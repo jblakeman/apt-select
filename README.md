@@ -34,4 +34,4 @@ After the new `sources.list` file is generated, the current file should be copie
 
 Note
 ------
-Although the script does its best to not replace any third party `apt` repositories that may have been manually added, there's a chance it could happen if the third white space delimited field has the release's codename (ie: trusty) in it.  This will most likely not be the case, but it still might be a good idea to double check the new file.  In the unlikely scenario that one of these repositories has been mistakenly replaced, just revert to using the old copy.
+Although the script does its best to not replace any third party `apt` repositories that may have been manually added, there's a chance it could happen if the third white space delimited field has the release's codename (ie: trusty) in it.  This will most likely not be the case, but it still might be a good idea to double check the new file.
