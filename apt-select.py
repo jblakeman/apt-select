@@ -46,17 +46,11 @@ avg_rtts = {}
 for url in urls:
     ping = RoundTrip(url)
     print("Connecting to %s" % url)
-    try:
-        avg = ping.avgRTT()
-    except KeyboardInterrupt as err:
-        print(err)
-        sys.exit(1)
-    else:
-        if avg is not False:
-            avg_rtts.update({url:avg})
-            n += 1
+    avg = ping.avgRTT()
+    if avg is not False:
+        avg_rtts.update({url:avg})
+        n += 1
         
-
 print("Tested %d mirrors" % n)
 if hardware == 'x86_64':
     hardware = 'amd64'
