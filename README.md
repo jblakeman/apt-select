@@ -1,7 +1,7 @@
 apt-select
 ========
 
-Speeds up updates and upgrades by selecting a mirror with the lowest latency.
+Speed up updates and upgrades by selecting a mirror with the lowest latency.
 
 Features
 -----------
