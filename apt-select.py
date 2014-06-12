@@ -62,13 +62,13 @@ ranks = sorted(avg_rtts, key=avg_rtts.__getitem__)
 info = []
 print("Retrieving status information")
 for rank in ranks:
-        d = Data(rank, codename, hardware)
-        data = d.getInfo()
-        if data is not False:
-            info += [data]
+    d = Data(rank, codename, hardware)
+    data = d.getInfo()
+    if data is not False:
+        info += [data]
 
-        if len(info) == top_num:
-            break
+    if len(info) == top_num:
+        break
 
 print("\nTop %d mirrors:\n" % top_num)
 for i, j in enumerate(info):
