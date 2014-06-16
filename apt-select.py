@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import sys
+from os import getcwd
 from re import findall, search
 from subprocess import check_output, CalledProcessError
 
@@ -138,6 +139,21 @@ def genFile():
     lines = ''.join(lines)
     for r in repo:
         lines = lines.replace(r, mirror)
+
+    if getcwd() == directory[0:-1]:
+        q = ("'/etc/apt' is the current directory.\n"
+             "Generating a new 'sources.list' will "
+             "overwrite the current file.\nContinue? ")
+        options = "[y] for yes\n[n] for no "
+        while True:
+            answer = ask(q)
+            if answer == 'y':
+                break
+            elif answer == 'n':
+                return
+            else:
+                q = options
+                continue
 
     try:
         f = open(apt_file, 'w')

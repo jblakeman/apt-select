@@ -38,5 +38,8 @@ From inside the directory, run:
 
 After the new `sources.list` file is generated, the current file should be copied to another location before being replaced:
 
-    sudo mv /etc/apt/sources.list /etc/apt/sources.list.backup && sudo mv sources.list /etc/apt/sources.list
+    if [ "$PWD" != "/etc/apt" -a -f "sources.list" ]; then
+        sudo mv /etc/apt/sources.list /etc/apt/sources.list.backup
+        sudo mv sources.list /etc/apt/sources.list
+    fi
 
