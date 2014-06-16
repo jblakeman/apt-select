@@ -34,7 +34,7 @@ From inside the directory, run:
 
     ./apt-select.py
 
-###Update `apt`
+####Update `apt`
 
 After the new `sources.list` file is generated, the current file should be copied to another location before being replaced:
 
