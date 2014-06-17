@@ -134,8 +134,6 @@ def genFile():
             print("Error finding current repository")
             sys.exit(1)
 
-        f.close()
-
     lines = ''.join(lines)
     for r in repo:
         lines = lines.replace(r, mirror)
@@ -156,9 +154,8 @@ def genFile():
                 continue
 
     try:
-        f = open(apt_file, 'w')
-        f.write(lines)
-        f.close()
+        with open(apt_file, 'w') as f:
+            f.write(lines)
     except IOError as err:
         print("Unable to write new '%s' file\n%s" % (apt_file, err))
         sys.exit(1)
