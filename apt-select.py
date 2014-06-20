@@ -83,11 +83,12 @@ try:
 except NameError:
     pass
 
-def ask(question):
+def ask(query):
     global input
-    answer = input(question)
+    answer = input(query)
     return answer
 
+options = "Options:\n[y] for yes\n[n] for no "
 def genFile():
     s = "Please select a mirror number from the list (1 - %d) " % top_num
     key = ask(s)
@@ -117,16 +118,16 @@ def genFile():
         for line in lines:
             arr = line.split()
             if not found:
-                if (arr and arr[0] in field1 and
-                        h == arr[1][:7] and
-                        release[1] in arr[2:]):
+                if (arr and (arr[0] in field1) and
+                        (h == arr[1][:7]) and
+                        (release[1] in arr[2:])):
                     repo = [arr[1]]
                     found = True
                     continue
             else:
-                if (arr and arr[0] in field1 and
-                        h in arr[1] and
-                        arr[2] == '%s-security' % (release[1])):
+                if (arr and (arr[0] in field1) and
+                        (h in arr[1]) and
+                        (arr[2] == '%s-security' % (release[1]))):
                     repo += [arr[1]]
                     break
             
@@ -139,18 +140,23 @@ def genFile():
         lines = lines.replace(r, mirror)
 
     if getcwd() == directory[0:-1]:
-        q = ("'/etc/apt' is the current directory.\n"
-             "Generating a new 'sources.list' will "
-             "overwrite the current file.\nContinue? ")
-        options = "[y] for yes\n[n] for no "
+        global options
+        query = ("'%(dir)s' is the current directory.\n"
+                 "Generating a new '%(apt)s' file will "
+                 "overwrite the current file.\n"
+                 "You should copy or backup '%(apt)s' before replacing it.\n"
+                 "Continue?\n%(opt)s" 
+                 % {'dir': directory,
+                    'apt': apt_file,
+                    'opt': options.replace("Options:\n", "")})
         while True:
-            answer = ask(q)
+            answer = ask(query)
             if answer == 'y':
                 break
             elif answer == 'n':
                 return
             else:
-                q = options
+                query = options
                 continue
 
     try:
@@ -160,26 +166,20 @@ def genFile():
         print("Unable to write new '%s' file\n%s" % (apt_file, err))
         sys.exit(1)
 
-def genList(arg):
-    s = ["Generate new '%s' file?\n" % apt_file]
-    s += ["Options:\n[y] for yes\n[n] for no\n[d] for details "]
-    if arg == 0:
-        answer = ask(''.join(s))
-    elif arg == 1:
-        answer = ask(s[1])
+def genList():
+    query = "Generate new '%s' file?\n" % apt_file
+    global options
+    answer = ask(query + options)
+    while True:
+        if answer == 'y':
+            genFile()
+            break
+        elif answer == 'n':
+            break
+        else:
+            answer = ask(options)
+            continue
 
-    if answer == 'y':
-        genFile()
-    elif answer == 'n':
-        sys.exit(0)
-    elif answer == 'd':
-        print(("Creates a new copy of '%s%s' in the current directory\n"
-               "using a mirror you select "
-               "from the list" % (directory, apt_file)))
-        genList(1)
-    else:
-        genList(1)
-
-genList(0)
+genList()
 
 sys.exit(0)
