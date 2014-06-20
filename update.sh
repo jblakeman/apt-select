@@ -30,7 +30,7 @@ isBackup (){
 }
 
 if [ "$PWD" = "$apt" ]; then
-    echo "Please run the update from a directory other than '%$apt'"
+    echo "Please run the update from a directory other than '$apt'"
     exit 1
 else
     if [ -f "$file" ]; then
