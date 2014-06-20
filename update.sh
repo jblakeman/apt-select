@@ -34,7 +34,6 @@ if [ "$PWD" = "$apt" ]; then
     exit 1
 else
     if [ -f "$file" ]; then
-        backup=${apt}/${file}.backup
         [ -f "$backup" ] && isBackup || update
     else
         echo "File '$file' must exist in the current directory"
