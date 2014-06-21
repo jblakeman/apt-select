@@ -94,7 +94,7 @@ def genFile():
     key = ask(s)
     while True:
         match = search(r'[1-5]', key)
-        if match and len(key) == 1:
+        if match and (len(key) == 1):
             key = int(key)
             break
         else:
@@ -159,12 +159,12 @@ def genFile():
                 query = options
                 continue
 
-    try:
-        with open(apt_file, 'w') as f:
+    with open(apt_file, 'w') as f:
+        try:
             f.write(lines)
-    except IOError as err:
-        print("Unable to write new '%s' file\n%s" % (apt_file, err))
-        sys.exit(1)
+        except IOError as err:
+            print("Unable to write new '%s' file\n%s" % (apt_file, err))
+            sys.exit(1)
 
 def genList():
     query = "Generate new '%s' file?\n" % apt_file
