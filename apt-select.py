@@ -145,10 +145,10 @@ def genFile():
                  "Generating a new '%(apt)s' file will "
                  "overwrite the current file.\n"
                  "You should copy or backup '%(apt)s' before replacing it.\n"
-                 "Continue?\n%(opt)s" 
-                 % {'dir': directory,
-                    'apt': apt_file,
-                    'opt': options.replace("Options:\n", "")})
+                 "Continue?\n%(opt)s" %
+                 {'dir': directory,
+                  'apt': apt_file,
+                  'opt': options.replace("Options:\n", "")})
         while True:
             answer = ask(query)
             if answer == 'y':
@@ -157,7 +157,6 @@ def genFile():
                 return
             else:
                 query = options
-                continue
 
     with open(apt_file, 'w') as f:
         try:
@@ -178,7 +177,6 @@ def genList():
             break
         else:
             answer = ask(options)
-            continue
 
 genList()
 
