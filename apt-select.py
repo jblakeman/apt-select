@@ -48,7 +48,7 @@ for url in urls:
     ping = RoundTrip(url)
     print("Connecting to %s" % url)
     avg = ping.avgRTT()
-    if avg is not False:
+    if avg:
         avg_rtts.update({url:avg})
         n += 1
         
@@ -65,7 +65,7 @@ print("Retrieving status information")
 for rank in ranks:
     d = Data(rank, codename, hardware)
     data = d.getInfo()
-    if data is not False:
+    if data:
         info += [data]
 
     if len(info) == top_num:
