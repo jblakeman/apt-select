@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys
+from sys import exit
 from os import getcwd
 from re import findall, search
 from subprocess import check_output, CalledProcessError
@@ -14,7 +14,7 @@ from mirrors import RoundTrip, Data
 
 def notUbuntu():
     print("Not an Ubuntu OS")
-    sys.exit(1)
+    exit(1)
 
 try:
     release = check_output("lsb_release -ics 2>/dev/null", shell=True)
@@ -26,7 +26,7 @@ else:
 hardware = check_output("uname -m", shell=True).strip().decode()
 if release[0] == 'Debian':
     print("Debian is not currently supported")
-    sys.exit(1)
+    exit(1)
 elif release[0] != 'Ubuntu':
     notUbuntu()
 
@@ -37,7 +37,7 @@ try:
 except IOError as err:
     print(("Could not connect to '%s'.\nCheck network connection\n"
            "%s" % (mirror_list, err)))
-    sys.exit(1)
+    exit(1)
 
 print("Got list of mirrors")
 archives = archives.read().decode()
@@ -110,7 +110,7 @@ def genFile():
             mirror = m
             break
 
-    found = False
+    found = None
     field1 = ('deb', 'deb-src')
     h = 'http://'
     with open('%s' % directory + apt_file, 'r') as f:
@@ -132,8 +132,8 @@ def genFile():
                     break
             
         else:
-            print("Error finding current repository")
-            sys.exit(1)
+            print("Error finding current repositories")
+            exit(1)
 
     lines = ''.join(lines)
     for r in repo:
@@ -163,7 +163,7 @@ def genFile():
             f.write(lines)
         except IOError as err:
             print("Unable to write new '%s' file\n%s" % (apt_file, err))
-            sys.exit(1)
+            exit(1)
 
 def genList():
     query = "Generate new '%s' file?\n" % apt_file
@@ -180,4 +180,4 @@ def genList():
 
 genList()
 
-sys.exit(0)
+exit(0)
