@@ -29,14 +29,14 @@ class RoundTrip:
             addr = socket.gethostbyname(self.url)
         except IOError as err:
             print("Could not resolve hostname\n%s" % err)
-            return False
+            return None
 
         send_tstamp = time.time()*1000
         try:
             s.connect((addr, port))
         except IOError as err:
             print(err)
-            return False
+            return None
 
         recv_tstamp = time.time()*1000
         rtt = recv_tstamp - send_tstamp
@@ -48,7 +48,7 @@ class RoundTrip:
         rtt = []
         for i in range(3):
             x = self.__tcpPing()
-            if x is not False:
+            if x:
                 rtt += [x]
             else:
                 rtt = []
@@ -58,13 +58,18 @@ class RoundTrip:
             avg = round(sum(rtt) / len(rtt))
             return avg
         else:
-            return False
+            return None
 
 class Data:
     def __init__(self, url, codename, hardware):
         self.url = url
         self.codename = codename
         self.hardware = hardware
+        self.regex = (
+            (r'Version\nArchitecture\nStatus\n[\w|\s]'
+             '+The\s%s\s\w+\n%s\n(.*)\n' % (self.codename, self.hardware)),
+             r'Speed:\n([0-9]{1,3}\s\w+)'
+        )
 
     def __reFind(self, regex, string):
         """Find and return regex match"""
@@ -78,9 +83,6 @@ class Data:
 
     def getInfo(self):
         """Return valid mirror status and bandwidth"""
-        regex1 = (r'Version\nArchitecture\nStatus\n[\w|\s]'
-                   '+The\s%s\s\w+\n%s\n(.*)\n' % (self.codename, self.hardware))
-        regex2 = r'Speed:\n([0-9]{1,3}\s\w+)'
         archive = "https://launchpad.net/ubuntu/+mirror/%s-archive" % self.url
         try:
             launch_html = urlopen(archive)
@@ -91,17 +93,17 @@ class Data:
                 print(("%s is one of the top mirrors, but "
                        "has a unique launchpad url.\n"
                        "Cannot verify, so removed from list" % self.url))
-                return False
+                return None
 
         launch_html = launch_html.read().decode()
         text = BeautifulSoup(launch_html).get_text()
-        status = self.__reFind(regex1, text)
+        status = self.__reFind(self.regex[0], text)
         if not status or 'unknown' in status:
-            return False
+            return None
 
-        speed = self.__reFind(regex2, text)
+        speed = self.__reFind(self.regex[1], text)
         if not speed:
-            return False
+            return None
         else:
             return [self.url, [status, speed]]
 
