@@ -6,8 +6,8 @@ apt_file=${apt}/${file}
 backup=${apt_file}.backup
 
 update (){
-    sudo mv $apt_file $backup  && \
-    sudo mv $file $apt_file && \
+    sudo mv $apt_file $backup  &&
+    sudo mv $file $apt_file &&
     echo "apt has been updated"
     exit 0
 }
