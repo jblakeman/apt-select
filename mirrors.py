@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
-import sys, socket
-import time
+from sys import exit
+from socket import (socket, AF_INET, SOCK_STREAM,
+                    gethostbyname, setdefaulttimeout)
+from time import time
 from re import search
 try:
     from urllib.request import urlopen, HTTPError
@@ -14,7 +16,7 @@ except ImportError as err:
     print(("%s\n"
            "Try 'sudo apt-get install python-bs4' "
            "or 'sudo apt-get install python3-bs4'" % err))
-    sys.exit(1)
+    exit(1)
 
 class RoundTrip:
     def __init__(self, url):
@@ -23,22 +25,22 @@ class RoundTrip:
     def __tcpPing(self):
         """Return latency to hostname"""
         port = 80
-        socket.setdefaulttimeout(2.5)
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        setdefaulttimeout(2.5)
+        s = socket(AF_INET, SOCK_STREAM)
         try:
-            addr = socket.gethostbyname(self.url)
+            addr = gethostbyname(self.url)
         except IOError as err:
             print("Could not resolve hostname\n%s" % err)
-            return None
+            return
 
-        send_tstamp = time.time()*1000
+        send_tstamp = time()*1000
         try:
             s.connect((addr, port))
         except IOError as err:
             print(err)
-            return None
+            return
 
-        recv_tstamp = time.time()*1000
+        recv_tstamp = time()*1000
         rtt = recv_tstamp - send_tstamp
         s.close()
         return rtt
@@ -58,7 +60,7 @@ class RoundTrip:
             avg = round(sum(rtt) / len(rtt))
             return avg
         else:
-            return None
+            return
 
 class Data:
     def __init__(self, url, codename, hardware):
@@ -93,17 +95,17 @@ class Data:
                 print(("%s is one of the top mirrors, but "
                        "has a unique launchpad url.\n"
                        "Cannot verify, so removed from list" % self.url))
-                return None
+                return
 
         launch_html = launch_html.read().decode()
         text = BeautifulSoup(launch_html).get_text()
         status = self.__reFind(self.regex[0], text)
         if not status or 'unknown' in status:
-            return None
+            return
 
         speed = self.__reFind(self.regex[1], text)
         if not speed:
-            return None
+            return
         else:
             return [self.url, [status, speed]]
 
