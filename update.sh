@@ -11,9 +11,11 @@ needSudo (){
         echo "Enter sudo password to continue"
     fi
 }
+
 updateApt (){
     sudo mv $file $apt_file && echo "apt has been updated"
 }
+
 updateBackup (){
     sudo mv $apt_file $backup && echo "Current file backed up to '$backup'" &&
     updateApt
@@ -35,7 +37,7 @@ isBackup (){
         case $opt in
             "${options[0]}")
                 needSudo
-                updateBackup && echo :
+                updateBackup
                 break
                 ;;
             "${options[1]}")
