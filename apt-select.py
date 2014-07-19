@@ -88,7 +88,7 @@ def ask(query):
     answer = input(query)
     return answer
 
-options = "Options:\n[y] for yes\n[n] for no "
+options = "Please enter 'yes' or 'no': "
 def genFile():
     s = "Please select a mirror number from the list (1 - %d) " % top_num
     key = ask(s)
@@ -141,19 +141,19 @@ def genFile():
 
     if getcwd() == directory[0:-1]:
         global options
-        query = ("'%(dir)s' is the current directory.\n"
-                 "Generating a new '%(apt)s' file will "
-                 "overwrite the current file.\n"
-                 "You should copy or backup '%(apt)s' before replacing it.\n"
-                 "Continue?\n%(opt)s" %
-                 {'dir': directory,
-                  'apt': apt_file,
-                  'opt': options.replace("Options:\n", "")})
+        query = (
+            "'%(dir)s' is the current directory.\n"
+            "Generating a new '%(apt)s' file will "
+            "overwrite the current file.\n"
+            "You should copy or backup '%(apt)s' before replacing it.\n"
+            "Continue?\n[yes|no] " %
+            {'dir': directory, 'apt': apt_file}
+        )
         while True:
             answer = ask(query)
-            if answer == 'y':
+            if answer == 'yes':
                 break
-            elif answer == 'n':
+            elif answer == 'no':
                 return
             else:
                 query = options
@@ -166,14 +166,14 @@ def genFile():
             exit(1)
 
 def genList():
-    query = "Generate new '%s' file?\n" % apt_file
+    query = "Generate new '%s' file?\n[yes|no] " % apt_file
     global options
-    answer = ask(query + options)
+    answer = ask(query)
     while True:
-        if answer == 'y':
+        if answer == 'yes':
             genFile()
             break
-        elif answer == 'n':
+        elif answer == 'no':
             break
         else:
             answer = ask(options)
