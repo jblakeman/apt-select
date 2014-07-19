@@ -1,32 +1,54 @@
-#!/bin/sh
+#!/bin/bash
 
 apt="/etc/apt"
 file="sources.list"
 apt_file=${apt}/${file}
 backup=${apt_file}.backup
 
-update (){
-    sudo mv $apt_file $backup  &&
-    sudo mv $file $apt_file &&
-    echo "apt has been updated"
+needSudo (){
+    if [ $EUID -ne 0 ]; then
+        echo "$0 needs sudoer priveleges to modify '${apt_file}'"
+        echo "Enter sudo password to continue"
+    fi
+}
+updateApt (){
+    sudo mv $file $apt_file && echo "apt has been updated"
+}
+updateBackup (){
+    sudo mv $apt_file $backup && echo "Current file backed up to '$backup'" &&
+    updateApt
     exit 0
 }
 
 isBackup (){
-    local query options answer
-    query="Copied original file '$backup' exists.\nOverwrite?"
-    options="Options:\n[y] for yes\n[n] for no "
-    if [ -z "$1" ]; then
-        echo -en "$query\n$options"
-    else
-        echo -en "$options"
-    fi
-    read answer
-    case $answer in 
-        y) update;;
-        n) echo "apt not updated";;
-        *) isBackup 1;;
-    esac
+    local query options opt
+    query="A backup file already exists.\n"
+    query+="Choose one of the following options:\n"
+    echo -e "$query"
+    options=(
+        "Replace current backup"
+        "Replace 'sources.list' without backing up"
+        "Quit"
+    )
+    select opt in "${options[@]}"
+    do
+        case $opt in
+            "${options[0]}")
+                needSudo
+                updateBackup && echo :
+                break
+                ;;
+            "${options[1]}")
+                needSudo
+                updateApt
+                break
+                ;;
+            "${options[2]}")
+                break
+                ;;
+            *) echo invalid option;;
+        esac
+    done
 }
 
 if [ "$PWD" = "$apt" ]; then
@@ -34,7 +56,11 @@ if [ "$PWD" = "$apt" ]; then
     exit 1
 else
     if [ -f "$file" ]; then
-        [ -f "$backup" ] && isBackup || update
+        if [ -f "$backup" ]; then
+            isBackup
+        else
+            needSudo && updateBackup
+        fi
     else
         echo "File '$file' must exist in the current directory"
         exit 1
