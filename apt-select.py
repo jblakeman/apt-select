@@ -66,7 +66,7 @@ for rank in ranks:
     d = Data(rank, codename, hardware)
     data = d.getInfo()
     if data:
-        info += [data]
+        info.append(data)
 
     if len(info) == top_num:
         break

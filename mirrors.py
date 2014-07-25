@@ -51,9 +51,9 @@ class RoundTrip:
         for i in range(3):
             x = self.__tcpPing()
             if x:
-                rtt += [x]
+                rtt.append(x)
             else:
-                rtt = []
+                rtt = None
                 break
 
         if rtt:
@@ -107,5 +107,5 @@ class Data:
         if not speed:
             return
         else:
-            return [self.url, [status, speed]]
+            return (self.url, (status, speed))
 
