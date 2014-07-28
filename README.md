@@ -20,11 +20,11 @@ Dependencies
 
 Python 2
 
-    sudo apt-get install python-bf4
+    sudo apt-get install python-bs4
 
 Python 3
 
-    sudo apt-get install python3-bf4
+    sudo apt-get install python3-bs4
 
 
 Usage

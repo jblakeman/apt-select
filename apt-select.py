@@ -88,7 +88,22 @@ def ask(query):
     answer = input(query)
     return answer
 
-options = "Please enter 'yes' or 'no': "
+def yesOrNo(*args):
+    y = 'yes'
+    n = 'no'
+    options = "Please enter %s or %s: " % (y,n)
+    while True:
+        answer = ask(args[0])
+        if answer == y:
+            if args[1]:
+                genFile()
+
+            break
+        elif answer == n:
+            return
+        else:
+            query = options
+
 def genFile():
     s = "Please select a mirror number from the list (1 - %d) " % top_num
     key = ask(s)
@@ -149,14 +164,7 @@ def genFile():
             "Continue?\n[yes|no] " %
             {'dir': directory, 'apt': apt_file}
         )
-        while True:
-            answer = ask(query)
-            if answer == 'yes':
-                break
-            elif answer == 'no':
-                return
-            else:
-                query = options
+        yesOrNo(query)
 
     with open(apt_file, 'w') as f:
         try:
@@ -165,19 +173,7 @@ def genFile():
             print("Unable to write new '%s' file\n%s" % (apt_file, err))
             exit(1)
 
-def genList():
-    query = "Generate new '%s' file?\n[yes|no] " % apt_file
-    global options
-    answer = ask(query)
-    while True:
-        if answer == 'yes':
-            genFile()
-            break
-        elif answer == 'no':
-            break
-        else:
-            answer = ask(options)
-
-genList()
+query = "Generate new '%s' file?\n[yes|no] " % apt_file
+yesOrNo(query, True)
 
 exit(0)
