@@ -51,7 +51,7 @@ for url in urls:
     if avg:
         avg_rtts.update({url:avg})
         n += 1
-        
+
 print("Tested %d mirrors" % n)
 if hardware == 'x86_64':
     hardware = 'amd64'
@@ -73,7 +73,7 @@ for rank in ranks:
 
 print("\nTop %d mirrors:\n" % top_num)
 for i, j in enumerate(info):
-    print("%d. %s\n\tLatency: %d ms\n\tStatus: %s\n\tBandwidth: %s\n" % 
+    print("%d. %s\n\tLatency: %d ms\n\tStatus: %s\n\tBandwidth: %s\n" %
           (i + 1, j[0], avg_rtts[j[0]], j[1][0], j[1][1]))
 
 directory = '/etc/apt/'
@@ -91,9 +91,10 @@ def ask(query):
 def yesOrNo(*args):
     y = 'yes'
     n = 'no'
-    options = "Please enter %s or %s: " % (y,n)
+    options = "Please enter '%s' or '%s': " % (y,n)
+    query = args[0]
     while True:
-        answer = ask(args[0])
+        answer = ask(query)
         if answer == y:
             if args[1]:
                 genFile()
@@ -145,7 +146,7 @@ def genFile():
                         (arr[2] == '%s-security' % (release[1]))):
                     repo += [arr[1]]
                     break
-            
+
         else:
             print("Error finding current repositories")
             exit(1)
