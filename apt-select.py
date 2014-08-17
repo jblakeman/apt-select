@@ -155,7 +155,8 @@ def genFile():
     for r in repo:
         lines = lines.replace(r, mirror)
 
-    if getcwd() == directory[0:-1]:
+    wd=getcwd()
+    if wd == directory[0:-1]:
         global options
         query = (
             "'%(dir)s' is the current directory.\n"
@@ -166,13 +167,13 @@ def genFile():
             {'dir': directory, 'apt': apt_file}
         )
         yesOrNo(query)
-
-    with open(apt_file, 'w') as f:
-        try:
+    try:
+        with open(apt_file, 'w') as f:
             f.write(lines)
-        except IOError as err:
-            print("Unable to write new '%s' file\n%s" % (apt_file, err))
-            exit(1)
+
+    except IOError as err:
+        print("%s\nAre you owner of directory %s ?" % (err, wd))
+        exit(1)
 
 query = "Generate new '%s' file?\n[yes|no] " % apt_file
 yesOrNo(query, True)
