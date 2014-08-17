@@ -8,7 +8,7 @@ backup=${apt_file}.backup
 needSudo (){
     if [ $EUID -ne 0 ]; then
         echo "$0 needs sudoer priveleges to modify '${apt_file}'"
-        echo "Enter sudo password to continue"
+        sudo -k true || exit $?
     fi
 }
 
