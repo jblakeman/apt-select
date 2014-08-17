@@ -36,7 +36,7 @@ From inside the directory, run:
 
 ####Update `apt`
 
-After the new `sources.list` file is generated, use the update script to safely copy and replace your current file:
+After the new `sources.list` file is generated, use the update script to backup and replace the current file:
 
     ./update.sh
 
