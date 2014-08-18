@@ -170,10 +170,12 @@ def genFile():
     try:
         with open(apt_file, 'w') as f:
             f.write(lines)
-
     except IOError as err:
-        print("%s\nAre you owner of directory %s ?" % (err, wd))
-        exit(1)
+        if err.strerror == 'Permission denied':
+            print(("%s\nYou do not own %s"
+                   "\nPlease run the script from a directory you own." %
+                   (err, wd)))
+            exit(1)
 
 query = "Generate new '%s' file?\n[yes|no] " % apt_file
 yesOrNo(query, True)
