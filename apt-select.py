@@ -88,96 +88,85 @@ def ask(query):
     answer = input(query)
     return answer
 
-def yesOrNo(*args):
+def yesOrNo():
     y = 'yes'
     n = 'no'
     options = "Please enter '%s' or '%s': " % (y,n)
-    query = args[0]
     while True:
         answer = ask(query)
         if answer == y:
-            if args[1]:
-                genFile()
-
             break
         elif answer == n:
-            return
+            exit(0)
         else:
             query = options
 
-def genFile():
-    s = "Please select a mirror number from the list (1 - %d) " % top_num
-    key = ask(s)
-    while True:
-        match = search(r'[1-5]', key)
-        if match and (len(key) == 1):
-            key = int(key)
-            break
+query = "Choose a mirror from the list (1 - %d) " % top_num
+key = ask(query)
+while True:
+    match = search(r'[1-5]', key)
+    if match and (len(key) == 1):
+        key = int(key)
+        break
+    else:
+        query = "Please enter a valid number "
+        key = ask(query)
+
+key = key - 1
+mirror = info[key][0]
+for m in archives.splitlines():
+    if mirror in m:
+        mirror = m
+        break
+
+found = None
+field1 = ('deb', 'deb-src')
+h = 'http://'
+with open('%s' % directory + apt_file, 'r') as f:
+    lines = f.readlines()
+    for line in lines:
+        arr = line.split()
+        if not found:
+            if (arr and (arr[0] in field1) and
+                    (h == arr[1][:7]) and
+                    (release[1] in arr[2:])):
+                repo = [arr[1]]
+                found = True
+                continue
         else:
-            print("Not a valid number")
-            key = ask(s)
+            if (arr and (arr[0] in field1) and
+                    (h in arr[1]) and
+                    (arr[2] == '%s-security' % (release[1]))):
+                repo += [arr[1]]
+                break
 
-    key = key - 1
-    global info
-    mirror = info[key][0]
-    global archives
-    for m in archives.splitlines():
-        if mirror in m:
-            mirror = m
-            break
+    else:
+        print("Error finding current repositories")
+        exit(1)
 
-    found = None
-    field1 = ('deb', 'deb-src')
-    h = 'http://'
-    with open('%s' % directory + apt_file, 'r') as f:
-        lines = f.readlines()
-        for line in lines:
-            arr = line.split()
-            if not found:
-                if (arr and (arr[0] in field1) and
-                        (h == arr[1][:7]) and
-                        (release[1] in arr[2:])):
-                    repo = [arr[1]]
-                    found = True
-                    continue
-            else:
-                if (arr and (arr[0] in field1) and
-                        (h in arr[1]) and
-                        (arr[2] == '%s-security' % (release[1]))):
-                    repo += [arr[1]]
-                    break
+lines = ''.join(lines)
+for r in repo:
+    lines = lines.replace(r, mirror)
 
-        else:
-            print("Error finding current repositories")
-            exit(1)
-
-    lines = ''.join(lines)
-    for r in repo:
-        lines = lines.replace(r, mirror)
-
-    wd = getcwd()
-    if wd == directory[0:-1]:
-        global options
-        query = (
-            "'%(dir)s' is the current directory.\n"
-            "Generating a new '%(apt)s' file will "
-            "overwrite the current file.\n"
-            "You should copy or backup '%(apt)s' before replacing it.\n"
-            "Continue?\n[yes|no] " %
-            {'dir': directory, 'apt': apt_file}
-        )
-        yesOrNo(query)
-    try:
-        with open(apt_file, 'w') as f:
-            f.write(lines)
-    except IOError as err:
-        if err.strerror == 'Permission denied':
-            print(("%s\nYou do not own %s"
-                   "\nPlease run the script from a directory you own." %
-                   (err, wd)))
-            exit(1)
-
-query = "Generate new '%s' file?\n[yes|no] " % apt_file
-yesOrNo(query, True)
+wd = getcwd()
+if wd == directory[0:-1]:
+    query = (
+        "'%(dir)s' is the current directory.\n"
+        "Generating a new '%(apt)s' file will "
+        "overwrite the current file.\n"
+        "You should copy or backup '%(apt)s' before replacing it.\n"
+        "Continue?\n[yes|no] " %
+        {'dir': directory, 'apt': apt_file}
+    )
+    yesOrNo()
+try:
+    with open(apt_file, 'w') as f:
+        f.write(lines)
+except IOError as err:
+    if err.strerror == 'Permission denied':
+        print(("%s\nYou do not own %s"
+               "\nPlease run the script from a directory you own." %
+               (err, wd)))
+        exit(1)
 
 exit(0)
