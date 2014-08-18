@@ -88,19 +88,6 @@ def ask(query):
     answer = input(query)
     return answer
 
-def yesOrNo():
-    y = 'yes'
-    n = 'no'
-    options = "Please enter '%s' or '%s': " % (y,n)
-    while True:
-        answer = ask(query)
-        if answer == y:
-            break
-        elif answer == n:
-            exit(0)
-        else:
-            query = options
-
 query = "Choose a mirror from the list (1 - %d) " % top_num
 key = ask(query)
 while True:
@@ -148,6 +135,19 @@ lines = ''.join(lines)
 for r in repo:
     lines = lines.replace(r, mirror)
 
+def yesOrNo():
+    y = 'yes'
+    n = 'no'
+    options = "Please enter '%s' or '%s': " % (y,n)
+    while True:
+        answer = ask(query)
+        if answer == y:
+            break
+        elif answer == n:
+            exit(0)
+        else:
+            query = options
+
 wd = getcwd()
 if wd == directory[0:-1]:
     query = (
@@ -159,13 +159,14 @@ if wd == directory[0:-1]:
         {'dir': directory, 'apt': apt_file}
     )
     yesOrNo()
+
 try:
     with open(apt_file, 'w') as f:
         f.write(lines)
 except IOError as err:
     if err.strerror == 'Permission denied':
-        print(("%s\nYou do not own %s"
-               "\nPlease run the script from a directory you own." %
+        print(("%s\nYou do not own %s\n"
+               "Please run the script from a directory you own." %
                (err, wd)))
         exit(1)
 
