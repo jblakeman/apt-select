@@ -46,7 +46,7 @@ class RoundTrip:
         return rtt
 
     def avgRTT(self):
-        """Return average ping (rtt) of 3 if all true"""
+        """Return average rtt"""
         rtt = []
         for i in range(3):
             x = self.__tcpPing()
@@ -84,7 +84,7 @@ class Data:
         return match
 
     def getInfo(self):
-        """Return valid mirror status and bandwidth"""
+        """Return mirror status and bandwidth"""
         archive = "https://launchpad.net/ubuntu/+mirror/%s-archive" % self.url
         try:
             launch_html = urlopen(archive)
