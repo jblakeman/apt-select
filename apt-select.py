@@ -35,7 +35,7 @@ mirror_list = "http://mirrors.ubuntu.com/mirrors.txt"
 try:
     archives = urlopen(mirror_list)
 except IOError as err:
-    print(("Could not connect to '%s'.\nCheck network connection\n"
+    print(("Could not connect to '%s'.\n"
            "%s" % (mirror_list, err)))
     exit(1)
 
