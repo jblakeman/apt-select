@@ -155,7 +155,7 @@ def genFile():
     for r in repo:
         lines = lines.replace(r, mirror)
 
-    wd=getcwd()
+    wd = getcwd()
     if wd == directory[0:-1]:
         global options
         query = (
