@@ -13,11 +13,13 @@ needSudo (){
 }
 
 updateApt (){
-    sudo mv $file $apt_file && echo "apt has been updated"
+    sudo mv $file $apt_file &&
+    echo "apt has been updated"
 }
 
 updateBackup (){
-    sudo mv $apt_file $backup && echo "Current file backed up to '$backup'" &&
+    sudo mv $apt_file $backup &&
+    echo "Current file backed up to '$backup'"
     updateApt
     exit 0
 }
