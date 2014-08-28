@@ -1,16 +1,15 @@
 #!/bin/bash
 
-apt="/etc/apt"
-file="sources.list"
+apt=/etc/apt
+file=sources.list
 apt_file=${apt}/${file}
 backup=${apt_file}.backup
 
-needSudo (){
-    if [ $EUID -ne 0 ]; then
-        echo "$0 needs sudoer priveleges to modify '${apt_file}'"
-        sudo -k true || exit $?
-    fi
-}
+if [ $EUID -ne 0 ]; then
+    echo -e "$0 needs sudoer priveleges to modify ${apt_file}"
+    sudo -K
+    sudo -v || exit $?
+fi
 
 updateApt (){
     sudo mv $file $apt_file &&
@@ -19,35 +18,44 @@ updateApt (){
 
 updateBackup (){
     sudo mv $apt_file $backup &&
-    echo "Current file backed up to '$backup'"
+    echo "$apt_file backed up to $backup"
     updateApt
-    exit 0
 }
 
 isBackup (){
     local query options opt
-    query="A backup file already exists.\n"
-    query+="Choose one of the following options:\n"
+    query="Backup file $backup already exists.\n"
+    query+="Choose one of the following options:"
     echo -e "$query"
     options=(
-        "Replace current backup"
-        "Replace 'sources.list' without backing up"
+        "Replace backup and update apt"
+        "Update apt without backing up"
+        "Examine backup file"
+        "Examine $apt_file"
+        "Examine $file"
         "Quit"
     )
     select opt in "${options[@]}"
     do
         case $opt in
             "${options[0]}")
-                needSudo
                 updateBackup
                 break
                 ;;
             "${options[1]}")
-                needSudo
                 updateApt
                 break
                 ;;
             "${options[2]}")
+                less $backup
+                ;;
+            "${options[3]}")
+                less $apt_file
+                ;;
+            "${options[4]}")
+                less $file
+                ;;
+            "${options[5]}")
                 break
                 ;;
             *) echo invalid option;;
@@ -56,17 +64,19 @@ isBackup (){
 }
 
 if [ "$PWD" = "$apt" ]; then
-    echo "Please run the update from a directory other than '$apt'"
+    echo "Please run the update from a directory other than $apt"
     exit 1
 else
     if [ -f "$file" ]; then
         if [ -f "$backup" ]; then
             isBackup
         else
-            needSudo && updateBackup
+            updateBackup
         fi
     else
-        echo "File '$file' must exist in the current directory"
+        echo "$file must exist in the working directory"
         exit 1
     fi
 fi
+sudo -k
+exit 0
