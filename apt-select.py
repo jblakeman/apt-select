@@ -4,6 +4,7 @@ from sys import exit
 from os import getcwd
 from re import findall, search
 from subprocess import check_output, CalledProcessError
+from argparse import ArgumentParser
 
 try:
     from urllib.request import urlopen, HTTPError
@@ -11,6 +12,11 @@ except ImportError:
     from urllib2 import urlopen, HTTPError
 
 from mirrors import RoundTrip, Data
+
+parser = ArgumentParser()
+parser.add_argument('--auto', '-a', action='store_true', help='auto: choose the best mirror', default=False)
+args = parser.parse_args()
+flag_auto = args.auto
 
 def notUbuntu():
     print("Not an Ubuntu OS")
@@ -83,13 +89,19 @@ try:
 except NameError:
     pass
 
-def ask(query):
-    global input
+def ask(query, default):
+
+    global input, flag_auto
+
+    if flag_auto:
+        return default
+
     answer = input(query)
     return answer
 
 query = "Choose a mirror from the list (1 - %d) " % top_num
-key = ask(query)
+key = ask(query, '1')
+
 while True:
     match = search(r'[1-5]', key)
     if match and (len(key) == 1):
@@ -138,9 +150,10 @@ for r in repo:
 def yesOrNo():
     y = 'yes'
     n = 'no'
+    query = ''
     options = "Please enter '%s' or '%s': " % (y,n)
     while True:
-        answer = ask(query)
+        answer = ask(query, 'yes')
         if answer == y:
             break
         elif answer == n:
