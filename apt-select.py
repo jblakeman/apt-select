@@ -119,24 +119,30 @@ for m in archives.splitlines():
         break
 
 found = None
-field1 = ('deb', 'deb-src')
-h = 'http://'
+deb = ('deb', 'deb-src')
+proto = ('http://', 'ftp://')
 with open('%s' % directory + apt_file, 'r') as f:
     lines = f.readlines()
+    def confirm_mirror(url, deb, proto):
+        if (url and (url[0] in deb) and
+                (proto[0] in url[1] or
+                 proto[1] in url[1])):
+            return True
+        else:
+            return
+
     for line in lines:
-        arr = line.split()
+        fields = line.split()
         if not found:
-            if (arr and (arr[0] in field1) and
-                    (h == arr[1][:7]) and
-                    (release[1] in arr[2:])):
-                repo = [arr[1]]
+            if (confirm_mirror(fields, deb, proto) and
+                    (release[1] in fields[2])):
+                repo = [fields[1]]
                 found = True
                 continue
         else:
-            if (arr and (arr[0] in field1) and
-                    (h in arr[1]) and
-                    (arr[2] == '%s-security' % (release[1]))):
-                repo += [arr[1]]
+            if (confirm_mirror(fields, deb, proto) and
+                (fields[2] == '%s-security' % (release[1]))):
+                repo += [fields[1]]
                 break
 
     else:
