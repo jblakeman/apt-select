@@ -74,10 +74,17 @@ for rank in ranks:
     if data:
         info.append(data)
 
-    if len(info) == top_num:
+    info_size = len(info)
+    if info_size == top_num:
         break
 
-print("\nTop %d mirrors:\n" % top_num)
+if info_size == 0:
+    print("Unable to find alternative mirrors")
+elif info_size == 1:
+    print("Alternative mirror found:")
+else:
+    print("\nTop %d mirrors:\n" % info_size)
+
 for i, j in enumerate(info):
     print("%d. %s\n\tLatency: %d ms\n\tStatus: %s\n\tBandwidth: %s\n" %
           (i + 1, j[0], avg_rtts[j[0]], j[1][0], j[1][1]))
