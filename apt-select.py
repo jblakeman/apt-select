@@ -2,7 +2,7 @@
 
 from sys import exit
 from os import getcwd
-from re import findall, search
+from re import findall, search, match
 from subprocess import check_output, CalledProcessError
 from argparse import ArgumentParser
 
@@ -14,7 +14,8 @@ except ImportError:
 from mirrors import RoundTrip, Data
 
 parser = ArgumentParser()
-parser.add_argument('--auto', '-a', action='store_true', help='auto: choose the best mirror', default=False)
+parser.add_argument('--auto', '-a', action='store_true',
+                    help='auto: choose the best mirror', default=False)
 args = parser.parse_args()
 flag_auto = args.auto
 
@@ -85,46 +86,8 @@ elif info_size == 1:
 else:
     print("\nTop %d mirrors:\n" % info_size)
 
-for i, j in enumerate(info):
-    print("%d. %s\n\tLatency: %d ms\n\tStatus: %s\n\tBandwidth: %s\n" %
-          (i + 1, j[0], avg_rtts[j[0]], j[1][0], j[1][1]))
-
 directory = '/etc/apt/'
 apt_file = 'sources.list'
-try:
-    input = raw_input
-except NameError:
-    pass
-
-def ask(query, default):
-
-    global input, flag_auto
-
-    if flag_auto:
-        return default
-
-    answer = input(query)
-    return answer
-
-query = "Choose a mirror from the list (1 - %d) " % top_num
-key = ask(query, '1')
-
-while True:
-    match = search(r'[1-5]', key)
-    if match and (len(key) == 1):
-        key = int(key)
-        break
-    else:
-        query = "Please enter a valid number "
-        key = ask(query)
-
-key = key - 1
-mirror = info[key][0]
-for m in archives.splitlines():
-    if mirror in m:
-        mirror = m
-        break
-
 found = None
 deb = ('deb', 'deb-src')
 proto = ('http://', 'ftp://')
@@ -155,6 +118,56 @@ with open('%s' % directory + apt_file, 'r') as f:
     else:
         print("Error finding current repositories")
         exit(1)
+
+repo_name = match(r'http://([\w|\.|\-]+)/', repo[0]).group(1)
+current_key = None
+for i, j in enumerate(info):
+    mirror_url = j[0]
+    if mirror_url == repo_name:
+        mirror_url += " (current)"
+        current_key = i
+
+    print("%d. %s\n\tLatency: %d ms\n\tStatus: %s\n\tBandwidth: %s\n" %
+          (i + 1, mirror_url, avg_rtts[j[0]], j[1][0], j[1][1]))
+
+try:
+    input = raw_input
+except NameError:
+    pass
+
+def ask(query, default):
+
+    global input, flag_auto
+
+    if flag_auto:
+        return default
+
+    answer = input(query)
+    return answer
+
+query = "Choose a mirror from the list (1 - %d) " % info_size
+key = ask(query, '1')
+
+while True:
+    match = search(r'[1-5]', key)
+    if match and (len(key) == 1):
+        key = int(key)
+        break
+    else:
+        query = "Please enter a valid number "
+        key = ask(query)
+
+key = key - 1
+if current_key == key:
+    print("The mirror you selected is the currently used mirror.\n"
+           "There is nothing to be done.")
+    exit(0)
+
+mirror = info[key][0]
+for m in archives.splitlines():
+    if mirror in m:
+        mirror = m
+        break
 
 lines = ''.join(lines)
 for r in repo:
