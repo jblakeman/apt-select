@@ -10,9 +10,10 @@ if [ $EUID -ne 0 ]; then
     if ! awk -F: -v u="$USER" '
              /^sudo/ {
                 for(i=4;i<=NF;i++) {
-                    if($i==u)
+                    if($i==u) {
                         f=1
                         break
+                    }
                 }
              } END {
                 if(!f)
