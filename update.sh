@@ -6,20 +6,42 @@ apt_file=${apt}/${file}
 backup=${apt_file}.backup
 
 if [ $EUID -ne 0 ]; then
-    echo -e "$0 needs sudoer priveleges to modify ${apt_file}"
-    sudo -K
-    sudo -v || exit $?
+    if ! awk -F: -v u="$USER" '
+             /^sudo/ {
+                for(i=4;i<=NF;i++) {
+                    if($i==u)
+                        f=1
+                        break
+                }
+             } END {
+                if(!f)
+                    exit 1
+            }' /etc/group; then
+        echo "$0 needs sudoer priveleges to modify ${apt_file}"
+        echo "Sorry, user $USER may not run sudo on $(hostname)."
+        exit 1
+    else
+        echo "$0 needs sudoer priveleges to modify ${apt_file}"
+        echo "please run script as super user (root)"
+        exit 1
+    fi
 fi
 
 updateApt (){
-    sudo mv $file $apt_file &&
+    mv $file $apt_file &&
     echo "apt has been updated"
 }
 
 updateBackup (){
-    sudo mv $apt_file $backup &&
+    mv $apt_file $backup &&
     echo "$apt_file backed up to $backup"
     updateApt
+}
+
+examine (){
+    less $1 2>/dev/null
+    isBackup
+    break
 }
 
 isBackup (){
@@ -47,13 +69,13 @@ isBackup (){
                 break
                 ;;
             "${options[2]}")
-                less $backup
+                examine $backup
                 ;;
             "${options[3]}")
-                less $apt_file
+                examine $apt_file
                 ;;
             "${options[4]}")
-                less $file
+                examine $file
                 ;;
             "${options[5]}")
                 break
@@ -78,5 +100,4 @@ else
         exit 1
     fi
 fi
-sudo -k
 exit 0
