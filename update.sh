@@ -6,6 +6,7 @@ apt_file=${apt}/${file}
 backup=${apt_file}.backup
 
 if [ $EUID -ne 0 ]; then
+    echo "$0 needs sudoer priveleges to modify ${apt_file}"
     if ! awk -F: -v u="$USER" '
              /^sudo/ {
                 for(i=4;i<=NF;i++) {
@@ -17,11 +18,9 @@ if [ $EUID -ne 0 ]; then
                 if(!f)
                     exit 1
             }' /etc/group; then
-        echo "$0 needs sudoer priveleges to modify ${apt_file}"
         echo "Sorry, user $USER may not run sudo on $(hostname)."
         exit 1
     else
-        echo "$0 needs sudoer priveleges to modify ${apt_file}"
         echo "please run script as super user (root)"
         exit 1
     fi
