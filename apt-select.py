@@ -208,5 +208,8 @@ except IOError as err:
                "Please run the script from a directory you own." %
                (err, wd)))
         exit(1)
+    else:
+        print(err)
+        exit(1)
 
 exit(0)
