@@ -155,7 +155,7 @@ while True:
         break
     else:
         query = "Please enter a valid number "
-        key = ask(query)
+        key = ask(query, '1')
 
 key = key - 1
 if current_key == key:
