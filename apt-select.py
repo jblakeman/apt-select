@@ -4,7 +4,7 @@ from sys import exit
 from os import getcwd
 from re import findall, search, match
 from subprocess import check_output, CalledProcessError
-from argparse import ArgumentParser
+from argparse import ArgumentParser, RawTextHelpFormatter
 
 try:
     from urllib.request import urlopen, HTTPError
@@ -13,10 +13,28 @@ except ImportError:
 
 from mirrors import RoundTrip, Data
 
-parser = ArgumentParser()
-parser.add_argument('--auto', '-a', action='store_true',
-                    help='auto: choose the best mirror', default=False)
+parser = ArgumentParser(description="Find the fastest Ubuntu mirrors",
+                        formatter_class=RawTextHelpFormatter)
+parser.add_argument('-a', '--auto', action='store_true',
+                    help="choose the best mirror", default=False)
+
+parser.add_argument('-s', '--status', nargs=1,
+                    help=(
+                        'return mirrors with minimum status\n'
+                        'choices:\n'
+                        '   up-to-date\n'
+                        '   one-day-behind\n'
+                        '   two-days-behind\n'
+                        '   one-week-behind\n'
+                        '   unknown\n'
+                        'default: up-to-date\n'
+                    ), default='up-to-date', metavar='')
+
 args = parser.parse_args()
+flag_status = args.status[0].replace('-', ' ')
+if flag_status != 'unknown':
+    flag_status = flag_status[0].upper() + flag_status[1:]
+
 flag_auto = args.auto
 
 def notUbuntu():
@@ -70,7 +88,7 @@ ranks = sorted(avg_rtts, key=avg_rtts.__getitem__)
 info = []
 print("Retrieving status information")
 for rank in ranks:
-    d = Data(rank, codename, hardware)
+    d = Data(rank, codename, hardware, flag_status)
     data = d.getInfo()
     if data:
         info.append(data)

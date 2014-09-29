@@ -63,10 +63,22 @@ class RoundTrip:
             return
 
 class Data:
-    def __init__(self, url, codename, hardware):
+    def __init__(self, url, codename, hardware, min_status=None):
         self.url = url
         self.codename = codename
         self.hardware = hardware
+        self.statuses = (
+            "unknown"
+            "One week behind"
+            "Two days behind"
+            "One day behind"
+            "Up to date"
+        )
+
+        if min_status:
+            min_index = self.statuses.index(min_status)
+            self.statuses = self.statuses[min_index:]
+
         self.regex = (
             (r'Version\nArchitecture\nStatus\n[\w|\s]'
              '+The\s%s\s\w+\n%s\n(.*)\n' % (self.codename, self.hardware)),
@@ -100,7 +112,7 @@ class Data:
         launch_html = launch_html.read().decode()
         text = BeautifulSoup(launch_html).get_text()
         status = self.__reFind(self.regex[0], text)
-        if not status or 'unknown' in status:
+        if not status or status not in self.statuses:
             return
 
         speed = self.__reFind(self.regex[1], text)
