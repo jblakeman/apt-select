@@ -11,24 +11,39 @@ try:
 except ImportError:
     from urllib2 import urlopen, HTTPError
 
-from mirrors import RoundTrip, Data
+from mirrors import RoundTrip, Data, statuses
 
 parser = ArgumentParser(description="Find the fastest Ubuntu mirrors",
                         formatter_class=RawTextHelpFormatter)
 parser.add_argument('-a', '--auto', action='store_true',
                     help="choose the best mirror", default=False)
 
+status_args = [
+    x[0].lower() + x[1:] for x in [
+        y.replace(' ', '-') for y in statuses
+    ]
+]
+status_args.reverse()
+
 parser.add_argument('-s', '--status', nargs=1,
+                    choices=status_args,
                     help=(
                         'return mirrors with minimum status\n'
                         'choices:\n'
-                        '   up-to-date\n'
-                        '   one-day-behind\n'
-                        '   two-days-behind\n'
-                        '   one-week-behind\n'
-                        '   unknown\n'
-                        'default: up-to-date\n'
-                    ), default='up-to-date', metavar='')
+                        '   %(up)s\n'
+                        '   %(day)s\n'
+                        '   %(two_day)s\n'
+                        '   %(week)s\n'
+                        '   %(unknown)s\n'
+                        'default: %(up)s\n' % {
+                            'up':status_args[0],
+                            'day':status_args[1],
+                            'two_day':status_args[2],
+                            'week':status_args[3],
+                            'unknown':status_args[4]
+                        }
+                    ),
+                    default=(status_args[0]), metavar='')
 
 args = parser.parse_args()
 flag_status = args.status[0].replace('-', ' ')
