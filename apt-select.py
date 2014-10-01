@@ -43,10 +43,16 @@ parser.add_argument('-s', '--status', nargs=1,
                             'unknown':status_args[4]
                         }
                     ),
-                    default=(status_args[0]), metavar='')
+                    default=status_args[0], metavar='')
 
 args = parser.parse_args()
-flag_status = args.status[0].replace('-', ' ')
+flag_status = args.status
+
+# argparse returns list type for only choice arguments, not default
+if type(flag_status) is list:
+    flag_status = flag_status[0]
+
+flag_status = flag_status.replace('-', ' ')
 if flag_status != 'unknown':
     flag_status = flag_status[0].upper() + flag_status[1:]
 
