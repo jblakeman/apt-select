@@ -107,7 +107,7 @@ else:
 top_num = 5
 ranks = sorted(avg_rtts, key=avg_rtts.__getitem__)
 info = []
-print("Retrieving status information")
+print("Looking up status information")
 for rank in ranks:
     d = Data(rank, codename, hardware, flag_status)
     data = d.getInfo()
@@ -119,7 +119,8 @@ for rank in ranks:
         break
 
 if info_size == 0:
-    print("Unable to find alternative mirrors")
+    print("Unable to find alternative mirror status(es)")
+    exit(1)
 elif info_size == 1:
     print("Alternative mirror found:")
 else:
