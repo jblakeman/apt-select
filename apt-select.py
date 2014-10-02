@@ -25,7 +25,7 @@ status_args = [
 ]
 status_args.reverse()
 
-parser.add_argument('-s', '--status', nargs=1,
+parser.add_argument('-m', '--min-status', nargs=1,
                     choices=status_args,
                     help=(
                         'return mirrors with minimum status\n'
@@ -43,10 +43,10 @@ parser.add_argument('-s', '--status', nargs=1,
                             'unknown':status_args[4]
                         }
                     ),
-                    default=status_args[0], metavar='')
+                    default=status_args[0], metavar='STATUS')
 
 args = parser.parse_args()
-flag_status = args.status
+flag_status = args.min_status
 
 # argparse returns list type for only choice arguments, not default
 if type(flag_status) is list:
