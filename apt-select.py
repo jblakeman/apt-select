@@ -176,16 +176,14 @@ except NameError:
     pass
 
 def ask(query, default):
-
     global input, flag_auto
-
     if flag_auto:
         return default
 
     answer = input(query)
     return answer
 
-query = "Choose a mirror from the list (1 - %d) " % info_size
+query = "Choose a mirror (1 - %d)\n'q' to quit " % info_size
 key = ask(query, '1')
 
 while True:
@@ -193,8 +191,10 @@ while True:
     if match and (len(key) == 1):
         key = int(key)
         break
+    elif key == 'q':
+        exit()
     else:
-        query = "Please enter a valid number "
+        query = "Invalid entry "
         key = ask(query, '1')
 
 key = key - 1
