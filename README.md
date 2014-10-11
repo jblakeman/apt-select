@@ -8,7 +8,7 @@ Features
 
 - Gets list of Ubuntu mirrors
 - Tests TCP latency to each mirror
-- Prints rank, round trip time, status, and bandwidth of the 5 fastest mirrors
+- Prints round trip time, status, and bandwidth of the fastest mirrors in a ranked list
 - Generates new `sources.list` file with user chosen mirror
 
 Dependencies
@@ -30,13 +30,17 @@ Python 3
 Usage
 -----
 
-From inside the directory, run:
+Run:
 
     ./apt-select.py
 
+For a list of arguments and options, do:
+
+    ./apt-select.py --help
+
 ####Update `apt`
 
-After the new `sources.list` file is generated, use the update script to backup and replace the current file:
+After the new `sources.list` file is generated, the update script can be used to backup and replace the current file:
 
     ./update.sh
 
