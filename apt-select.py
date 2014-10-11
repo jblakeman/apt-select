@@ -133,7 +133,7 @@ deb = ('deb', 'deb-src')
 proto = ('http://', 'ftp://')
 with open('%s' % directory + apt_file, 'r') as f:
     lines = f.readlines()
-    def confirm_mirror(url, deb, proto):
+    def confirmMirror(url, deb, proto):
         if (url and (url[0] in deb) and
                 (proto[0] in url[1] or
                  proto[1] in url[1])):
@@ -144,13 +144,13 @@ with open('%s' % directory + apt_file, 'r') as f:
     for line in lines:
         fields = line.split()
         if not found:
-            if (confirm_mirror(fields, deb, proto) and
+            if (confirmMirror(fields, deb, proto) and
                     (release[1] in fields[2])):
                 repo = [fields[1]]
                 found = True
                 continue
         else:
-            if (confirm_mirror(fields, deb, proto) and
+            if (confirmMirror(fields, deb, proto) and
                 (fields[2] == '%s-security' % (release[1]))):
                 repo += [fields[1]]
                 break
