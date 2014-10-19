@@ -214,7 +214,6 @@ def ask(query):
 if flag_choose:
     query = "Choose a mirror (1 - %d)\n'q' to quit " % info_size
     key = ask(query)
-
     while True:
         match = search(r'[1-5]', key)
         if match and (len(key) == 1):
@@ -250,10 +249,9 @@ if not flag_list:
     def yesOrNo():
         y = 'yes'
         n = 'no'
-        query = ''
         options = "Please enter '%s' or '%s': " % (y,n)
         while True:
-            answer = ask(query, 'yes')
+            answer = ask(query)
             if answer == y:
                 break
             elif answer == n:
