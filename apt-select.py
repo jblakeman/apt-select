@@ -233,6 +233,8 @@ if flag_choose:
     exit(0)
 
     mirror = info[key][0]
+else:
+    mirror = info[0][0]
 
 # Switch mirror from resolvable url back to full http/ftp path
 for m in archives.splitlines():
