@@ -57,8 +57,7 @@ isBackup (){
         "Examine $file"
         "Quit"
     )
-    select opt in "${options[@]}"
-    do
+    select opt in "${options[@]}"; do
         case $opt in
             "${options[0]}")
                 updateBackup
@@ -80,7 +79,9 @@ isBackup (){
             "${options[5]}")
                 break
                 ;;
-            *) echo invalid option;;
+            *) 
+                echo invalid option
+                ;;
         esac
     done
 }
