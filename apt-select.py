@@ -13,12 +13,15 @@ except ImportError:
 
 from mirrors import RoundTrip, Data, statuses
 
-parser = ArgumentParser(description="Find the fastest Ubuntu mirrors",
+parser = ArgumentParser(description=(
+                            "Find the fastest Ubuntu apt mirrors.\n"
+                            "Generate new sources.list file."
+                        ),
                         formatter_class=RawTextHelpFormatter)
 parser.add_argument('-t', '--top-number', nargs=1, type=int,
                     help=(
-                        "Specify number of mirrors to return\n"
-                        "   default: 1\n"
+                        "specify number of mirrors to return\n"
+                        "default: 1\n"
                     ), default=1, metavar='NUMBER')
 
 status_args = [
@@ -31,7 +34,7 @@ status_args.reverse()
 parser.add_argument('-m', '--min-status', nargs=1,
                     choices=status_args,
                     help=(
-                        "Return mirrors with minimum status\n"
+                        "return mirrors with minimum status\n"
                         "choices:\n"
                         "   %(up)s\n"
                         "   %(day)s\n"
@@ -49,13 +52,13 @@ parser.add_argument('-m', '--min-status', nargs=1,
                     default=status_args[0], metavar='STATUS')
 parser.add_argument('-c', '--choose', action='store_true',
                     help=(
-                        "Choose mirror from a list.\n"
-                        "Requires -t, --top-num NUMBER where NUMBER > 2.\n"
+                        "choose mirror from a list\n"
+                        "requires -t, --top-num NUMBER where NUMBER > 2\n"
                     ), default=False)
 parser.add_argument('-l', '--list', dest='list_only', action='store_true',
                     help=(
-                        "Print list of mirrors only, don't generate file.\n"
-                        "Cannot be used in conjunction with -c, --choose option."
+                        "print list of mirrors only, don't generate file\n"
+                        "cannot be used in conjunction with -c, --choose option"
                     ),
                     default=False)
 
