@@ -53,7 +53,7 @@ parser.add_argument('-m', '--min-status', nargs=1,
 parser.add_argument('-c', '--choose', action='store_true',
                     help=(
                         "choose mirror from a list\n"
-                        "requires -t, --top-num NUMBER where NUMBER > 2\n"
+                        "requires -t, --top-num NUMBER where NUMBER > 1\n"
                     ), default=False)
 parser.add_argument('-l', '--list', dest='list_only', action='store_true',
                     help=(
