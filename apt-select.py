@@ -17,8 +17,8 @@ parser = ArgumentParser(description="Find the fastest Ubuntu mirrors",
                         formatter_class=RawTextHelpFormatter)
 parser.add_argument('-t', '--top-number', nargs=1, type=int,
                     help=(
-                        'Specify number of mirrors to return\n'
-                        '   default=1\n'
+                        "Specify number of mirrors to return\n"
+                        "   default: 1\n"
                     ), default=1, metavar='NUMBER')
 
 status_args = [
@@ -31,14 +31,14 @@ status_args.reverse()
 parser.add_argument('-m', '--min-status', nargs=1,
                     choices=status_args,
                     help=(
-                        'Return mirrors with minimum status\n'
-                        'choices:\n'
-                        '   %(up)s\n'
-                        '   %(day)s\n'
-                        '   %(two_day)s\n'
-                        '   %(week)s\n'
-                        '   %(unknown)s\n'
-                        'default: %(up)s\n' % {
+                        "Return mirrors with minimum status\n"
+                        "choices:\n"
+                        "   %(up)s\n"
+                        "   %(day)s\n"
+                        "   %(two_day)s\n"
+                        "   %(week)s\n"
+                        "   %(unknown)s\n"
+                        "default: %(up)s\n" % {
                             'up':status_args[0],
                             'day':status_args[1],
                             'two_day':status_args[2],
@@ -47,20 +47,17 @@ parser.add_argument('-m', '--min-status', nargs=1,
                         }
                     ),
                     default=status_args[0], metavar='STATUS')
-
-parser.add_argument('-l', '--list', dest='list_only', action='store_true',
-                    help=(
-                        "Print list of mirrors only.\n"
-                        "Don't generate file."
-                    ),
-                    default=False)
-
 parser.add_argument('-c', '--choose', action='store_true',
                     help=(
                         "Choose mirror from a list.\n"
-                        "Requires -t, --top-num option\n"
-                        "with an argument > 2."
+                        "Requires -t, --top-num NUMBER where NUMBER > 2.\n"
                     ), default=False)
+parser.add_argument('-l', '--list', dest='list_only', action='store_true',
+                    help=(
+                        "Print list of mirrors only, don't generate file.\n"
+                        "Cannot be used in conjunction with -c, --choose option."
+                    ),
+                    default=False)
 
 args = parser.parse_args()
 
@@ -72,19 +69,21 @@ def indexZero(flag):
         return flag
 
 flag_number = indexZero(args.top_number)
-flag_status = indexZero(args.min_status)
-
-flag_status = flag_status.replace('-', ' ')
+flag_status = indexZero(args.min_status).replace('-', ' ')
 if flag_status != 'unknown':
     flag_status = flag_status[0].upper() + flag_status[1:]
 
 flag_list = args.list_only
 flag_choose = args.choose
 
-
 if flag_choose and (not flag_number or flag_number < 2):
     parser.print_usage()
-    print("-c, --choose option requires -t, --top-number NUMBER where NUMBER is greater than 1")
+    print(("-c, --choose option requires -t, --top-number NUMBER "
+           "where NUMBER is greater than 1."))
+    exit(1)
+if flag_choose and flag_list:
+    parser.print_usage()
+    print("-c, --choose and -l, --list options cannot be used together.")
     exit(1)
 
 def notUbuntu():
@@ -164,7 +163,6 @@ with open('%s' % directory + apt_file, 'r') as f:
     def confirmMirror(url):
         deb = ('deb', 'deb-src')
         proto = ('http://', 'ftp://')
-
         if (url and (url[0] in deb) and
                 (proto[0] in url[1] or
                  proto[1] in url[1])):
@@ -185,7 +183,6 @@ with open('%s' % directory + apt_file, 'r') as f:
                 (fields[2] == '%s-security' % (release[1]))):
                 repo += [fields[1]]
                 break
-
     else:
         print("Error finding current repositories")
         exit(1)
@@ -228,7 +225,7 @@ if flag_choose:
     key = key - 1
     if current_key == key:
         print("The mirror you selected is the currently used mirror.\n"
-               "There is nothing to be done.")
+              "There is nothing to be done.")
     exit(0)
 
     mirror = info[key][0]
