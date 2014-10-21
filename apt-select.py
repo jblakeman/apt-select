@@ -50,15 +50,17 @@ parser.add_argument('-m', '--min-status', nargs=1,
                         }
                     ),
                     default=status_args[0], metavar='STATUS')
-parser.add_argument('-c', '--choose', action='store_true',
+
+group = parser.add_mutually_exclusive_group(required=True)
+group.add_argument('-c', '--choose', action='store_true',
                     help=(
                         "choose mirror from a list\n"
-                        "requires -t, --top-num NUMBER where NUMBER > 1\n"
+                        "requires -t/--top-num NUMBER where NUMBER > 1\n"
                     ), default=False)
-parser.add_argument('-l', '--list', dest='list_only', action='store_true',
+group.add_argument('-l', '--list', dest='list_only', action='store_true',
                     help=(
                         "print list of mirrors only, don't generate file\n"
-                        "cannot be used in conjunction with -c, --choose option"
+                        "cannot be used in conjunction with -c/--choose option"
                     ),
                     default=False)
 
@@ -81,12 +83,8 @@ flag_choose = args.choose
 
 if flag_choose and (not flag_number or flag_number < 2):
     parser.print_usage()
-    print(("-c, --choose option requires -t, --top-number NUMBER "
+    print(("error: -c/--choose option requires -t/--top-number NUMBER "
            "where NUMBER is greater than 1."))
-    exit(1)
-if flag_choose and flag_list:
-    parser.print_usage()
-    print("-c, --choose and -l, --list options cannot be used together.")
     exit(1)
 
 def notUbuntu():
@@ -229,7 +227,7 @@ if flag_choose:
     if current_key == key:
         print("The mirror you selected is the currently used mirror.\n"
               "There is nothing to be done.")
-    exit(0)
+        exit(0)
 
     mirror = info[key][0]
 else:
