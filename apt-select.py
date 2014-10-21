@@ -51,7 +51,7 @@ parser.add_argument('-m', '--min-status', nargs=1,
                     ),
                     default=status_args[0], metavar='STATUS')
 
-group = parser.add_mutually_exclusive_group(required=True)
+group = parser.add_mutually_exclusive_group(required=False)
 group.add_argument('-c', '--choose', action='store_true',
                     help=(
                         "choose mirror from a list\n"
@@ -81,15 +81,17 @@ if flag_status != 'unknown':
 flag_list = args.list_only
 flag_choose = args.choose
 
+def errorExit(err, status):
+    print(err)
+    exit(status)
+
 if flag_choose and (not flag_number or flag_number < 2):
     parser.print_usage()
-    print(("error: -c/--choose option requires -t/--top-number NUMBER "
-           "where NUMBER is greater than 1."))
-    exit(1)
+    errorExit(("error: -c/--choose option requires -t/--top-number NUMBER "
+               "where NUMBER is greater than 1."), 1)
 
 def notUbuntu():
-    print("Not an Ubuntu OS")
-    exit(1)
+    errorExit("Not an Ubuntu OS", 1)
 
 try:
     release = check_output("lsb_release -ics 2>/dev/null", shell=True)
@@ -100,8 +102,7 @@ else:
 
 hardware = check_output("uname -m", shell=True).strip().decode()
 if release[0] == 'Debian':
-    print("Debian is not currently supported")
-    exit(1)
+    errorExit("Debian is not currently supported", 1)
 elif release[0] != 'Ubuntu':
     notUbuntu()
 
@@ -110,9 +111,8 @@ mirror_list = "http://mirrors.ubuntu.com/mirrors.txt"
 try:
     archives = urlopen(mirror_list)
 except IOError as err:
-    print(("Could not connect to '%s'.\n"
-           "%s" % (mirror_list, err)))
-    exit(1)
+    errorExit(("Could not connect to '%s'.\n"
+               "%s" % (mirror_list, err)), 1)
 
 print("Got list of mirrors")
 archives = archives.read().decode()
@@ -147,8 +147,7 @@ for rank in ranks:
         break
 
 if info_size == 0:
-    print("Unable to find alternative mirror status(es)")
-    exit(1)
+    errorExit("Unable to find alternative mirror status(es)", 1)
 elif info_size == 1:
     header = "\nTop mirror:\n"
 else:
@@ -185,8 +184,7 @@ with open('%s' % directory + apt_file, 'r') as f:
                 repo += [fields[1]]
                 break
     else:
-        print("Error finding current repositories")
-        exit(1)
+        errorExit("Error finding current repositories", 1)
 
 repo_name = match(r'http://([\w|\.|\-]+)/', repo[0]).group(1)
 current_key = None
@@ -225,9 +223,8 @@ if flag_choose:
 
     key = key - 1
     if current_key == key:
-        print("The mirror you selected is the currently used mirror.\n"
-              "There is nothing to be done.")
-        exit(0)
+        errorExit(("The mirror you selected is the currently used mirror.\n"
+                   "There is nothing to be done.", 0))
 
     mirror = info[key][0]
 else:
@@ -274,12 +271,10 @@ if not flag_list:
             f.write(lines)
     except IOError as err:
         if err.strerror == 'Permission denied':
-            print(("%s\nYou do not own %s\n"
-                   "Please run the script from a directory you own." %
-                   (err, wd)))
-            exit(1)
+            errorExit(("%s\nYou do not own %s\n"
+                       "Please run the script from a directory you own." %
+                       (err, wd)), 1)
         else:
-            print(err)
-            exit(1)
+            errorExit(err, 1)
 
 exit(0)
