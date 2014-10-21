@@ -36,8 +36,7 @@ class RoundTrip:
         send_tstamp = time()*1000
         try:
             s.connect((addr, port))
-        except IOError as err:
-            print(err)
+        except IOError:
             return
 
         recv_tstamp = time()*1000
