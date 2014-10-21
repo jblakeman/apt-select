@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-from sys import exit
+from __future__ import print_function
+from sys import exit, stderr, stdout
 from os import getcwd
 from re import findall, search, match
 from subprocess import check_output, CalledProcessError
@@ -82,7 +83,7 @@ flag_list = args.list_only
 flag_choose = args.choose
 
 def errorExit(err, status):
-    print(err)
+    print(err, file=stderr)
     exit(status)
 
 if flag_choose and (not flag_number or flag_number < 2):
@@ -107,27 +108,45 @@ elif release[0] != 'Ubuntu':
     notUbuntu()
 
 codename = release[1][0].upper() + release[1][1:]
-mirror_list = "http://mirrors.ubuntu.com/mirrors.txt"
+ubuntu_url = "mirrors.ubuntu.com"
+mirror_list = "http://%s/mirrors.txt" % ubuntu_url
 try:
     archives = urlopen(mirror_list)
 except IOError as err:
     errorExit(("Could not connect to '%s'.\n"
                "%s" % (mirror_list, err)), 1)
 
-print("Got list of mirrors")
+def progressUpdate(processed, total, status=None):
+    if total > 1:
+        stdout.write('\r')
+        percent = int((float(processed)/total)*100)
+        stdout.write("[%d/%d] %d%%" % (processed, total, percent))
+        stdout.flush()
+
+print("Got list of mirrors from %s" % ubuntu_url)
 archives = archives.read().decode()
 urls = findall(r'http://([\w|\.|\-]+)/', archives)
-n = 0
+tested = 0
+processed = 0
 avg_rtts = {}
+num_urls = len(urls)
+print("Testing %d mirror(s)" % num_urls)
+progressUpdate(0, num_urls)
 for url in urls:
     ping = RoundTrip(url)
-    print("Connecting to %s" % url)
     avg = ping.avgRTT()
     if avg:
         avg_rtts.update({url:avg})
-        n += 1
+        tested += 1
 
-print("Tested %d mirrors" % n)
+    processed += 1
+    progressUpdate(processed, num_urls)
+
+if num_urls != tested:
+    print("\n%d mirror(s) returned no response" % (num_urls - tested))
+else:
+    print()
+
 if hardware == 'x86_64':
     hardware = 'amd64'
 else:
@@ -136,6 +155,7 @@ else:
 ranks = sorted(avg_rtts, key=avg_rtts.__getitem__)
 info = []
 print("Looking up status information")
+progressUpdate(0, flag_number)
 for rank in ranks:
     d = Data(rank, codename, hardware, flag_status)
     data = d.getInfo()
@@ -143,17 +163,14 @@ for rank in ranks:
         info.append(data)
 
     info_size = len(info)
+    progressUpdate(info_size, flag_number)
     if info_size == flag_number:
         break
 
 if info_size == 0:
     errorExit("Unable to find alternative mirror status(es)", 1)
-elif info_size == 1:
-    header = "\nTop mirror:\n"
-else:
-    header = "\nTop %d mirrors:\n" % info_size
-
-print(header)
+elif info_size > 1:
+    print("\nTop %d mirrors:\n" % info_size)
 
 directory = '/etc/apt/'
 apt_file = 'sources.list'
@@ -187,14 +204,19 @@ with open('%s' % directory + apt_file, 'r') as f:
         errorExit("Error finding current repositories", 1)
 
 repo_name = match(r'http://([\w|\.|\-]+)/', repo[0]).group(1)
+current = None
 current_key = None
 for i, j in enumerate(info):
     mirror_url = j[0]
     if mirror_url == repo_name:
         mirror_url += " (current)"
         current_key = i
+        if i == 0:
+            current = True
+        else:
+            current = False
 
-    print("%d. %s\n\tLatency: %d ms\n\tStatus: %s\n\tBandwidth: %s\n" %
+    print("%d. %s\n\tLatency: %d ms\n\tStatus: %s\n\tBandwidth: %s" %
           (i + 1, mirror_url, avg_rtts[j[0]], j[1][0], j[1][1]))
 
 try:
@@ -206,6 +228,13 @@ def ask(query):
     global input
     answer = input(query)
     return answer
+
+def currentMirror(require=True):
+    global current
+    global repo_name
+    if current or not require:
+        errorExit(("%s is the currently used mirror.\n"
+                   "There is nothing to be done." % repo_name), 0)
 
 if flag_choose:
     query = "Choose a mirror (1 - %d)\n'q' to quit " % info_size
@@ -223,14 +252,14 @@ if flag_choose:
 
     key = key - 1
     if current_key == key:
-        errorExit(("The mirror you selected is the currently used mirror.\n"
-                   "There is nothing to be done.", 0))
+        currentMirror(require=False)
 
     mirror = info[key][0]
 else:
+    currentMirror()
     mirror = info[0][0]
 
-# Switch mirror from resolvable url back to full http/ftp path
+# Switch mirror from resolvable url back to full path
 for m in archives.splitlines():
     if mirror in m:
         mirror = m
