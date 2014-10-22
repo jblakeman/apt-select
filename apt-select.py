@@ -197,7 +197,7 @@ with open('%s' % directory + apt_file, 'r') as f:
                 continue
         else:
             if (confirmMirror(fields) and
-                (fields[2] == '%s-security' % (release[1]))):
+                    (fields[2] == '%s-security' % (release[1]))):
                 repo += [fields[1]]
                 break
     else:
