@@ -123,7 +123,7 @@ def progressUpdate(processed, total, status=None):
         stdout.write("[%d/%d] %d%%" % (processed, total, percent))
         stdout.flush()
 
-print("Got list of mirrors from %s" % ubuntu_url)
+print("Got list from %s" % ubuntu_url)
 archives = archives.read().decode()
 urls = findall(r'http://([\w|\.|\-]+)/', archives)
 tested = 0
@@ -142,10 +142,9 @@ for url in urls:
     processed += 1
     progressUpdate(processed, num_urls)
 
+print()
 if num_urls != tested:
-    print("\n%d mirror(s) returned no response" % (num_urls - tested))
-else:
-    print()
+    print("%d mirror(s) returned no response" % (num_urls - tested))
 
 if hardware == 'x86_64':
     hardware = 'amd64'
@@ -167,10 +166,9 @@ for rank in ranks:
     if info_size == flag_number:
         break
 
+print()
 if info_size == 0:
     errorExit("Unable to find alternative mirror status(es)", 1)
-elif info_size > 1:
-    print("\nTop %d mirrors:\n" % info_size)
 
 directory = '/etc/apt/'
 apt_file = 'sources.list'
@@ -216,8 +214,16 @@ for i, j in enumerate(info):
         else:
             current = False
 
-    print("%d. %s\n\tLatency: %d ms\n\tStatus: %s\n\tBandwidth: %s" %
-          (i + 1, mirror_url, avg_rtts[j[0]], j[1][0], j[1][1]))
+    print(("%(rank)d. %(mirror)s\n%(tab)sLatency: %(ms)d ms\n"
+           "%(tab)sStatus: %(status)s\n%(tab)sBandwidth: %(speed)s" %
+           {
+                'tab': '    ',
+                'rank': i + 1,
+                'mirror': mirror_url,
+                'ms': avg_rtts[j[0]],
+                'status': j[1][0],
+                'speed': j[1][1]
+           }))
 
 try:
     input = raw_input
