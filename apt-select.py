@@ -256,16 +256,19 @@ if flag_choose:
 
     mirror = info[key][0]
 else:
-    currentMirror()
     mirror = info[0][0]
 
-# Switch mirror from resolvable url back to full path
-for m in archives.splitlines():
-    if mirror in m:
-        mirror = m
-        break
+if flag_list:
+    exit()
+else:
+    currentMirror()
 
-if not flag_list:
+    # Switch mirror from resolvable url back to full path
+    for m in archives.splitlines():
+        if mirror in m:
+            mirror = m
+            break
+
     lines = ''.join(lines)
     for r in repo:
         lines = lines.replace(r, mirror)
