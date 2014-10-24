@@ -110,7 +110,7 @@ class Data:
                        "Cannot verify, so removed from list" % self.url))
                 return
 
-        launch_html = launch_html.read().decode()
+        launch_html = launch_html.read().decode('utf-8')
         text = BeautifulSoup(launch_html).get_text()
         status = self.__reFind(self.regex[0], text)
         if not status or status not in statuses:

@@ -99,9 +99,9 @@ try:
 except CalledProcessError:
     notUbuntu()
 else:
-    release = [s.strip() for s in release.decode().split()]
+    release = [s.strip() for s in release.decode('utf-8').split()]
 
-hardware = check_output("uname -m", shell=True).strip().decode()
+hardware = check_output("uname -m", shell=True).strip().decode('utf-8')
 if release[0] == 'Debian':
     errorExit("Debian is not currently supported", 1)
 elif release[0] != 'Ubuntu':
@@ -129,7 +129,7 @@ def progressUpdate(processed, total, status=None):
         stdout.flush()
 
 print("Got list from %s" % ubuntu_url)
-archives = archives.read().decode()
+archives = archives.read().decode('utf-8')
 urls = findall(r'http://([\w|\.|\-]+)/', archives)
 tested = 0
 processed = 0
