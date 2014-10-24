@@ -269,53 +269,53 @@ else:
 
 if flag_list:
     exit()
-else:
+elif not flag_choose:
     currentMirror()
 
-    # Switch mirror from resolvable url back to full path
-    for m in archives.splitlines():
-        if mirror in m:
-            mirror = m
+# Switch mirror from resolvable url back to full path
+for m in archives.splitlines():
+    if mirror in m:
+        mirror = m
+        break
+
+lines = ''.join(lines)
+for r in repo:
+    lines = lines.replace(r, mirror)
+
+def yesOrNo():
+    y = 'yes'
+    n = 'no'
+    options = "Please enter '%s' or '%s': " % (y,n)
+    while True:
+        answer = ask(query)
+        if answer == y:
             break
-
-    lines = ''.join(lines)
-    for r in repo:
-        lines = lines.replace(r, mirror)
-
-    def yesOrNo():
-        y = 'yes'
-        n = 'no'
-        options = "Please enter '%s' or '%s': " % (y,n)
-        while True:
-            answer = ask(query)
-            if answer == y:
-                break
-            elif answer == n:
-                exit(0)
-            else:
-                query = options
-
-    wd = getcwd()
-    if wd == directory[0:-1]:
-        query = (
-            "'%(dir)s' is the current directory.\n"
-            "Generating a new '%(apt)s' file will "
-            "overwrite the current file.\n"
-            "You should copy or backup '%(apt)s' before replacing it.\n"
-            "Continue?\n[yes|no] " %
-            {'dir': directory, 'apt': apt_file}
-        )
-        yesOrNo()
-
-    try:
-        with open(apt_file, 'w') as f:
-            f.write(lines)
-    except IOError as err:
-        if err.strerror == 'Permission denied':
-            errorExit(("%s\nYou do not own %s\n"
-                       "Please run the script from a directory you own." %
-                       (err, wd)), 1)
+        elif answer == n:
+            exit(0)
         else:
-            errorExit(err, 1)
+            query = options
+
+wd = getcwd()
+if wd == directory[0:-1]:
+    query = (
+        "'%(dir)s' is the current directory.\n"
+        "Generating a new '%(apt)s' file will "
+        "overwrite the current file.\n"
+        "You should copy or backup '%(apt)s' before replacing it.\n"
+        "Continue?\n[yes|no] " %
+        {'dir': directory, 'apt': apt_file}
+    )
+    yesOrNo()
+
+try:
+    with open(apt_file, 'w') as f:
+        f.write(lines)
+except IOError as err:
+    if err.strerror == 'Permission denied':
+        errorExit(("%s\nYou do not own %s\n"
+                   "Please run the script from a directory you own." %
+                   (err, wd)), 1)
+    else:
+        errorExit(err, 1)
 
 exit(0)
