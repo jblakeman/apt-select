@@ -120,7 +120,12 @@ def progressUpdate(processed, total, status=None):
     if total > 1:
         stdout.write('\r')
         percent = int((float(processed)/total)*100)
-        stdout.write("[%d/%d] %d%%" % (processed, total, percent))
+        if not status:
+            message = "Testing %d mirror(s)" % total
+        else:
+            message = "Looking up top status(es)"
+
+        stdout.write("%s [%d/%d] %d%%" % (message, processed, total, percent))
         stdout.flush()
 
 print("Got list from %s" % ubuntu_url)
@@ -130,7 +135,6 @@ tested = 0
 processed = 0
 avg_rtts = {}
 num_urls = len(urls)
-print("Testing %d mirror(s)" % num_urls)
 progressUpdate(0, num_urls)
 for url in urls:
     ping = RoundTrip(url)
@@ -153,8 +157,7 @@ else:
 
 ranks = sorted(avg_rtts, key=avg_rtts.__getitem__)
 info = []
-print("Looking up status information")
-progressUpdate(0, flag_number)
+progressUpdate(0, flag_number, status=True)
 for rank in ranks:
     d = Data(rank, codename, hardware, flag_status)
     data = d.getInfo()
@@ -162,7 +165,7 @@ for rank in ranks:
         info.append(data)
 
     info_size = len(info)
-    progressUpdate(info_size, flag_number)
+    progressUpdate(info_size, flag_number, status=True)
     if info_size == flag_number:
         break
 
