@@ -123,7 +123,7 @@ def progressUpdate(processed, total, status=None):
         if not status:
             message = "Testing %d mirror(s)" % total
         else:
-            message = "Looking up top status(es)"
+            message = "Looking up status(es)"
 
         stdout.write("%s [%d/%d] %d%%" % (message, processed, total, percent))
         stdout.flush()
