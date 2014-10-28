@@ -307,8 +307,9 @@ if wd == directory[0:-1]:
     )
     yesOrNo()
 
+write_file = wd + "/" + apt_file
 try:
-    with open(apt_file, 'w') as f:
+    with open(write_file, 'w') as f:
         f.write(lines)
 except IOError as err:
     if err.strerror == 'Permission denied':
@@ -317,5 +318,7 @@ except IOError as err:
                    (err, wd)), 1)
     else:
         errorExit(err, 1)
+else:
+    print("New config file saved to %s" % write_file)
 
 exit(0)
