@@ -32,7 +32,8 @@ status_args = [
 ]
 status_args.reverse()
 
-parser.add_argument('-m', '--min-status', nargs=1,
+test_group = parser.add_mutually_exclusive_group(required=False)
+test_group.add_argument('-m', '--min-status', nargs=1,
                     choices=status_args,
                     help=(
                         "return mirrors with minimum status\n"
@@ -51,14 +52,19 @@ parser.add_argument('-m', '--min-status', nargs=1,
                         }
                     ),
                     default=status_args[0], metavar='STATUS')
+test_group.add_argument('-p', '--ping-only', action='store_true',
+                        help=(
+                            "rank mirror(s) by latency only\n"
+                            "disregard status(es)"
+                        ), default=False)
 
-group = parser.add_mutually_exclusive_group(required=False)
-group.add_argument('-c', '--choose', action='store_true',
+output_group = parser.add_mutually_exclusive_group(required=False)
+output_group.add_argument('-c', '--choose', action='store_true',
                     help=(
                         "choose mirror from a list\n"
                         "requires -t/--top-num NUMBER where NUMBER > 1\n"
                     ), default=False)
-group.add_argument('-l', '--list', dest='list_only', action='store_true',
+output_group.add_argument('-l', '--list', dest='list_only', action='store_true',
                     help=(
                         "print list of mirrors only, don't generate file\n"
                         "cannot be used in conjunction with -c/--choose option"
@@ -81,6 +87,7 @@ if flag_status != 'unknown':
 
 flag_list = args.list_only
 flag_choose = args.choose
+flag_ping = args.ping_only
 
 def errorExit(err, status):
     print(err, file=stderr)
@@ -157,19 +164,28 @@ else:
 
 ranks = sorted(avg_rtts, key=avg_rtts.__getitem__)
 info = []
-progressUpdate(0, flag_number, status=True)
-for rank in ranks:
-    d = Data(rank, codename, hardware, flag_status)
-    data = d.getInfo()
-    if data:
-        info.append(data)
+if not flag_ping:
+    progressUpdate(0, flag_number, status=True)
+    for rank in ranks:
+        d = Data(rank, codename, hardware, flag_status)
+        data = d.getInfo()
+        if data:
+            info.append(data)
 
-    info_size = len(info)
-    progressUpdate(info_size, flag_number, status=True)
-    if info_size == flag_number:
-        break
+        info_size = len(info)
+        progressUpdate(info_size, flag_number, status=True)
+        if info_size == flag_number:
+            break
+else:
+    for rank in ranks:
+        info.append(rank)
+        info_size = len(info)
+        if info_size == flag_number:
+            break
 
-print()
+if (flag_number > 1) and not flag_ping:
+    print()
+
 if info_size == 0:
     errorExit("Unable to find alternative mirror status(es)", 1)
 
@@ -217,16 +233,19 @@ for i, j in enumerate(info):
         else:
             current = False
 
-    print(("%(rank)d. %(mirror)s\n%(tab)sLatency: %(ms)d ms\n"
-           "%(tab)sStatus: %(status)s\n%(tab)sBandwidth: %(speed)s" %
-           {
-                'tab': '    ',
-                'rank': i + 1,
-                'mirror': mirror_url,
-                'ms': avg_rtts[j[0]],
-                'status': j[1][0],
-                'speed': j[1][1]
-           }))
+    if type(j) is list:
+        print(("%(rank)d. %(mirror)s\n%(tab)sLatency: %(ms)d ms\n"
+               "%(tab)sStatus: %(status)s\n%(tab)sBandwidth: %(speed)s" %
+               {
+                    'tab': '    ',
+                    'rank': i + 1,
+                    'mirror': mirror_url,
+                    'ms': avg_rtts[j[0]],
+                    'status': j[1][0],
+                    'speed': j[1][1]
+               }))
+    else:
+        print("%d. %s: %d ms" % (i + 1, j, avg_rtts[j]))
 
 try:
     input = raw_input
@@ -244,6 +263,12 @@ def currentMirror(require=True):
     if current or not require:
         errorExit(("%s is the currently used mirror.\n"
                    "There is nothing to be done." % repo_name), 0)
+
+def whichKey(flag, info, key):
+    if not flag:
+        return info[key][0]
+    else:
+        return info[key]
 
 if flag_choose:
     query = "Choose a mirror (1 - %d)\n'q' to quit " % info_size
@@ -263,9 +288,9 @@ if flag_choose:
     if current_key == key:
         currentMirror(require=False)
 
-    mirror = info[key][0]
+    mirror = whichKey(flag_ping, info, key)
 else:
-    mirror = info[0][0]
+    mirror = whichKey(flag_ping, info, 0)
 
 if flag_list:
     exit()
