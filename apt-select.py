@@ -183,8 +183,6 @@ for url in urls:
     progressUpdate(processed, num_urls)
 
 print()
-if num_urls != tested:
-    print("%d mirror(s) returned no response" % (num_urls - tested))
 
 if hardware == 'x86_64':
     hardware = 'amd64'
