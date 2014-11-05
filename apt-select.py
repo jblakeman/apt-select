@@ -262,7 +262,7 @@ for i, j in enumerate(info):
         else:
             current = False
 
-    if type(j) is list:
+    if not flag_ping:
         print((
             "%(rank)d. %(mirror)s\n%(tab)sLatency: %(ms)d ms\n"
             "%(tab)sStatus: %(status)s\n%(tab)sBandwidth: %(speed)s" % {
