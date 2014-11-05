@@ -25,7 +25,7 @@ class RoundTrip:
         self.url = url
 
     def __tcpPing(self):
-        """Return latency to hostname"""
+        """Return latency to url's resolved IP address"""
         port = 80
         setdefaulttimeout(2.5)
         s = socket(AF_INET, SOCK_STREAM)
@@ -63,6 +63,7 @@ class RoundTrip:
         else:
             return
 
+# Possible statuses from mirror launchpad sites
 statuses = (
     "unknown",
     "One week behind",
