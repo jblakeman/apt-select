@@ -13,9 +13,11 @@ except ImportError:
 try:
     from bs4 import BeautifulSoup
 except ImportError as err:
-    print(("%s\n"
-           "Try 'sudo apt-get install python-bs4' "
-           "or 'sudo apt-get install python3-bs4'" % err))
+    print((
+        "%s\n"
+        "Try 'sudo apt-get install python-bs4' "
+        "or 'sudo apt-get install python3-bs4'" % err
+    ))
     exit(1)
 
 class RoundTrip:
@@ -46,17 +48,17 @@ class RoundTrip:
 
     def avgRTT(self):
         """Return average rtt"""
-        rtt = []
+        rtts = []
         for i in range(3):
-            x = self.__tcpPing()
-            if x:
-                rtt.append(x)
+            rtt = self.__tcpPing()
+            if rtt:
+                rtts.append(rtt)
             else:
-                rtt = None
+                rtts = None
                 break
 
-        if rtt:
-            avg = round(sum(rtt) / len(rtt))
+        if rtts:
+            avg = round(sum(rtts) / len(rtts))
             return avg
         else:
             return
@@ -81,9 +83,11 @@ class Data:
             statuses = statuses[min_index:]
 
         self.regex = (
-            (r'Version\nArchitecture\nStatus\n[\w|\s]'
-             '+The\s%s\s\w+\n%s\n(.*)\n' % (self.codename, self.hardware)),
-             r'Speed:\n([0-9]{1,3}\s\w+)'
+            (
+                r'Version\nArchitecture\nStatus\n[\w|\s]'
+                '+The\s%s\s\w+\n%s\n(.*)\n' % (self.codename, self.hardware)
+            ),
+            r'Speed:\n([0-9]{1,3}\s\w+)'
         )
 
     def __reFind(self, regex, string):
@@ -105,9 +109,11 @@ class Data:
             try:
                 launch_html = urlopen(archive.replace('-archive', ''))
             except HTTPError:
-                print(("%s is one of the top mirrors, but "
-                       "has a unique launchpad url.\n"
-                       "Cannot verify, so removed from list" % self.url))
+                print((
+                    "%s is one of the top mirrors, but "
+                    "has a unique launchpad url.\n"
+                    "Cannot verify, so removed from list" % self.url
+                ))
                 return
 
         launch_html = launch_html.read().decode('utf-8')
