@@ -14,16 +14,25 @@ except ImportError:
 
 from mirrors import RoundTrip, Data, statuses
 
-parser = ArgumentParser(description=(
-                            "Find the fastest Ubuntu apt mirrors.\n"
-                            "Generate new sources.list file."
-                        ),
-                        formatter_class=RawTextHelpFormatter)
-parser.add_argument('-t', '--top-number', nargs=1, type=int,
-                    help=(
-                        "specify number of mirrors to return\n"
-                        "default: 1\n"
-                    ), default=1, metavar='NUMBER')
+parser = ArgumentParser(
+    description=(
+        "Find the fastest Ubuntu apt mirrors.\n"
+        "Generate new sources.list file."
+    ),
+    formatter_class=RawTextHelpFormatter
+)
+parser.add_argument(
+    '-t',
+    '--top-number',
+    nargs=1,
+    type=int,
+    help=(
+        "specify number of mirrors to return\n"
+        "default: 1\n"
+    ),
+    default=1,
+    metavar='NUMBER'
+)
 
 status_args = [
     x[0].lower() + x[1:] for x in [
@@ -33,43 +42,63 @@ status_args = [
 status_args.reverse()
 
 test_group = parser.add_mutually_exclusive_group(required=False)
-test_group.add_argument('-m', '--min-status', nargs=1,
-                    choices=status_args,
-                    help=(
-                        "return mirrors with minimum status\n"
-                        "choices:\n"
-                        "   %(up)s\n"
-                        "   %(day)s\n"
-                        "   %(two_day)s\n"
-                        "   %(week)s\n"
-                        "   %(unknown)s\n"
-                        "default: %(up)s\n" % {
-                            'up':status_args[0],
-                            'day':status_args[1],
-                            'two_day':status_args[2],
-                            'week':status_args[3],
-                            'unknown':status_args[4]
-                        }
-                    ),
-                    default=status_args[0], metavar='STATUS')
-test_group.add_argument('-p', '--ping-only', action='store_true',
-                        help=(
-                            "rank mirror(s) by latency only\n"
-                            "disregard status(es)"
-                        ), default=False)
+test_group.add_argument(
+    '-m',
+    '--min-status',
+    nargs=1,
+    choices=status_args,
+    help=(
+        "return mirrors with minimum status\n"
+        "choices:\n"
+        "   %(up)s\n"
+        "   %(day)s\n"
+        "   %(two_day)s\n"
+        "   %(week)s\n"
+        "   %(unknown)s\n"
+        "default: %(up)s\n" % {
+            'up':status_args[0],
+            'day':status_args[1],
+            'two_day':status_args[2],
+            'week':status_args[3],
+            'unknown':status_args[4]
+        }
+    ),
+    default=status_args[0],
+    metavar='STATUS'
+)
+test_group.add_argument(
+    '-p',
+    '--ping-only',
+    action='store_true',
+    help=(
+        "rank mirror(s) by latency only\n"
+        "disregard status(es)"
+    ),
+    default=False
+)
 
 output_group = parser.add_mutually_exclusive_group(required=False)
-output_group.add_argument('-c', '--choose', action='store_true',
-                    help=(
-                        "choose mirror from a list\n"
-                        "requires -t/--top-num NUMBER where NUMBER > 1\n"
-                    ), default=False)
-output_group.add_argument('-l', '--list', dest='list_only', action='store_true',
-                    help=(
-                        "print list of mirrors only, don't generate file\n"
-                        "cannot be used in conjunction with -c/--choose option"
-                    ),
-                    default=False)
+output_group.add_argument(
+    '-c',
+    '--choose',
+    action='store_true',
+    help=(
+        "choose mirror from a list\n"
+        "requires -t/--top-num NUMBER where NUMBER > 1\n"
+    ),
+    default=False
+)
+output_group.add_argument(
+    '-l',
+    '--list',
+    dest='list_only',
+    action='store_true',
+    help=(
+        "print list of mirrors only, don't generate file\n"
+        "cannot be used in conjunction with -c/--choose option"
+    ),
+    default=False
+)
 
 args = parser.parse_args()
 
@@ -126,7 +155,7 @@ except IOError as err:
 def progressUpdate(processed, total, status=None):
     if total > 1:
         stdout.write('\r')
-        percent = int((float(processed)/total)*100)
+        percent = int((float(processed) / total) * 100)
         if not status:
             message = "Testing %d mirror(s)" % total
         else:
@@ -234,16 +263,17 @@ for i, j in enumerate(info):
             current = False
 
     if type(j) is list:
-        print(("%(rank)d. %(mirror)s\n%(tab)sLatency: %(ms)d ms\n"
-               "%(tab)sStatus: %(status)s\n%(tab)sBandwidth: %(speed)s" %
-               {
-                    'tab': '    ',
-                    'rank': i + 1,
-                    'mirror': mirror_url,
-                    'ms': avg_rtts[j[0]],
-                    'status': j[1][0],
-                    'speed': j[1][1]
-               }))
+        print((
+            "%(rank)d. %(mirror)s\n%(tab)sLatency: %(ms)d ms\n"
+            "%(tab)sStatus: %(status)s\n%(tab)sBandwidth: %(speed)s" % {
+                'tab': '    ',
+                'rank': i + 1,
+                'mirror': mirror_url,
+                'ms': avg_rtts[j[0]],
+                'status': j[1][0],
+                'speed': j[1][1]
+            }
+        ))
     else:
         print("%d. %s: %d ms" % (i + 1, j, avg_rtts[j]))
 
@@ -261,8 +291,13 @@ def currentMirror(require=True):
     global current
     global repo_name
     if current or not require:
-        errorExit(("%s is the currently used mirror.\n"
-                   "There is nothing to be done." % repo_name), 0)
+        errorExit(
+            (
+                "%s is the currently used mirror.\n"
+                "There is nothing to be done." % repo_name
+            ),
+            0
+        )
 
 def whichKey(flag, info, key):
     if not flag:
@@ -327,8 +362,10 @@ if wd == directory[0:-1]:
         "Generating a new '%(apt)s' file will "
         "overwrite the current file.\n"
         "You should copy or backup '%(apt)s' before replacing it.\n"
-        "Continue?\n[yes|no] " %
-        {'dir': directory, 'apt': apt_file}
+        "Continue?\n[yes|no] " % {
+            'dir': directory,
+            'apt': apt_file
+        }
     )
     yesOrNo()
 
@@ -338,9 +375,16 @@ try:
         f.write(lines)
 except IOError as err:
     if err.strerror == 'Permission denied':
-        errorExit(("%s\nYou do not own %s\n"
-                   "Please run the script from a directory you own." %
-                   (err, wd)), 1)
+        errorExit(
+            (
+                "%s\nYou do not own %s\n"
+                "Please run the script from a directory you own." % (
+                    err,
+                    wd
+                )
+            ),
+            1
+        )
     else:
         errorExit(err, 1)
 else:
