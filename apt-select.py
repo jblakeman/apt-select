@@ -256,7 +256,11 @@ repo_name = match(r'http://([\w|\.|\-]+)/', repo[0]).group(1)
 current = None
 current_key = None
 for i, j in enumerate(info):
-    mirror_url = j[0]
+    if type(j) is tuple:
+        mirror_url = j[0]
+    else:
+        mirror_url = j
+
     if mirror_url == repo_name:
         mirror_url += " (current)"
         current_key = i
@@ -272,7 +276,7 @@ for i, j in enumerate(info):
                 'tab': '    ',
                 'rank': i + 1,
                 'mirror': mirror_url,
-                'ms': avg_rtts[j[0]],
+                'ms': avg_rtts[mirror_url],
                 'status': j[1][0],
                 'speed': j[1][1]
             }
