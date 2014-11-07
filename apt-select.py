@@ -71,8 +71,8 @@ test_group.add_argument(
     '--ping-only',
     action='store_true',
     help=(
-        "rank mirror(s) by latency only\n"
-        "disregard status(es)"
+        "rank mirror(s) by latency only, disregard status(es)\n"
+        "cannot be used in conjunction with -m/--min-status\n"
     ),
     default=False
 )
@@ -95,7 +95,7 @@ output_group.add_argument(
     action='store_true',
     help=(
         "print list of mirrors only, don't generate file\n"
-        "cannot be used in conjunction with -c/--choose option"
+        "cannot be used in conjunction with -c/--choose\n"
     ),
     default=False
 )
