@@ -171,7 +171,7 @@ def progressUpdate(processed, total, status=None):
 
 print("Got list from %s" % ubuntu_url)
 archives = archives.read().decode('utf-8')
-urls = findall(r'http://([\w|\.|\-]+)/', archives)
+urls = findall(r'http://([\w\.\-]+)/', archives)
 tested = 0
 processed = 0
 avg_rtts = {}
@@ -199,10 +199,14 @@ info = []
 if not flag_ping:
     progressUpdate(0, flag_number, status=True)
     for rank in ranks:
-        d = Data(rank, codename, hardware, flag_status)
-        data = d.getInfo()
-        if data:
-            info.append(data)
+        launchpad_data = Data(
+            rank,
+            codename,
+            hardware,
+            flag_status
+        ).getInfo()
+        if launchpad_data:
+            info.append(launchpad_data)
 
         info_size = len(info)
         progressUpdate(info_size, flag_number, status=True)
@@ -276,7 +280,7 @@ for i, j in enumerate(info):
                 'tab': '    ',
                 'rank': i + 1,
                 'mirror': mirror_url,
-                'ms': avg_rtts[mirror_url],
+                'ms': avg_rtts[j[0]],
                 'status': j[1][0],
                 'speed': j[1][1]
             }
