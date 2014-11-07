@@ -124,8 +124,13 @@ def errorExit(err, status):
 
 if flag_choose and (not flag_number or flag_number < 2):
     parser.print_usage()
-    errorExit(("error: -c/--choose option requires -t/--top-number NUMBER "
-               "where NUMBER is greater than 1."), 1)
+    errorExit(
+        (
+            "error: -c/--choose option requires -t/--top-number NUMBER "
+            "where NUMBER is greater than 1."
+        ),
+        1
+    )
 
 def notUbuntu():
     errorExit("Not an Ubuntu OS", 1)
