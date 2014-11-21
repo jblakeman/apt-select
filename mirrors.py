@@ -46,8 +46,8 @@ class RoundTrip:
         s.close()
         return rtt
 
-    def avgRTT(self):
-        """Return average rtt"""
+    def minRTT(self):
+        """Return lowest rtt"""
         rtts = []
         for i in range(3):
             rtt = self.__tcpPing()
@@ -58,8 +58,7 @@ class RoundTrip:
                 break
 
         if rtts:
-            avg = round(sum(rtts) / len(rtts))
-            return avg
+            return round(min(rtts))
         else:
             return
 

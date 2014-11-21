@@ -179,7 +179,7 @@ num_urls = len(urls)
 progressUpdate(0, num_urls)
 for url in urls:
     ping = RoundTrip(url)
-    avg = ping.avgRTT()
+    avg = ping.minRTT()
     if avg:
         avg_rtts.update({url:avg})
         tested += 1
