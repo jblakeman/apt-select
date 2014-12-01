@@ -174,14 +174,14 @@ archives = archives.read().decode('utf-8')
 urls = findall(r'http://([\w\.\-]+)/', archives)
 tested = 0
 processed = 0
-avg_rtts = {}
+low_rtts = {}
 num_urls = len(urls)
 progressUpdate(0, num_urls)
 for url in urls:
     ping = RoundTrip(url)
-    avg = ping.minRTT()
-    if avg:
-        avg_rtts.update({url:avg})
+    lowest = ping.minRTT()
+    if lowest:
+        low_rtts.update({url:lowest})
         tested += 1
 
     processed += 1
@@ -194,7 +194,7 @@ if hardware == 'x86_64':
 else:
     hardware = 'i386'
 
-ranks = sorted(avg_rtts, key=avg_rtts.__getitem__)
+ranks = sorted(low_rtts, key=low_rtts.__getitem__)
 info = []
 if not flag_ping:
     progressUpdate(0, flag_number, status=True)
@@ -280,13 +280,13 @@ for i, j in enumerate(info):
                 'tab': '    ',
                 'rank': i + 1,
                 'mirror': mirror_url,
-                'ms': avg_rtts[j[0]],
+                'ms': low_rtts[j[0]],
                 'status': j[1][0],
                 'speed': j[1][1]
             }
         ))
     else:
-        print("%d. %s: %d ms" % (i + 1, j, avg_rtts[j]))
+        print("%d. %s: %d ms" % (i + 1, j, low_rtts[j]))
 
 try:
     input = raw_input
