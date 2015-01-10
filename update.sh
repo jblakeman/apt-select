@@ -5,30 +5,10 @@ file=sources.list
 apt_file=${apt}/${file}
 backup=${apt_file}.backup
 
-isSudo (){
-    awk -F: -v u="$USER" '
-        /^sudo/ {
-            for(i=4;i<=NF;i++) {
-                if($i==u) {
-                    f=1
-                    break
-                }
-            }
-        } END {
-            if(!f)
-                exit 1
-        }' /etc/group
-}
-
 if [ $EUID -ne 0 ]; then
     echo "$0 needs sudoer priveleges to modify ${apt_file}"
-    if ! isSudo; then
-        echo "Sorry, user $USER may not run sudo on $(hostname)."
-        exit 1
-    else
-        echo "please run script as super user (root)"
-        exit 1
-    fi
+    echo "please run script as super user (root)"
+    exit 1
 fi
 
 updateApt (){
