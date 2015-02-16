@@ -30,11 +30,9 @@ Python 3
 Usage
 -----
 
-Run:
-
     ./apt-select.py
 
-For a list of arguments and options, do:
+For a list of arguments and options:
 
     ./apt-select.py --help
 
