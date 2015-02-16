@@ -9,7 +9,7 @@ Features
 - Gets list of Ubuntu mirrors
 - Tests TCP latency to each mirror
 - Prints round trip time, status, and bandwidth of the fastest mirrors in a ranked list
-- Generates new `sources.list` file with user chosen mirror
+- Generates new `sources.list` file automatically or with user chosen mirror
 
 Dependencies
 ------------
