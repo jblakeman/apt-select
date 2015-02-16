@@ -6,8 +6,7 @@ Speed up updates and upgrades by selecting a mirror with the lowest latency.
 Features
 -----------
 
-- Gets list of Ubuntu mirrors
-- Tests TCP latency to each mirror
+- Tests TCP latency to Ubuntu mirrors
 - Prints round trip time, status, and bandwidth of the fastest mirrors in a ranked list
 - Generates new `sources.list` file automatically or with user chosen mirror
 
