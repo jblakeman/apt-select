@@ -256,7 +256,7 @@ with open('%s' % directory + apt_file, 'r') as f:
     else:
         errorExit("Error finding current repositories", 1)
 
-repo_name = match(r'http://([\w|\.|\-]+)/', repo[0]).group(1)
+repo_name = match(r'http://([\w\.\-]+)/', repo[0]).group(1)
 current = None
 current_key = None
 for i, j in enumerate(info):
@@ -275,8 +275,8 @@ for i, j in enumerate(info):
 
     if not flag_ping:
         print((
-            "%(rank)d. %(mirror)s\n%(tab)sLatency: %(ms)d ms\n"
-            "%(tab)sStatus: %(status)s\n%(tab)sBandwidth: %(speed)s" % {
+            "%(rank)d. %(mirror)s\n%(tab)sLatency:  \t%(ms)d ms\n"
+            "%(tab)sStatus:   \t%(status)s\n%(tab)sBandwidth:\t%(speed)s" % {
                 'tab': '    ',
                 'rank': i + 1,
                 'mirror': mirror_url,
