@@ -244,7 +244,8 @@ with open('%s' % directory + apt_file, 'r') as f:
         fields = line.split()
         if not found:
             if (confirmMirror(fields) and
-                    (release[1] in fields[2])):
+                    (release[1] in fields[2]) and
+                    (fields[3] == "main")):
                 repo = [fields[1]]
                 found = True
                 continue
