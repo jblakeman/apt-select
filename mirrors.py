@@ -23,21 +23,20 @@ except ImportError as err:
 class RoundTrip:
     def __init__(self, url):
         self.url = url
+        try:
+            self.addr = gethostbyname(self.url)
+        except IOError as err:
+            print("Could not resolve hostname\n%s" % err)
+            return
 
     def __tcpPing(self):
         """Return latency to url's resolved IP address"""
         port = 80
         setdefaulttimeout(2.5)
         s = socket(AF_INET, SOCK_STREAM)
-        try:
-            addr = gethostbyname(self.url)
-        except IOError as err:
-            print("Could not resolve hostname\n%s" % err)
-            return
-
         send_tstamp = time()*1000
         try:
-            s.connect((addr, port))
+            s.connect((self.addr, port))
         except IOError:
             return
 
