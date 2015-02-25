@@ -201,9 +201,10 @@ else:
     hardware = 'i386'
 
 ranks = sorted(low_rtts, key=low_rtts.__getitem__)
+num_ranked = len(ranks)
 info = []
 if not flag_ping:
-    progressUpdate(0, flag_number, status=True)
+    progressUpdate(0, num_ranked, status=True)
     for rank in ranks:
         launchpad_data = Data(
             rank,
@@ -215,7 +216,7 @@ if not flag_ping:
             info.append(launchpad_data)
 
         info_size = len(info)
-        progressUpdate(info_size, flag_number, status=True)
+        progressUpdate(info_size, num_ranked, status=True)
         if info_size == flag_number:
             break
 else:
