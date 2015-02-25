@@ -171,7 +171,13 @@ def progressUpdate(processed, total, status=None):
 
 print("Got list from %s" % ubuntu_url)
 archives = archives.read().decode('utf-8')
-urls = findall(r'http://([\w\.\-]+)/', archives)
+
+urls = []
+for archive in archives.splitlines():
+    archive = archive.split('//', 1)[-1]
+    archive = archive.split('/', 1)[0]
+    urls.append(archive)
+
 tested = 0
 processed = 0
 low_rtts = {}
