@@ -36,9 +36,9 @@ isBackup (){
     options=(
         "Replace backup and update apt"
         "Update apt without backing up"
-        "Examine backup file"
+        "Examine $backup"
         "Examine $apt_file"
-        "Examine $file"
+        "Examine $PWD/$file"
         "Quit"
     )
     select opt in "${options[@]}"; do
