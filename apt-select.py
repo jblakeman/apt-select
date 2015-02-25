@@ -151,10 +151,20 @@ elif release[0] != 'Ubuntu':
 codename = release[1][0].upper() + release[1][1:]
 ubuntu_url = "mirrors.ubuntu.com"
 mirror_list = "http://%s/mirrors.txt" % ubuntu_url
+print("Connecting to %s ... " % ubuntu_url, end="")
 try:
     archives = urlopen(mirror_list)
 except IOError as err:
     errorExit(("Could not connect to '%s'.\n%s" % (mirror_list, err)), 1)
+
+print("successfully got list")
+archives = archives.read().decode('utf-8')
+
+urls = []
+for archive in archives.splitlines():
+    archive = archive.split('//', 1)[-1]
+    archive = archive.split('/', 1)[0]
+    urls.append(archive)
 
 def progressUpdate(processed, total, status=None):
     if total > 1:
@@ -167,15 +177,6 @@ def progressUpdate(processed, total, status=None):
 
         stdout.write("%s [%d/%d] %d%%" % (message, processed, total, percent))
         stdout.flush()
-
-print("Got list from %s" % ubuntu_url)
-archives = archives.read().decode('utf-8')
-
-urls = []
-for archive in archives.splitlines():
-    archive = archive.split('//', 1)[-1]
-    archive = archive.split('/', 1)[0]
-    urls.append(archive)
 
 tested = 0
 processed = 0
