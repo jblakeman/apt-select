@@ -223,7 +223,13 @@ if (flag_number > 1) and not flag_ping:
     print()
 
 if info_size == 0:
-    errorExit("Unable to find alternative mirror status(es)", 1)
+    errorExit(
+        (
+            "Unable to find alternative mirror status(es)\n"
+            "Try using -p/--ping-only option or adjust -m/--min-status argument"
+        ),
+        1
+    )
 
 directory = '/etc/apt/'
 apt_file = 'sources.list'
