@@ -118,6 +118,9 @@ class Data:
         launch_html = launch_html.read().decode('utf-8')
         text = BeautifulSoup(launch_html).get_text()
         status = self.__reFind(self.regex[0], text)
+        if "unknown" in status:
+            status = "unknown"
+
         if not status or status not in statuses:
             return
 
