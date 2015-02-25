@@ -154,8 +154,7 @@ mirror_list = "http://%s/mirrors.txt" % ubuntu_url
 try:
     archives = urlopen(mirror_list)
 except IOError as err:
-    errorExit(("Could not connect to '%s'.\n"
-               "%s" % (mirror_list, err)), 1)
+    errorExit(("Could not connect to '%s'.\n%s" % (mirror_list, err)), 1)
 
 def progressUpdate(processed, total, status=None):
     if total > 1:
