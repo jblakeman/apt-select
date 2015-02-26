@@ -333,16 +333,20 @@ def whichKey(flag, info, key):
 if flag_choose:
     query = "Choose a mirror (1 - %d)\n'q' to quit " % info_size
     key = ask(query)
+    choices = range(1, info_size+1)
     while True:
-        match = search(r'[1-5]', key)
-        if match and (len(key) == 1):
+        try:
             key = int(key)
-            break
-        elif key == 'q':
-            exit()
-        else:
+        except ValueError:
+            if key == 'q':
+                exit()
+
+        if type(key) is str or key not in choices:
             query = "Invalid entry "
             key = ask(query)
+            continue
+
+        break
 
     key = key - 1
     if current_key == key:
