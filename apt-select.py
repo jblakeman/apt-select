@@ -151,13 +151,13 @@ elif release[0] != 'Ubuntu':
 codename = release[1][0].upper() + release[1][1:]
 ubuntu_url = "mirrors.ubuntu.com"
 mirror_list = "http://%s/mirrors.txt" % ubuntu_url
-print("Connecting to %s ... " % ubuntu_url, end="")
+print("Getting list of mirrors ...", end=" ")
 try:
     archives = urlopen(mirror_list)
 except IOError as err:
     errorExit(("Could not connect to '%s'.\n%s" % (mirror_list, err)), 1)
 
-print("successfully got list")
+print("done.")
 archives = archives.read().decode('utf-8')
 
 urls = []
