@@ -33,10 +33,10 @@ List arguments and options:
 
 Choose from the top 5 mirrors, including those last updated a week ago:
 
-    ./apt-select -c -t 3 -m one-week-behind
+    ./apt-select.py -c -t 3 -m one-week-behind
 
 Find the top 10 mirrors, output latency info only, and don't generate new config file:
 
-    ./apt-select -t 10 -p -l
+    ./apt-select.py -t 10 -p -l
 
 [`update.sh`](https://github.com/jblakeman/apt-select/blob/master/update.sh) can be used to backup and replace `/etc/apt/sources.list` with the newly generated config file, but it might be better (safer) to examine, backup and replace it manually.
