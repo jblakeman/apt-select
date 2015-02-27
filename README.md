@@ -6,7 +6,7 @@ Select a fast, up to date Ubuntu apt mirror.
 Features
 -----------
 
-- Tests latency to each mirror found in [mirrors.txt](http://mirrors.ubuntu.com/mirrors.txt).
+- Tests latency to mirrors in [mirrors.txt](http://mirrors.ubuntu.com/mirrors.txt).
     - Each mirror is sent 3 TCP connection requests (on port 80) to gauge round trip time.
 
 - Prints latency, status, and bandwidth capacity of the fastest mirrors in a ranked list.
