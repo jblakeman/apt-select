@@ -270,7 +270,8 @@ with open('%s' % directory + apt_file, 'r') as f:
                     (fields[2] == '%s-security' % (release[1]))):
                 repo += [fields[1]]
                 break
-    else:
+
+    if not repo:
         errorExit("Error finding current repositories", 1)
 
 repo_name = match(r'http://([\w\.\-]+)/', repo[0]).group(1)
