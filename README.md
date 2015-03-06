@@ -1,9 +1,7 @@
 apt-select
 ========
 
-Select a fast, up to date Ubuntu apt mirror using a flexible set of criterion.
-
-Unlike other mirror selection tools, apt-select has the ability to filter out any mirrors that aren't up to date for your distribution and machine architecture.
+Select a fast, up to date Ubuntu apt mirror using flexible filters.
 
 Features
 -----------
