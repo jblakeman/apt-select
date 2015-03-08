@@ -274,7 +274,7 @@ with open('%s' % directory + apt_file, 'r') as f:
     if not repo:
         errorExit("Error finding current repositories", 1)
 
-repo_name = match(r'http://([\w\.\-]+)/', repo[0]).group(1)
+repo_name = match(r'(http://|ftp://)([\w\.\-]+)/', repo[0]).group(1)
 current = None
 current_key = None
 for i, j in enumerate(info):
