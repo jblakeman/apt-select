@@ -3,7 +3,6 @@
 from __future__ import print_function
 from sys import exit, stderr, stdout
 from os import getcwd
-from re import findall, search, match
 from subprocess import check_output, CalledProcessError
 from argparse import ArgumentParser, RawTextHelpFormatter
 
@@ -160,11 +159,13 @@ except IOError as err:
 print("done.")
 archives = archives.read().decode('utf-8')
 
+def parseURL(path):
+    path = path.split('//', 1)[-1]
+    return path.split('/', 1)[0]
+
 urls = []
 for archive in archives.splitlines():
-    archive = archive.split('//', 1)[-1]
-    archive = archive.split('/', 1)[0]
-    urls.append(archive)
+    urls.append(parseURL(archive))
 
 def progressUpdate(processed, total, status=None):
     if total > 1:
@@ -274,7 +275,7 @@ with open('%s' % directory + apt_file, 'r') as f:
     if not repo:
         errorExit("Error finding current repositories", 1)
 
-repo_name = match(r'http://([\w\.\-]+)/', repo[0]).group(1)
+repo_name = parseURL(repo[0])
 current = None
 current_key = None
 for i, j in enumerate(info):
