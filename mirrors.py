@@ -6,9 +6,9 @@ from socket import (socket, AF_INET, SOCK_STREAM,
 from time import time
 from re import search
 try:
-    from urllib.request import urlopen, HTTPError
+    from urllib.request import urlopen, HTTPError, URLError
 except ImportError:
-    from urllib2 import urlopen, HTTPError
+    from urllib2 import urlopen, HTTPError, URLError
 
 try:
     from bs4 import BeautifulSoup
@@ -104,16 +104,15 @@ class Data:
         archive = "https://launchpad.net/ubuntu/+mirror/%s-archive" % self.url
         try:
             launch_html = urlopen(archive)
-        except HTTPError:
-            try:
-                launch_html = urlopen(archive.replace('-archive', ''))
-            except HTTPError:
-                print((
-                    "%s is one of the top mirrors, but "
-                    "has a unique launchpad url.\n"
-                    "Cannot verify, so removed from list" % self.url
-                ))
-                return
+        except HTTPError as err:
+            print("\n" + err)
+            return
+        except URLError as err:
+            print(("Unable to connect to %s\n"
+                   "Launchpad may be down or refusing connections\n%s" %
+                   (archive, err)
+            ))
+            exit(1)
 
         launch_html = launch_html.read().decode('utf-8')
         text = BeautifulSoup(launch_html).get_text()
