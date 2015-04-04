@@ -12,6 +12,7 @@ except ImportError:
     from urllib2 import urlopen, HTTPError
 
 from mirrors import RoundTrip, Data, statuses
+from bs4 import BeautifulSoup
 
 parser = ArgumentParser(
     description=(
@@ -163,9 +164,9 @@ def parseURL(path):
     path = path.split('//', 1)[-1]
     return path.split('/', 1)[0]
 
-urls = []
+urls = {}
 for archive in archives.splitlines():
-    urls.append(parseURL(archive))
+    urls[parseURL(archive)] = None
 
 def progressUpdate(processed, total, status=None):
     if total > 1:
@@ -209,9 +210,30 @@ if flag_number > num_ranked:
 info = []
 if not flag_ping:
     progressUpdate(0, flag_number, status=True)
+    launchpad_base = "https://launchpad.net"
+    launchpad_url = launchpad_base + "/ubuntu/+archivemirrors"
+    launchpad_html = urlopen(launchpad_url).read().decode('utf-8')
+    for element in BeautifulSoup(launchpad_html).table.descendants:
+        try:
+            url = element.a
+        except AttributeError:
+            continue
+
+        try:
+            url = url["href"]
+        except TypeError:
+            continue
+
+        if url in archives.splitlines():
+            urls[parseURL(url)] = launchpad_base + prev
+
+        if url.startswith("/ubuntu/+mirror/"):
+            prev = url
+
     for rank in ranks:
         launchpad_data = Data(
             rank,
+            urls[rank],
             codename,
             hardware,
             flag_status
