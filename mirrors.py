@@ -71,8 +71,9 @@ statuses = (
 )
 
 class Data:
-    def __init__(self, url, codename, hardware, min_status=None):
+    def __init__(self, url, launch_url, codename, hardware, min_status=None):
         self.url = url
+        self.launch_url = launch_url
         self.codename = codename
         self.hardware = hardware
         global statuses
@@ -101,7 +102,7 @@ class Data:
 
     def getInfo(self):
         """Return mirror status and bandwidth"""
-        archive = "https://launchpad.net/ubuntu/+mirror/%s-archive" % self.url
+        archive = self.launch_url
         try:
             launch_html = urlopen(archive)
         except HTTPError as err:
