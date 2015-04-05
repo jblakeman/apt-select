@@ -100,6 +100,9 @@ class Data:
     def getInfo(self):
         """Return mirror status and bandwidth"""
         launch_html = getHTML(self.launch_url)
+        if not launch_html:
+            return
+
         text = BeautifulSoup(launch_html).get_text()
         status = self.__reFind(self.regex[0], text)
         if "unknown" in status:
