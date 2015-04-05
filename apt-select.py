@@ -1,16 +1,11 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-from sys import exit, stderr, stdout
+from sys import exit, stdout
 from os import getcwd
 from subprocess import check_output, CalledProcessError
 from argparse import ArgumentParser, RawTextHelpFormatter
-
-try:
-    from urllib.request import urlopen, HTTPError
-except ImportError:
-    from urllib2 import urlopen, HTTPError
-
+from util_funcs import errorExit, getHTML
 from mirrors import RoundTrip, Data, statuses
 from bs4 import BeautifulSoup
 
@@ -118,10 +113,6 @@ flag_list = args.list_only
 flag_choose = args.choose
 flag_ping = args.ping_only
 
-def errorExit(err, status):
-    print(err, file=stderr)
-    exit(status)
-
 if flag_choose and (not flag_number or flag_number < 2):
     parser.print_usage()
     errorExit(
@@ -152,18 +143,9 @@ codename = release[1][0].upper() + release[1][1:]
 ubuntu_url = "mirrors.ubuntu.com"
 mirror_list = "http://%s/mirrors.txt" % ubuntu_url
 
-def getHTML(url):
-    try:
-        content = urlopen(url)
-    except IOError as err:
-        errorExit(("Could not connect to '%s'.\n%s" % (mirror_list, err)), 1)
-
-    return content
-
 print("Getting list of mirrors ...", end=" ")
 archives = getHTML(mirror_list)
 print("done.")
-archives = archives.read().decode('utf-8')
 
 def parseURL(path):
     path = path.split('//', 1)[-1]
@@ -217,7 +199,7 @@ if not flag_ping:
     progressUpdate(0, flag_number, status=True)
     launchpad_base = "https://launchpad.net"
     launchpad_url = launchpad_base + "/ubuntu/+archivemirrors"
-    launchpad_html = getHTML(launchpad_url).read().decode('utf-8')
+    launchpad_html = getHTML(launchpad_url)
     for element in BeautifulSoup(launchpad_html).table.descendants:
         try:
             url = element.a

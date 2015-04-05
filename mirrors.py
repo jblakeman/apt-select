@@ -1,24 +1,21 @@
 #!/usr/bin/env python
 
-from sys import exit
 from socket import (socket, AF_INET, SOCK_STREAM,
                     gethostbyname, setdefaulttimeout)
 from time import time
 from re import search
-try:
-    from urllib.request import urlopen, HTTPError, URLError
-except ImportError:
-    from urllib2 import urlopen, HTTPError, URLError
-
+from util_funcs import errorExit, getHTML
 try:
     from bs4 import BeautifulSoup
 except ImportError as err:
-    print((
-        "%s\n"
-        "Try 'sudo apt-get install python-bs4' "
-        "or 'sudo apt-get install python3-bs4'" % err
-    ))
-    exit(1)
+    errorExit(
+        (
+            "%s\n"
+            "Try 'sudo apt-get install python-bs4' "
+            "or 'sudo apt-get install python3-bs4'" % err
+        ),
+        1
+    )
 
 class RoundTrip:
     def __init__(self, url):
@@ -102,20 +99,7 @@ class Data:
 
     def getInfo(self):
         """Return mirror status and bandwidth"""
-        archive = self.launch_url
-        try:
-            launch_html = urlopen(archive)
-        except HTTPError as err:
-            print("\n" + err)
-            return
-        except URLError as err:
-            print(("Unable to connect to %s\n"
-                   "Launchpad may be down or refusing connections\n%s" %
-                   (archive, err)
-            ))
-            exit(1)
-
-        launch_html = launch_html.read().decode('utf-8')
+        launch_html = getHTML(self.launch_url)
         text = BeautifulSoup(launch_html).get_text()
         status = self.__reFind(self.regex[0], text)
         if "unknown" in status:
