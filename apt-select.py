@@ -151,12 +151,17 @@ elif release[0] != 'Ubuntu':
 codename = release[1][0].upper() + release[1][1:]
 ubuntu_url = "mirrors.ubuntu.com"
 mirror_list = "http://%s/mirrors.txt" % ubuntu_url
-print("Getting list of mirrors ...", end=" ")
-try:
-    archives = urlopen(mirror_list)
-except IOError as err:
-    errorExit(("Could not connect to '%s'.\n%s" % (mirror_list, err)), 1)
 
+def getHTML(url):
+    try:
+        content = urlopen(url)
+    except IOError as err:
+        errorExit(("Could not connect to '%s'.\n%s" % (mirror_list, err)), 1)
+
+    return content
+
+print("Getting list of mirrors ...", end=" ")
+archives = getHTML(mirror_list)
 print("done.")
 archives = archives.read().decode('utf-8')
 
@@ -212,7 +217,7 @@ if not flag_ping:
     progressUpdate(0, flag_number, status=True)
     launchpad_base = "https://launchpad.net"
     launchpad_url = launchpad_base + "/ubuntu/+archivemirrors"
-    launchpad_html = urlopen(launchpad_url).read().decode('utf-8')
+    launchpad_html = getHTML(launchpad_url).read().decode('utf-8')
     for element in BeautifulSoup(launchpad_html).table.descendants:
         try:
             url = element.a
