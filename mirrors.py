@@ -105,10 +105,13 @@ class Data:
 
         text = BeautifulSoup(launch_html).get_text()
         status = self.__reFind(self.regex[0], text)
+        if not status:
+            return
+
         if "unknown" in status:
             status = "unknown"
 
-        if not status or status not in statuses:
+        if status not in statuses:
             return
 
         speed = self.__reFind(self.regex[1], text)
