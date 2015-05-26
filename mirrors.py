@@ -106,6 +106,7 @@ class Data:
         text = BeautifulSoup(launch_html).get_text()
         status = self.__reFind(self.regex[0], text)
         if not status:
+            print("Unable to parse status info from %s", self.launch_url)
             return
 
         if "unknown" in status:
