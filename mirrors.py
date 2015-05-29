@@ -23,8 +23,8 @@ class RoundTrip:
         try:
             self.addr = gethostbyname(self.url)
         except IOError as err:
-            print("Could not resolve hostname\n%s" % err)
-            return
+            print("\nCould not resolve hostname %s\n%s" % (self.url, err))
+            self.addr = None
 
     def __tcpPing(self):
         """Return latency to url's resolved IP address"""
@@ -44,6 +44,9 @@ class RoundTrip:
 
     def minRTT(self):
         """Return lowest rtt"""
+        if not self.addr:
+            return
+
         rtts = []
         for i in range(3):
             rtt = self.__tcpPing()
