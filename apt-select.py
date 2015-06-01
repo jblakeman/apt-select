@@ -184,6 +184,17 @@ for url in urls:
 
 print()
 
+if len(low_rtts) == 0:
+    errorExit(
+        (
+            "Cannot connect to any mirrors in %s\n."
+            "Minimum latency of this machine may exceed"
+            "2.5 seconds or\nthere may be other unknown"
+            "TCP connectivity issues.\n" % mirror_list
+        ),
+        1
+    )
+
 if hardware == 'x86_64':
     hardware = 'amd64'
 else:
