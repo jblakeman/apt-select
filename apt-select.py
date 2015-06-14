@@ -215,18 +215,19 @@ if not flag_ping:
         try:
             url = element.a
         except AttributeError:
-            continue
+            pass
+        else:
+            try:
+                url = url["href"]
+            except TypeError:
+                pass
+            else:
 
-        try:
-            url = url["href"]
-        except TypeError:
-            continue
+                if url in archives.splitlines():
+                    urls[parseURL(url)] = launchpad_base + prev
 
-        if url in archives.splitlines():
-            urls[parseURL(url)] = launchpad_base + prev
-
-        if url.startswith("/ubuntu/+mirror/"):
-            prev = url
+                if url.startswith("/ubuntu/+mirror/"):
+                    prev = url
 
     for rank in ranks:
         launchpad_data = Data(
