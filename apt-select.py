@@ -315,14 +315,16 @@ for i, j in enumerate(info):
 
     if not flag_ping:
         print((
-            "%(rank)d. %(mirror)s\n%(tab)sLatency:  \t%(ms)d ms\n"
-            "%(tab)sStatus:   \t%(status)s\n%(tab)sBandwidth:\t%(speed)s" % {
-                'tab': '    ',
-                'rank': i + 1,
+            "%(rank)d. %(mirror)s\n"
+            "%(tab)sLatency:  \t%(ms)d ms\n"
+            "%(tab)sStatus:   \t%(status)s\n"
+            "%(tab)sBandwidth:\t%(speed)s" % {
+                'tab':    '    ',
+                'rank':   i + 1,
                 'mirror': mirror_url,
-                'ms': low_rtts[j[0]],
+                'ms':     low_rtts[j[0]],
                 'status': j[1][0],
-                'speed': j[1][1]
+                'speed':  j[1][1]
             }
         ))
     else:
