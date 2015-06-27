@@ -3,7 +3,7 @@
 from __future__ import print_function
 from sys import exit, stdout
 from os import getcwd
-from subprocess import check_output, CalledProcessError
+from subprocess import check_output
 from argparse import ArgumentParser, RawTextHelpFormatter
 from util_funcs import errorExit, getHTML
 from mirrors import RoundTrip, Data, statuses
@@ -127,13 +127,13 @@ def notUbuntu():
     errorExit("Not an Ubuntu OS", 1)
 
 try:
-    release = check_output("lsb_release -ics 2>/dev/null", shell=True)
-except CalledProcessError:
+    release = check_output(["lsb_release", "-ics"])
+except OSError:
     notUbuntu()
 else:
     release = [s.strip() for s in release.decode('utf-8').split()]
 
-hardware = check_output("uname -m", shell=True).strip().decode('utf-8')
+hardware = check_output(["uname", "-m"]).strip().decode('utf-8')
 if release[0] == 'Debian':
     errorExit("Debian is not currently supported", 1)
 elif release[0] != 'Ubuntu':
