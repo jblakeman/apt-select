@@ -143,7 +143,7 @@ codename = release[1][0].upper() + release[1][1:]
 ubuntu_url = "mirrors.ubuntu.com"
 mirror_list = "http://%s/mirrors.txt" % ubuntu_url
 
-print("Getting list of mirrors ...", end=" ")
+print("Getting list of mirrors ...")
 archives = getHTML(mirror_list)
 print("done.")
 

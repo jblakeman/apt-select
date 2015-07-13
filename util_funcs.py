@@ -21,8 +21,7 @@ def getHTML(url):
         errorExit(
                 (
                     "Unable to connect to %s\n"
-                    "Site may be down or refusing connections\n"
-                    "%s" % (archive, err)
+                    "%s\n" % (url, err)
                 ),
                 1
         )
