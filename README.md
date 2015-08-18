@@ -44,3 +44,13 @@ After new sources.list is generated in current working directory, backup and rep
     sudo mv /etc/apt/sources.list /etc/apt/sources.list.backup && \
     sudo mv sources.list /etc/apt/
 
+Supported [URI](https://en.wikipedia.org/wiki/URI) Types
+--------------------------------------------------------
+
+Currently, `http` and `ftp` are supported.
+
+`/etc/apt/sources.list` should contain sources in the following format:
+
+    [deb|deb-src] [http|ftp]://mirror.example.com/path [component1] [component2] [...]
+
+
