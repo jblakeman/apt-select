@@ -39,4 +39,8 @@ Find the top 10 mirrors, output latency info only, and don't generate new config
 
     ./apt-select.py -t 10 -p -l
 
-[`update.sh`](https://github.com/jblakeman/apt-select/blob/master/update.sh) can be used to backup and replace `/etc/apt/sources.list` with the newly generated config file, but it might be better (safer) to examine, backup and replace it manually.
+After new sources.list is generated in current working directory, backup and replace to update apt:
+
+    sudo mv /etc/apt/sources.list /etc/apt/sources.list.backup && \
+    sudo mv sources.list /etc/apt/
+
