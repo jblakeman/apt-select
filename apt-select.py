@@ -2,7 +2,7 @@
 
 from __future__ import print_function
 from sys import exit, stdout
-from os import getcwd
+from os import getcwd, path
 from subprocess import check_output
 from argparse import ArgumentParser, RawTextHelpFormatter
 from util_funcs import errorExit, getHTML
@@ -139,6 +139,12 @@ if release[0] == 'Debian':
 elif release[0] != 'Ubuntu':
     notUbuntu()
 
+directory = '/etc/apt/'
+apt_file = 'sources.list'
+sources_path = directory + apt_file
+if not path.isfile(sources_path):
+    errorExit("%s must exist as file" % sources_path, 1)
+
 codename = release[1][0].upper() + release[1][1:]
 ubuntu_url = "mirrors.ubuntu.com"
 mirror_list = "http://%s/mirrors.txt" % ubuntu_url
@@ -263,9 +269,6 @@ if info_size == 0:
         1
     )
 
-directory = '/etc/apt/'
-apt_file = 'sources.list'
-sources_path = directory + apt_file
 found = None
 with open(sources_path, 'r') as f:
     lines = f.readlines()
