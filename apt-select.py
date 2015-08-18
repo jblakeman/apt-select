@@ -265,8 +265,9 @@ if info_size == 0:
 
 directory = '/etc/apt/'
 apt_file = 'sources.list'
+sources_path = directory + apt_file
 found = None
-with open('%s' % directory + apt_file, 'r') as f:
+with open(sources_path, 'r') as f:
     lines = f.readlines()
     def confirmMirror(url):
         deb = ('deb', 'deb-src')
@@ -278,23 +279,29 @@ with open('%s' % directory + apt_file, 'r') as f:
         else:
             return
 
+    repo = []
+    required_repo = "main"
     for line in lines:
         fields = line.split()
-        if not found:
-            if (confirmMirror(fields) and
+        if confirmMirror(fields):
+            if (not found and
                     (release[1] in fields[2]) and
-                    (fields[3] == "main")):
-                repo = [fields[1]]
+                    (fields[3] == required_repo)):
+                repo += [fields[1]]
                 found = True
                 continue
-        else:
-            if (confirmMirror(fields) and
-                    (fields[2] == '%s-security' % (release[1]))):
+            elif (fields[2] == '%s-security' % (release[1])):
                 repo += [fields[1]]
                 break
 
     if not repo:
-        errorExit("Error finding current repositories", 1)
+        errorExit(
+            (
+                "Error finding current %s repository in %s" %
+                (required_repo, sources_path)
+            ),
+            1
+        )
 
 repo_name = parseURL(repo[0])
 current = None
