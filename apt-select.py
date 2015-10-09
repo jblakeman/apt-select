@@ -161,15 +161,10 @@ urls = {}
 for archive in archives.splitlines():
     urls[parseURL(archive)] = None
 
-def progressUpdate(processed, total, status=None):
+def progressUpdate(processed, total, message):
     if total > 1:
         stdout.write('\r')
         percent = int((float(processed) / total) * 100)
-        if not status:
-            message = "Testing %d mirror(s)" % total
-        else:
-            message = "Looking up status(es)"
-
         stdout.write("%s [%d/%d] %d%%" % (message, processed, total, percent))
         stdout.flush()
 
@@ -177,7 +172,8 @@ tested = 0
 processed = 0
 low_rtts = {}
 num_urls = len(urls)
-progressUpdate(0, num_urls)
+message = "Testing %d mirror(s)" % num_urls
+progressUpdate(0, num_urls, message)
 for url in urls:
     ping = RoundTrip(url)
     lowest = ping.minRTT()
@@ -186,7 +182,7 @@ for url in urls:
         tested += 1
 
     processed += 1
-    progressUpdate(processed, num_urls)
+    progressUpdate(processed, num_urls, message)
 
 print()
 
@@ -213,7 +209,8 @@ if flag_number > num_ranked:
 
 info = []
 if not flag_ping:
-    progressUpdate(0, flag_number, status=True)
+    message = "Looking up %d status(es)" % flag_number
+    progressUpdate(0, flag_number, message)
     launchpad_base = "https://launchpad.net"
     launchpad_url = launchpad_base + "/ubuntu/+archivemirrors"
     launchpad_html = getHTML(launchpad_url)
@@ -247,7 +244,7 @@ if not flag_ping:
             info.append(launchpad_data)
 
         info_size = len(info)
-        progressUpdate(info_size, flag_number, status=True)
+        progressUpdate(info_size, flag_number, message)
         if info_size == flag_number:
             break
 else:
