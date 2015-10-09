@@ -133,7 +133,6 @@ except OSError:
 else:
     release = [s.strip() for s in release.decode('utf-8').split()]
 
-hardware = check_output(["uname", "-m"]).strip().decode('utf-8')
 if release[0] == 'Debian':
     errorExit("Debian is not currently supported", 1)
 elif release[0] != 'Ubuntu':
@@ -197,6 +196,7 @@ if len(low_rtts) == 0:
         1
     )
 
+hardware = check_output(["uname", "-m"]).strip().decode('utf-8')
 if hardware == 'x86_64':
     hardware = 'amd64'
 else:
