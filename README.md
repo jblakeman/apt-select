@@ -31,7 +31,7 @@ List arguments and options:
 
     ./apt-select.py -h
 
-Choose from the top 5 mirrors, including those last updated a week ago:
+Choose from the top 3 mirrors, including those last updated a week ago:
 
     ./apt-select.py -c -t 3 -m one-week-behind
 
