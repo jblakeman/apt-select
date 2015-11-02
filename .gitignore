@@ -2,3 +2,6 @@ __pycache__
 *.pyc
 *test*
 sources.list
+pkg
+tmp-build
+tmp-dest
