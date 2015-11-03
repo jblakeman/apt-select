@@ -7,6 +7,7 @@ class AptSelect < FPM::Cookery::Recipe
   description 'Choose a fast, up to date Ubuntu apt mirror'
   maintainer  'Gabriel Mazetto <brodock@gmail.com>'
   source      './', :with => :local_path
+  arch        'all'
 
   platforms [:ubuntu] do
     depends 'python-bs4'
