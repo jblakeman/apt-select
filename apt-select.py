@@ -5,7 +5,7 @@ from sys import exit, stdout
 from os import getcwd, path
 from subprocess import check_output
 from argparse import ArgumentParser, RawTextHelpFormatter
-from util_funcs import errorExit, getHTML
+from util_funcs import getHTML
 from mirrors import RoundTrip, Data, statuses
 from bs4 import BeautifulSoup
 
@@ -115,16 +115,13 @@ flag_ping = args.ping_only
 
 if flag_choose and (not flag_number or flag_number < 2):
     parser.print_usage()
-    errorExit(
-        (
-            "error: -c/--choose option requires -t/--top-number NUMBER "
-            "where NUMBER is greater than 1."
-        ),
-        1
-    )
+    exit((
+        "error: -c/--choose option requires -t/--top-number NUMBER "
+        "where NUMBER is greater than 1."
+    ))
 
 def notUbuntu():
-    errorExit("Not an Ubuntu OS", 1)
+    exit("Not an Ubuntu OS")
 
 try:
     release = check_output(["lsb_release", "-ics"])
@@ -134,7 +131,7 @@ else:
     release = [s.strip() for s in release.decode('utf-8').split()]
 
 if release[0] == 'Debian':
-    errorExit("Debian is not currently supported", 1)
+    exit("Debian is not currently supported")
 elif release[0] != 'Ubuntu':
     notUbuntu()
 
@@ -142,7 +139,7 @@ directory = '/etc/apt/'
 apt_file = 'sources.list'
 sources_path = directory + apt_file
 if not path.isfile(sources_path):
-    errorExit("%s must exist as file" % sources_path, 1)
+    exit("%s must exist as file" % sources_path)
 
 codename = release[1][0].upper() + release[1][1:]
 ubuntu_url = "mirrors.ubuntu.com"
@@ -186,15 +183,12 @@ for url in urls:
 print()
 
 if len(low_rtts) == 0:
-    errorExit(
-        (
-            "Cannot connect to any mirrors in %s\n."
-            "Minimum latency of this machine may exceed"
-            "2.5 seconds or\nthere may be other unknown"
-            "TCP connectivity issues.\n" % mirror_list
-        ),
-        1
-    )
+    exit((
+        "Cannot connect to any mirrors in %s\n."
+        "Minimum latency of this machine may exceed"
+        "2.5 seconds or\nthere may be other unknown"
+        "TCP connectivity issues.\n" % mirror_list
+    ))
 
 hardware = check_output(["uname", "-m"]).strip().decode('utf-8')
 if hardware == 'x86_64':
@@ -258,13 +252,10 @@ if (flag_number > 1) and not flag_ping:
     print()
 
 if info_size == 0:
-    errorExit(
-        (
-            "Unable to find alternative mirror status(es)\n"
-            "Try using -p/--ping-only option or adjust -m/--min-status argument"
-        ),
-        1
-    )
+    exit((
+        "Unable to find alternative mirror status(es)\n"
+        "Try using -p/--ping-only option or adjust -m/--min-status argument"
+    ))
 
 found = None
 with open(sources_path, 'r') as f:
@@ -295,13 +286,10 @@ with open(sources_path, 'r') as f:
                 break
 
     if not repo:
-        errorExit(
-            (
-                "Error finding current %s repository in %s" %
-                (required_repo, sources_path)
-            ),
-            1
-        )
+        exit((
+            "Error finding current %s repository in %s" %
+            (required_repo, sources_path)
+        ))
 
 repo_name = parseURL(repo[0])
 current = None
@@ -351,13 +339,10 @@ def currentMirror(require=True):
     global current
     global repo_name
     if current or not require:
-        errorExit(
-            (
-                "%s is the currently used mirror.\n"
-                "There is nothing to be done." % repo_name
-            ),
-            0
-        )
+        exit((
+            "%s is the currently used mirror.\n"
+            "There is nothing to be done." % repo_name
+        ))
 
 def whichKey(flag, info, key):
     if not flag:
@@ -439,18 +424,13 @@ try:
         f.write(lines)
 except IOError as err:
     if err.strerror == 'Permission denied':
-        errorExit(
-            (
-                "%s\nYou do not own %s\n"
-                "Please run the script from a directory you own." % (
-                    err,
-                    wd
-                )
-            ),
-            1
-        )
+        exit((
+            "%s\nYou do not own %s\n"
+            "Please run the script from a directory you own." %
+            (err, wd)
+        ))
     else:
-        errorExit(err, 1)
+        exit(err)
 else:
     print("New config file saved to %s" % write_file)
 

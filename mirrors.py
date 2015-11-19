@@ -4,18 +4,15 @@ from socket import (socket, AF_INET, SOCK_STREAM,
                     gethostbyname, setdefaulttimeout)
 from time import time
 from re import search
-from util_funcs import errorExit, getHTML
+from util_funcs import getHTML
 try:
     from bs4 import BeautifulSoup
 except ImportError as err:
-    errorExit(
-        (
-            "%s\n"
-            "Try 'sudo apt-get install python-bs4' "
-            "or 'sudo apt-get install python3-bs4'" % err
-        ),
-        1
-    )
+    exit((
+        "%s\n"
+        "Try 'sudo apt-get install python-bs4' "
+        "or 'sudo apt-get install python3-bs4'" % err
+    ))
 
 class RoundTrip:
     def __init__(self, url):

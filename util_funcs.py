@@ -7,24 +7,17 @@ try:
 except ImportError:
     from urllib2 import urlopen, HTTPError, URLError
 
-def errorExit(err, status):
-    print(err, file=stderr)
-    exit(status)
-
 def getHTML(url):
     try:
         html = urlopen(url)
     except HTTPError as err:
-        print("\n" + err)
+        stderr.write("\n%s\n" % err)
         return
     except URLError as err:
-        errorExit(
-                (
-                    "Unable to connect to %s\n"
-                    "%s\n" % (url, err)
-                ),
-                1
-        )
+        exit((
+            "Unable to connect to %s\n"
+            "%s\n" % (url, err)
+        ))
 
     return html.read().decode('utf-8')
 
