@@ -37,7 +37,7 @@ class RoundTrip:
         try:
             s.connect((self.addr, port))
         except IOError:
-            return
+            return None
 
         recv_tstamp = time()*1000
         rtt = recv_tstamp - send_tstamp
@@ -47,7 +47,7 @@ class RoundTrip:
     def minRTT(self):
         """Return lowest rtt"""
         if not self.addr:
-            return
+            return None
 
         rtts = []
         for i in range(3):
@@ -60,8 +60,8 @@ class RoundTrip:
 
         if rtts:
             return round(min(rtts))
-        else:
-            return
+
+        return None
 
 # Possible statuses from mirror launchpad sites
 statuses = (
@@ -106,23 +106,23 @@ class Data:
         """Return mirror status and bandwidth"""
         launch_html = getHTML(self.launch_url)
         if not launch_html:
-            return
+            return None
 
         text = BeautifulSoup(launch_html).get_text()
         status = self.__reFind(self.regex[0], text)
         if not status:
             stderr.write("Unable to parse status info from %s", self.launch_url)
-            return
+            return None
 
         if "unknown" in status:
             status = "unknown"
 
         if status not in statuses:
-            return
+            return None
 
         speed = self.__reFind(self.regex[1], text)
         if not speed:
-            return
-        else:
-            return (self.url, (status, speed))
+            return None
+
+        return (self.url, (status, speed))
 

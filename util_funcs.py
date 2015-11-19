@@ -12,7 +12,7 @@ def getHTML(url):
         html = urlopen(url)
     except HTTPError as err:
         stderr.write("\n%s\n" % err)
-        return
+        return None
     except URLError as err:
         exit((
             "Unable to connect to %s\n"

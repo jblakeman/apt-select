@@ -101,8 +101,8 @@ args = parser.parse_args()
 def indexZero(flag):
     if type(flag) is list:
         return flag[0]
-    else:
-        return flag
+
+    return flag
 
 flag_number = indexZero(args.top_number)
 flag_status = indexZero(args.min_status).replace('-', ' ')
@@ -256,7 +256,7 @@ if info_size == 0:
         "Try using -p/--ping-only option or adjust -m/--min-status argument"
     ))
 
-found = None
+found = False
 with open(sources_path, 'r') as f:
     lines = f.readlines()
     def confirmMirror(url):
@@ -266,8 +266,8 @@ with open(sources_path, 'r') as f:
                 (proto[0] in url[1] or
                  proto[1] in url[1])):
             return True
-        else:
-            return
+
+        return False
 
     repo = []
     required_repo = "main"
@@ -346,8 +346,8 @@ def currentMirror(require=True):
 def whichKey(flag, info, key):
     if not flag:
         return info[key][0]
-    else:
-        return info[key]
+
+    return info[key]
 
 if flag_choose:
     query = "Choose a mirror (1 - %d)\n'q' to quit " % info_size
