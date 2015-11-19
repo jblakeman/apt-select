@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from sys import stderr
 from socket import (socket, AF_INET, SOCK_STREAM,
                     gethostbyname, setdefaulttimeout)
 from time import time
@@ -20,7 +21,10 @@ class RoundTrip:
         try:
             self.addr = gethostbyname(self.url)
         except IOError as err:
-            print("\nCould not resolve hostname %s\n%s\n" % (self.url, err))
+            stderr.write((
+                "\nCould not resolve hostname %s\n%s\n" %
+                (self.url, err)
+            ))
             self.addr = None
 
 
@@ -107,7 +111,7 @@ class Data:
         text = BeautifulSoup(launch_html).get_text()
         status = self.__reFind(self.regex[0], text)
         if not status:
-            print("Unable to parse status info from %s", self.launch_url)
+            stderr.write("Unable to parse status info from %s", self.launch_url)
             return
 
         if "unknown" in status:

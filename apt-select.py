@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-from sys import exit, stdout
+from sys import exit, stderr
 from os import getcwd, path
 from subprocess import check_output
 from argparse import ArgumentParser, RawTextHelpFormatter
@@ -145,9 +145,9 @@ codename = release[1][0].upper() + release[1][1:]
 ubuntu_url = "mirrors.ubuntu.com"
 mirror_list = "http://%s/mirrors.txt" % ubuntu_url
 
-print("Getting list of mirrors ...")
+stderr.write("Getting list of mirrors ...")
 archives = getHTML(mirror_list)
-print("done.")
+stderr.write("done.\n")
 
 def parseURL(path):
     path = path.split('//', 1)[-1]
@@ -159,10 +159,9 @@ for archive in archives.splitlines():
 
 def progressUpdate(processed, total, message):
     if total > 1:
-        stdout.write('\r')
         percent = int((float(processed) / total) * 100)
-        stdout.write("%s [%d/%d] %d%%" % (message, processed, total, percent))
-        stdout.flush()
+        stderr.write("\r%s [%d/%d] %d%%" % (message, processed, total, percent))
+        stderr.flush()
 
 tested = 0
 processed = 0
@@ -180,7 +179,7 @@ for url in urls:
     processed += 1
     progressUpdate(processed, num_urls, message)
 
-print()
+stderr.write('\n')
 
 if len(low_rtts) == 0:
     exit((
@@ -249,7 +248,7 @@ else:
             break
 
 if (flag_number > 1) and not flag_ping:
-    print()
+    stderr.write('\n')
 
 if info_size == 0:
     exit((
