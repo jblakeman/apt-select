@@ -6,6 +6,7 @@ try:
 except ImportError:
     from urllib2 import urlopen, HTTPError, URLError
 
+
 def getHTML(url):
     try:
         html = urlopen(url)
@@ -19,4 +20,3 @@ def getHTML(url):
         ))
 
     return html.read().decode('utf-8')
-

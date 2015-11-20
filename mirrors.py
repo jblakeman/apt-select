@@ -15,7 +15,9 @@ except ImportError as err:
         "or 'sudo apt-get install python3-bs4'" % err
     ))
 
+
 class RoundTrip:
+
     def __init__(self, url):
         self.url = url
         try:
@@ -26,7 +28,6 @@ class RoundTrip:
                 (self.url, err)
             ))
             self.addr = None
-
 
     def __tcpPing(self):
         """Return latency to url's resolved IP address"""
@@ -72,7 +73,9 @@ statuses = (
     "Up to date"
 )
 
+
 class Data:
+
     def __init__(self, url, launch_url, codename, hardware, min_status=None):
         self.url = url
         self.launch_url = launch_url
@@ -111,7 +114,9 @@ class Data:
         text = BeautifulSoup(launch_html).get_text()
         status = self.__reFind(self.regex[0], text)
         if not status:
-            stderr.write("Unable to parse status info from %s", self.launch_url)
+            stderr.write(
+                "Unable to parse status info from %s" % self.launch_url
+            )
             return None
 
         if "unknown" in status:
@@ -125,4 +130,3 @@ class Data:
             return None
 
         return (self.url, (status, speed))
-

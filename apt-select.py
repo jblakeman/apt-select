@@ -50,11 +50,11 @@ test_group.add_argument(
         "   %(week)s\n"
         "   %(unknown)s\n"
         "default: %(up)s\n" % {
-            'up':status_args[0],
-            'day':status_args[1],
-            'two_day':status_args[2],
-            'week':status_args[3],
-            'unknown':status_args[4]
+            'up': status_args[0],
+            'day': status_args[1],
+            'two_day': status_args[2],
+            'week': status_args[3],
+            'unknown': status_args[4]
         }
     ),
     default=status_args[0],
@@ -96,6 +96,7 @@ output_group.add_argument(
 
 args = parser.parse_args()
 
+
 # argparse returns list type for only choice arguments, not default
 def indexZero(flag):
     if type(flag) is list:
@@ -118,6 +119,7 @@ if flag_choose and (not flag_number or flag_number < 2):
         "error: -c/--choose option requires -t/--top-number NUMBER "
         "where NUMBER is greater than 1."
     ))
+
 
 def notUbuntu():
     exit("Not an Ubuntu OS")
@@ -148,6 +150,7 @@ stderr.write("Getting list of mirrors ...")
 archives = getHTML(mirror_list)
 stderr.write("done.\n")
 
+
 def parseURL(path):
     path = path.split('//', 1)[-1]
     return path.split('/', 1)[0]
@@ -156,10 +159,13 @@ urls = {}
 for archive in archives.splitlines():
     urls[parseURL(archive)] = None
 
+
 def progressUpdate(processed, total, message):
     if total > 1:
         percent = int((float(processed) / total) * 100)
-        stderr.write("\r%s [%d/%d] %d%%" % (message, processed, total, percent))
+        stderr.write(
+            "\r%s [%d/%d] %d%%" % (message, processed, total, percent)
+        )
         stderr.flush()
 
 tested = 0
@@ -172,7 +178,7 @@ for url in urls:
     ping = RoundTrip(url)
     lowest = ping.minRTT()
     if lowest:
-        low_rtts.update({url:lowest})
+        low_rtts.update({url: lowest})
         tested += 1
 
     processed += 1
@@ -258,6 +264,7 @@ if info_size == 0:
 found = False
 with open(sources_path, 'r') as f:
     lines = f.readlines()
+
     def confirmMirror(url):
         deb = ('deb', 'deb-src')
         proto = ('http://', 'ftp://')
@@ -328,10 +335,12 @@ try:
 except NameError:
     pass
 
+
 def ask(query):
     global input
     answer = input(query)
     return answer
+
 
 def currentMirror(require=True):
     global current
@@ -342,11 +351,13 @@ def currentMirror(require=True):
             "There is nothing to be done." % repo_name
         ))
 
+
 def whichKey(flag, info, key):
     if not flag:
         return info[key][0]
 
     return info[key]
+
 
 if flag_choose:
     query = "Choose a mirror (1 - %d)\n'q' to quit " % info_size
@@ -389,10 +400,11 @@ lines = ''.join(lines)
 for r in repo:
     lines = lines.replace(r, mirror)
 
+
 def yesOrNo():
     y = 'yes'
     n = 'no'
-    options = "Please enter '%s' or '%s': " % (y,n)
+    options = "Please enter '%s' or '%s': " % (y, n)
     while True:
         answer = ask(query)
         if answer == y:
@@ -401,6 +413,7 @@ def yesOrNo():
             exit(0)
         else:
             query = options
+
 
 wd = getcwd()
 if wd == directory[0:-1]:
