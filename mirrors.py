@@ -90,7 +90,7 @@ class Data:
         self.regex = (
             (
                 r'Version\nArchitecture\nStatus\n[\w\s]+'
-                'The\s%s\s\w+\n%s\n(.*)\n' % (self.codename, self.hardware)
+                r'The\s%s\s\w+\n%s\n(.*)\n' % (self.codename, self.hardware)
             ),
             r'Speed:\n([0-9]{1,3}\s\w+)'
         )
