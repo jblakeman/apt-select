@@ -401,19 +401,14 @@ for r in repo:
     lines = lines.replace(r, mirror)
 
 
-def yesOrNo():
-    y = 'yes'
-    n = 'no'
-    options = "Please enter '%s' or '%s': " % (y, n)
-    while True:
-        answer = ask(query)
-        if answer == y:
-            break
-        elif answer == n:
+def yesOrNo(query):
+    y, n = ('yes', 'no')
+    answer = ask(query)
+    while answer != y:
+        if answer == n:
             exit(0)
         else:
-            query = options
-
+            answer = ask("Please enter '%s' or '%s': " % (y, n))
 
 wd = getcwd()
 if wd == directory[0:-1]:
@@ -427,7 +422,7 @@ if wd == directory[0:-1]:
             'apt': apt_file
         }
     )
-    yesOrNo()
+    yesOrNo(query)
 
 write_file = wd + "/" + apt_file
 try:
