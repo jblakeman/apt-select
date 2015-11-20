@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Collection of module netural utility functions"""
 
 from sys import exit, stderr
 try:

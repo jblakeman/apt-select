@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+"""The mirrors module defines classes and methods
+   for Ubuntu archive mirrors.
+
+   The core purpose of this module is to provide
+   latency testing and mirror attribute getting
+   from Launchpad."""
 
 from sys import stderr
 from socket import (socket, AF_INET, SOCK_STREAM,
@@ -17,6 +23,7 @@ except ImportError as err:
 
 
 class RoundTrip:
+    """Socket connections for latency reporting"""
 
     def __init__(self, url):
         self.url = url
@@ -30,7 +37,7 @@ class RoundTrip:
             self.addr = None
 
     def __tcpPing(self):
-        """Return latency to url's resolved IP address"""
+        """Return socket latency to host's resolved IP address"""
         port = 80
         setdefaulttimeout(2.5)
         s = socket(AF_INET, SOCK_STREAM)
@@ -75,6 +82,7 @@ statuses = (
 
 
 class Data:
+    """Launchpad mirror data"""
 
     def __init__(self, url, launch_url, codename, hardware, min_status=None):
         self.url = url
