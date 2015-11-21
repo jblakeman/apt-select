@@ -11,7 +11,7 @@ from socket import (socket, AF_INET, SOCK_STREAM,
                     gethostbyname, setdefaulttimeout)
 from time import time
 from re import search
-from util_funcs import getHTML
+from util_funcs import get_html
 try:
     from bs4 import BeautifulSoup
 except ImportError as err:
@@ -36,30 +36,30 @@ class RoundTrip(object):
             ))
             self.addr = None
 
-    def __tcpPing(self):
+    def __tcp_ping(self):
         """Return socket latency to host's resolved IP address"""
         port = 80
         setdefaulttimeout(2.5)
-        s = socket(AF_INET, SOCK_STREAM)
+        sock = socket(AF_INET, SOCK_STREAM)
         send_tstamp = time()*1000
         try:
-            s.connect((self.addr, port))
+            sock.connect((self.addr, port))
         except IOError:
             return None
 
         recv_tstamp = time()*1000
         rtt = recv_tstamp - send_tstamp
-        s.close()
+        sock.close()
         return rtt
 
-    def minRTT(self):
+    def min_rtt(self):
         """Return lowest rtt"""
         if not self.addr:
             return None
 
         rtts = []
-        for i in range(3):
-            rtt = self.__tcpPing()
+        for _ in range(3):
+            rtt = self.__tcp_ping()
             if rtt:
                 rtts.append(rtt)
             else:
@@ -103,7 +103,7 @@ class Data(object):
             r'Speed:\n([0-9]{1,3}\s\w+)'
         )
 
-    def __reFind(self, regex, string):
+    def __re_find(self, regex, string):
         """Find and return regex match"""
         match = search(regex, string)
         try:
@@ -113,14 +113,14 @@ class Data(object):
 
         return match
 
-    def getInfo(self):
+    def get_info(self):
         """Return mirror status and bandwidth"""
-        launch_html = getHTML(self.launch_url)
+        launch_html = get_html(self.launch_url)
         if not launch_html:
             return None
 
         text = BeautifulSoup(launch_html).get_text()
-        status = self.__reFind(self.regex[0], text)
+        status = self.__re_find(self.regex[0], text)
         if not status:
             stderr.write(
                 "Unable to parse status info from %s" % self.launch_url
@@ -133,7 +133,7 @@ class Data(object):
         if status not in statuses:
             return None
 
-        speed = self.__reFind(self.regex[1], text)
+        speed = self.__re_find(self.regex[1], text)
         if not speed:
             return None
 

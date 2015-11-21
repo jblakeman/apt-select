@@ -4,7 +4,7 @@ from sys import exit, stderr
 from os import getcwd, path
 from subprocess import check_output
 from argparse import ArgumentParser, RawTextHelpFormatter
-from util_funcs import getHTML
+from util_funcs import get_html
 from mirrors import RoundTrip, Data, statuses
 from bs4 import BeautifulSoup
 
@@ -98,14 +98,14 @@ args = parser.parse_args()
 
 
 # argparse returns list type for only choice arguments, not default
-def indexZero(flag):
+def index_zero(flag):
     if type(flag) is list:
         return flag[0]
 
     return flag
 
-flag_number = indexZero(args.top_number)
-flag_status = indexZero(args.min_status).replace('-', ' ')
+flag_number = index_zero(args.top_number)
+flag_status = index_zero(args.min_status).replace('-', ' ')
 if flag_status != 'unknown':
     flag_status = flag_status[0].upper() + flag_status[1:]
 
@@ -121,20 +121,20 @@ if flag_choose and (not flag_number or flag_number < 2):
     ))
 
 
-def notUbuntu():
+def not_ubuntu():
     exit("Not an Ubuntu OS")
 
 try:
     release = check_output(["lsb_release", "-ics"])
 except OSError:
-    notUbuntu()
+    not_ubuntu()
 else:
     release = [s.strip() for s in release.decode('utf-8').split()]
 
 if release[0] == 'Debian':
     exit("Debian is not currently supported")
 elif release[0] != 'Ubuntu':
-    notUbuntu()
+    not_ubuntu()
 
 directory = '/etc/apt/'
 apt_file = 'sources.list'
@@ -147,20 +147,20 @@ ubuntu_url = "mirrors.ubuntu.com"
 mirror_list = "http://%s/mirrors.txt" % ubuntu_url
 
 stderr.write("Getting list of mirrors ...")
-archives = getHTML(mirror_list)
+archives = get_html(mirror_list)
 stderr.write("done.\n")
 
 
-def parseURL(path):
+def parse_url(path):
     path = path.split('//', 1)[-1]
     return path.split('/', 1)[0]
 
 urls = {}
 for archive in archives.splitlines():
-    urls[parseURL(archive)] = None
+    urls[parse_url(archive)] = None
 
 
-def progressUpdate(processed, total, message):
+def progress_msg(processed, total, message):
     if total > 1:
         percent = int((float(processed) / total) * 100)
         stderr.write(
@@ -173,16 +173,16 @@ processed = 0
 low_rtts = {}
 num_urls = len(urls)
 message = "Testing %d mirror(s)" % num_urls
-progressUpdate(0, num_urls, message)
+progress_msg(0, num_urls, message)
 for url in urls:
     ping = RoundTrip(url)
-    lowest = ping.minRTT()
+    lowest = ping.min_rtt()
     if lowest:
         low_rtts.update({url: lowest})
         tested += 1
 
     processed += 1
-    progressUpdate(processed, num_urls, message)
+    progress_msg(processed, num_urls, message)
 
 stderr.write('\n')
 
@@ -208,10 +208,10 @@ if flag_number > num_ranked:
 info = []
 if not flag_ping:
     message = "Looking up %d status(es)" % flag_number
-    progressUpdate(0, flag_number, message)
+    progress_msg(0, flag_number, message)
     launchpad_base = "https://launchpad.net"
     launchpad_url = launchpad_base + "/ubuntu/+archivemirrors"
-    launchpad_html = getHTML(launchpad_url)
+    launchpad_html = get_html(launchpad_url)
     for element in BeautifulSoup(launchpad_html).table.descendants:
         try:
             url = element.a
@@ -225,7 +225,7 @@ if not flag_ping:
             else:
 
                 if url in archives.splitlines():
-                    urls[parseURL(url)] = launchpad_base + prev
+                    urls[parse_url(url)] = launchpad_base + prev
 
                 if url.startswith("/ubuntu/+mirror/"):
                     prev = url
@@ -237,12 +237,12 @@ if not flag_ping:
             codename,
             hardware,
             flag_status
-        ).getInfo()
+        ).get_info()
         if launchpad_data:
             info.append(launchpad_data)
 
         info_size = len(info)
-        progressUpdate(info_size, flag_number, message)
+        progress_msg(info_size, flag_number, message)
         if info_size == flag_number:
             break
 else:
@@ -265,7 +265,7 @@ found = False
 with open(sources_path, 'r') as f:
     lines = f.readlines()
 
-    def confirmMirror(url):
+    def confirm_mirror(url):
         deb = ('deb', 'deb-src')
         proto = ('http://', 'ftp://')
         if (url and (url[0] in deb) and
@@ -279,7 +279,7 @@ with open(sources_path, 'r') as f:
     required_repo = "main"
     for line in lines:
         fields = line.split()
-        if confirmMirror(fields):
+        if confirm_mirror(fields):
             if (not found and
                     (release[1] in fields[2]) and
                     (fields[3] == required_repo)):
@@ -296,7 +296,7 @@ with open(sources_path, 'r') as f:
             (required_repo, sources_path)
         ))
 
-repo_name = parseURL(repo[0])
+repo_name = parse_url(repo[0])
 current = None
 current_key = None
 for i, j in enumerate(info):
@@ -342,7 +342,7 @@ def ask(query):
     return answer
 
 
-def currentMirror(require=True):
+def current_mirror(require=True):
     global current
     global repo_name
     if current or not require:
@@ -352,7 +352,7 @@ def currentMirror(require=True):
         ))
 
 
-def whichKey(flag, info, key):
+def which_key(flag, info, key):
     if not flag:
         return info[key][0]
 
@@ -379,16 +379,16 @@ if flag_choose:
 
     key = key - 1
     if current_key == key:
-        currentMirror(require=False)
+        current_mirror(require=False)
 
-    mirror = whichKey(flag_ping, info, key)
+    mirror = which_key(flag_ping, info, key)
 else:
-    mirror = whichKey(flag_ping, info, 0)
+    mirror = which_key(flag_ping, info, 0)
 
 if flag_list:
     exit()
 elif not flag_choose:
-    currentMirror()
+    current_mirror()
 
 # Switch mirror from resolvable url back to full path
 for m in archives.splitlines():
@@ -401,14 +401,14 @@ for r in repo:
     lines = lines.replace(r, mirror)
 
 
-def yesOrNo(query):
-    y, n = ('yes', 'no')
+def yes_or_no(query):
+    opts = ('yes', 'no')
     answer = ask(query)
-    while answer != y:
-        if answer == n:
+    while answer != opts[0]:
+        if answer == opts[1]:
             exit(0)
         else:
-            answer = ask("Please enter '%s' or '%s': " % (y, n))
+            answer = ask("Please enter '%s' or '%s': " % opts)
 
 wd = getcwd()
 if wd == directory[0:-1]:
@@ -422,7 +422,7 @@ if wd == directory[0:-1]:
             'apt': apt_file
         }
     )
-    yesOrNo(query)
+    yes_or_no(query)
 
 write_file = wd + "/" + apt_file
 try:

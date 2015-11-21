@@ -8,7 +8,7 @@ except ImportError:
     from urllib2 import urlopen, HTTPError, URLError
 
 
-def getHTML(url):
+def get_html(url):
     try:
         html = urlopen(url)
     except HTTPError as err:
