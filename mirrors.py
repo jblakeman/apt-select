@@ -22,7 +22,7 @@ except ImportError as err:
     ))
 
 
-class RoundTrip:
+class RoundTrip(object):
     """Socket connections for latency reporting"""
 
     def __init__(self, url):
@@ -81,7 +81,7 @@ statuses = (
 )
 
 
-class Data:
+class Data(object):
     """Launchpad mirror data"""
 
     def __init__(self, url, launch_url, codename, hardware, min_status=None):
