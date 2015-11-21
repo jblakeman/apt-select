@@ -99,6 +99,7 @@ args = parser.parse_args()
 
 # argparse returns list type for only choice arguments, not default
 def index_zero(flag):
+    """Get first element of list or return unchanged"""
     if type(flag) is list:
         return flag[0]
 
@@ -122,6 +123,7 @@ if flag_choose and (not flag_number or flag_number < 2):
 
 
 def not_ubuntu():
+    """Notify of incompatibility"""
     exit("Not an Ubuntu OS")
 
 try:
@@ -152,6 +154,7 @@ stderr.write("done.\n")
 
 
 def parse_url(path):
+    """Parse hostname from URL"""
     path = path.split('//', 1)[-1]
     return path.split('/', 1)[0]
 
@@ -161,6 +164,7 @@ for archive in archives.splitlines():
 
 
 def progress_msg(processed, total, message):
+    """Update user on percent done"""
     if total > 1:
         percent = int((float(processed) / total) * 100)
         stderr.write(
@@ -266,6 +270,7 @@ with open(sources_path, 'r') as f:
     lines = f.readlines()
 
     def confirm_mirror(url):
+        """Check if line follows correct sources.list URI"""
         deb = ('deb', 'deb-src')
         proto = ('http://', 'ftp://')
         if (url and (url[0] in deb) and
@@ -337,12 +342,14 @@ except NameError:
 
 
 def ask(query):
+    """Ask user for input"""
     global input
     answer = input(query)
     return answer
 
 
 def current_mirror(require=True):
+    """Check for and abort if selected mirror is currently used"""
     global current
     global repo_name
     if current or not require:
@@ -353,6 +360,7 @@ def current_mirror(require=True):
 
 
 def which_key(flag, info, key):
+    """Get the needed info value from selected key"""
     if not flag:
         return info[key][0]
 
@@ -402,6 +410,7 @@ for r in repo:
 
 
 def yes_or_no(query):
+    """Act on yes or no confirmation"""
     opts = ('yes', 'no')
     answer = ask(query)
     while answer != opts[0]:
