@@ -7,6 +7,10 @@ from argparse import ArgumentParser, RawTextHelpFormatter
 from util_funcs import get_html, progress_msg
 from mirrors import RoundTrip, Data, statuses
 from bs4 import BeautifulSoup
+try:
+        from urlparse import urlparse
+except ImportError:
+        from urllib.parse import urlparse
 
 parser = ArgumentParser(
     description=(
@@ -152,15 +156,9 @@ stderr.write("Getting list of mirrors ...")
 archives = get_html(mirror_list)
 stderr.write("done.\n")
 
-
-def parse_url(path):
-    """Parse hostname from URL"""
-    path = path.split('//', 1)[-1]
-    return path.split('/', 1)[0]
-
 urls = {}
 for archive in archives.splitlines():
-    urls[parse_url(archive)] = None
+    urls[urlparse(archive).netloc] = None
 
 tested = 0
 processed = 0
@@ -217,7 +215,7 @@ if not flag_ping:
             else:
 
                 if url in archives.splitlines():
-                    urls[parse_url(url)] = launchpad_base + prev
+                    urls[urlparse(url).netloc] = launchpad_base + prev
 
                 if url.startswith("/ubuntu/+mirror/"):
                     prev = url
@@ -291,7 +289,7 @@ with open(sources_path, 'r') as f:
             (required_repo, sources_path)
         ))
 
-repo_name = parse_url(repo[0])
+repo_name = urlparse(repo[0]).netloc
 current = None
 current_key = None
 for i, j in enumerate(info):
