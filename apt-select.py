@@ -4,7 +4,7 @@ from sys import exit, stderr
 from os import getcwd, path
 from subprocess import check_output
 from argparse import ArgumentParser, RawTextHelpFormatter
-from util_funcs import get_html
+from util_funcs import get_html, progress_msg
 from mirrors import RoundTrip, Data, statuses
 from bs4 import BeautifulSoup
 
@@ -162,22 +162,12 @@ urls = {}
 for archive in archives.splitlines():
     urls[parse_url(archive)] = None
 
-
-def progress_msg(processed, total, message):
-    """Update user on percent done"""
-    if total > 1:
-        percent = int((float(processed) / total) * 100)
-        stderr.write(
-            "\r%s [%d/%d] %d%%" % (message, processed, total, percent)
-        )
-        stderr.flush()
-
 tested = 0
 processed = 0
 low_rtts = {}
 num_urls = len(urls)
-message = "Testing %d mirror(s)" % num_urls
-progress_msg(0, num_urls, message)
+stderr.write("Testing %d mirror(s)\n" % num_urls)
+progress_msg(0, num_urls)
 for url in urls:
     ping = RoundTrip(url)
     lowest = ping.min_rtt()
@@ -186,7 +176,7 @@ for url in urls:
         tested += 1
 
     processed += 1
-    progress_msg(processed, num_urls, message)
+    progress_msg(processed, num_urls)
 
 stderr.write('\n')
 
@@ -211,8 +201,6 @@ if flag_number > num_ranked:
 
 info = []
 if not flag_ping:
-    message = "Looking up %d status(es)" % flag_number
-    progress_msg(0, flag_number, message)
     launchpad_base = "https://launchpad.net"
     launchpad_url = launchpad_base + "/ubuntu/+archivemirrors"
     launchpad_html = get_html(launchpad_url)
@@ -234,6 +222,8 @@ if not flag_ping:
                 if url.startswith("/ubuntu/+mirror/"):
                     prev = url
 
+    stderr.write("Looking up %d status(es)\n" % flag_number)
+    progress_msg(0, flag_number)
     for rank in ranks:
         launchpad_data = Data(
             rank,
@@ -246,7 +236,7 @@ if not flag_ping:
             info.append(launchpad_data)
 
         info_size = len(info)
-        progress_msg(info_size, flag_number, message)
+        progress_msg(info_size, flag_number)
         if info_size == flag_number:
             break
 else:
