@@ -1,10 +1,7 @@
 #!/usr/bin/env python
-"""The mirrors module defines classes and methods
-   for Ubuntu archive mirrors.
+"""The mirrors module defines classes and methods for Ubuntu archive mirrors.
 
-   The core purpose of this module is to provide
-   latency testing and mirror attribute getting
-   from Launchpad."""
+   Provides latency testing and mirror attribute getting from Launchpad."""
 
 from sys import stderr
 from socket import (socket, AF_INET, SOCK_STREAM,
