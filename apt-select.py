@@ -4,13 +4,9 @@ from sys import exit, stderr
 from os import getcwd, path
 from subprocess import check_output
 from argparse import ArgumentParser, RawTextHelpFormatter
-from util_funcs import get_html, progress_msg
-from mirrors import RoundTrip, Data, statuses
+from util_funcs import get_html, HTMLGetError
+from mirrors import Mirrors
 from bs4 import BeautifulSoup
-try:
-        from urlparse import urlparse
-except ImportError:
-        from urllib.parse import urlparse
 
 parser = ArgumentParser(
     description=(
@@ -32,19 +28,20 @@ parser.add_argument(
     metavar='NUMBER'
 )
 
-status_args = [
-    x[0].lower() + x[1:] for x in [
-        y.replace(' ', '-') for y in statuses
-    ]
-]
-status_args.reverse()
+STATUS_ARGS = (
+    "up-to-date",
+    "one-day-behind",
+    "two-days-behind",
+    "one-week-behind",
+    "unknown"
+)
 
 test_group = parser.add_mutually_exclusive_group(required=False)
 test_group.add_argument(
     '-m',
     '--min-status',
     nargs=1,
-    choices=status_args,
+    choices=STATUS_ARGS,
     help=(
         "return mirrors with minimum status\n"
         "choices:\n"
@@ -54,14 +51,14 @@ test_group.add_argument(
         "   %(week)s\n"
         "   %(unknown)s\n"
         "default: %(up)s\n" % {
-            'up': status_args[0],
-            'day': status_args[1],
-            'two_day': status_args[2],
-            'week': status_args[3],
-            'unknown': status_args[4]
+            'up': STATUS_ARGS[0],
+            'day': STATUS_ARGS[1],
+            'two_day': STATUS_ARGS[2],
+            'week': STATUS_ARGS[3],
+            'unknown': STATUS_ARGS[4]
         }
     ),
-    default=status_args[0],
+    default=STATUS_ARGS[0],
     metavar='STATUS'
 )
 test_group.add_argument(
@@ -152,33 +149,18 @@ codename = release[1][0].upper() + release[1][1:]
 ubuntu_url = "mirrors.ubuntu.com"
 mirror_list = "http://%s/mirrors.txt" % ubuntu_url
 
-stderr.write("Getting list of mirrors ...")
-archives = get_html(mirror_list)
+stderr.write("Getting list of mirrors...")
+try:
+    archives = Mirrors(get_html(mirror_list).splitlines())
+except HTMLGetError as err:
+    exit("Error getting list from %s:\n\t%s" % (mirror_list, err))
+
 stderr.write("done.\n")
+archives.get_rtts()
+if archives.got["ping"] < flag_number:
+    flag_number = archives.got["ping"]
 
-urls = {}
-for archive in archives.splitlines():
-    urls[urlparse(archive).netloc] = None
-
-tested = 0
-processed = 0
-low_rtts = {}
-num_urls = len(urls)
-stderr.write("Testing %d mirror(s)\n" % num_urls)
-progress_msg(0, num_urls)
-for url in urls:
-    ping = RoundTrip(url)
-    lowest = ping.min_rtt()
-    if lowest:
-        low_rtts.update({url: lowest})
-        tested += 1
-
-    processed += 1
-    progress_msg(processed, num_urls)
-
-stderr.write('\n')
-
-if len(low_rtts) == 0:
+if flag_number == 0:
     exit((
         "Cannot connect to any mirrors in %s\n."
         "Minimum latency of this machine may exceed"
@@ -186,84 +168,67 @@ if len(low_rtts) == 0:
         "TCP connectivity issues.\n" % mirror_list
     ))
 
-hardware = check_output(["uname", "-m"]).strip().decode('utf-8')
-if hardware == 'x86_64':
-    hardware = 'amd64'
-else:
-    hardware = 'i386'
-
-ranks = sorted(low_rtts, key=low_rtts.__getitem__)
-num_ranked = len(ranks)
-if flag_number > num_ranked:
-    flag_number = num_ranked
-
-info = []
+abort_launch = False
 if not flag_ping:
     launchpad_base = "https://launchpad.net"
     launchpad_url = launchpad_base + "/ubuntu/+archivemirrors"
-    launchpad_html = get_html(launchpad_url)
-    for element in BeautifulSoup(launchpad_html).table.descendants:
-        try:
-            url = element.a
-        except AttributeError:
-            pass
-        else:
+    stderr.write("Getting list of launchpad URLs...")
+    try:
+        launchpad_html = get_html(launchpad_url)
+    except HTMLGetError as err:
+        stderr.write((
+            "Unable to retrieve list of launchpad sites\n"
+            "Reverting to latency only"
+        ))
+        abort_launch = True
+    else:
+        stderr.write("done.\n")
+        prev = ""
+        for element in BeautifulSoup(launchpad_html).table.descendants:
             try:
-                url = url["href"]
-            except TypeError:
+                url = element.a
+            except AttributeError:
                 pass
             else:
+                try:
+                    url = url["href"]
+                except TypeError:
+                    pass
+                else:
 
-                if url in archives.splitlines():
-                    urls[urlparse(url).netloc] = launchpad_base + prev
+                    if url in archives.urls:
+                        archives.urls[url]["Launchpad"] = launchpad_base + prev
 
-                if url.startswith("/ubuntu/+mirror/"):
-                    prev = url
+                    if url.startswith("/ubuntu/+mirror/"):
+                        prev = url
 
-    stderr.write("Looking up %d status(es)\n" % flag_number)
-    progress_msg(0, flag_number)
-    for rank in ranks:
-        launchpad_data = Data(
-            rank,
-            urls[rank],
-            codename,
-            hardware,
-            flag_status
-        ).get_info()
-        if launchpad_data:
-            info.append(launchpad_data)
+        hardware = check_output(["uname", "-m"]).strip().decode('utf-8')
+        if hardware == 'x86_64':
+            hardware = 'amd64'
+        else:
+            hardware = 'i386'
 
-        info_size = len(info)
-        progress_msg(info_size, flag_number)
-        if info_size == flag_number:
-            break
-else:
-    for rank in ranks:
-        info.append(rank)
-        info_size = len(info)
-        if info_size == flag_number:
-            break
+        stderr.write("Looking up %d status(es)\n" % flag_number)
+        archives.lookup_statuses(
+            flag_number, flag_status, codename, hardware
+        )
 
 if (flag_number > 1) and not flag_ping:
     stderr.write('\n')
 
-if info_size == 0:
-    exit((
-        "Unable to find alternative mirror status(es)\n"
-        "Try using -p/--ping-only option or adjust -m/--min-status argument"
-    ))
-
+repo_name = ""
 found = False
+skip_gen_msg = "Skipping file generation."
 with open(sources_path, 'r') as f:
     lines = f.readlines()
 
-    def confirm_mirror(url):
+    def confirm_mirror(uri):
         """Check if line follows correct sources.list URI"""
         deb = ('deb', 'deb-src')
         proto = ('http://', 'ftp://')
-        if (url and (url[0] in deb) and
-                (proto[0] in url[1] or
-                 proto[1] in url[1])):
+        if (uri and (uri[0] in deb) and
+                (proto[0] in uri[1] or
+                 proto[1] in uri[1])):
             return True
 
         return False
@@ -279,49 +244,60 @@ with open(sources_path, 'r') as f:
                 repo += [fields[1]]
                 found = True
                 continue
-            elif (fields[2] == '%s-security' % (release[1])):
+            elif fields[2] == '%s-security' % (release[1]):
                 repo += [fields[1]]
                 break
 
     if not repo:
-        exit((
-            "Error finding current %s repository in %s" %
-            (required_repo, sources_path)
+        stderr.write((
+            "Error finding current %s repository in %s\n%s\n" %
+            (required_repo, sources_path, skip_gen_msg)
         ))
-
-repo_name = urlparse(repo[0]).netloc
-current = None
-current_key = None
-for i, j in enumerate(info):
-    if type(j) is tuple:
-        mirror_url = j[0]
     else:
-        mirror_url = j
+        repo_name = repo[0]
 
-    if mirror_url == repo_name:
-        mirror_url += " (current)"
-        current_key = i
-        if i == 0:
-            current = True
+
+def assign_defaults(info, keys, default):
+    for key in keys:
+        if key not in info:
+            info[key] = default
+
+rank = 0
+final = []
+current_key = -1
+for i in range(flag_number):
+    url = archives.ranked[i]
+    info = archives.urls[url]
+    host = info["Host"]
+    if url == repo_name:
+        host += " (current)"
+        current_key = rank
+
+    if not flag_ping and not abort_launch:
+        if "Status" in info:
+            assign_defaults(info, ("Org", "Speed"), "N/A")
+            print((
+                "%(rank)d. %(mirror)s\n%(tab)sLatency: %(ms)d ms\n"
+                "%(tab)sOrg:     %(org)s\n%(tab)sStatus:  %(status)s\n"
+                "%(tab)sSpeed:   %(speed)s" % {
+                    'tab': '    ',
+                    'rank': rank + 1,
+                    'mirror': host,
+                    'ms': info["Latency"],
+                    'org': info["Organisation"],
+                    'status': info["Status"],
+                    'speed': info["Speed"]
+                }
+            ))
         else:
-            current = False
-
-    if not flag_ping:
-        print((
-            "%(rank)d. %(mirror)s\n"
-            "%(tab)sLatency:  \t%(ms)d ms\n"
-            "%(tab)sStatus:   \t%(status)s\n"
-            "%(tab)sBandwidth:\t%(speed)s" % {
-                'tab':    '    ',
-                'rank':   i + 1,
-                'mirror': mirror_url,
-                'ms':     low_rtts[j[0]],
-                'status': j[1][0],
-                'speed':  j[1][1]
-            }
-        ))
+            continue
     else:
-        print("%d. %s: %d ms" % (i + 1, j, low_rtts[j]))
+        print("%d. %s: %d ms" % (rank+1, info["Host"], info["Latency"]))
+
+    rank += 1
+    final.append(url)
+    if rank == flag_number:
+        break
 
 try:
     input = raw_input
@@ -330,35 +306,15 @@ except NameError:
 
 
 def ask(query):
-    """Ask user for input"""
     global input
     answer = input(query)
     return answer
 
 
-def current_mirror(require=True):
-    """Check for and abort if selected mirror is currently used"""
-    global current
-    global repo_name
-    if current or not require:
-        exit((
-            "%s is the currently used mirror.\n"
-            "There is nothing to be done." % repo_name
-        ))
-
-
-def which_key(flag, info, key):
-    """Get the needed info value from selected key"""
-    if not flag:
-        return info[key][0]
-
-    return info[key]
-
-
+key = 0
 if flag_choose:
-    query = "Choose a mirror (1 - %d)\n'q' to quit " % info_size
+    query = "Choose a mirror (1 - %d)\n'q' to quit " % len(final)
     key = ask(query)
-    choices = range(1, info_size+1)
     while True:
         try:
             key = int(key)
@@ -366,7 +322,7 @@ if flag_choose:
             if key == 'q':
                 exit()
 
-        if type(key) is str or key not in choices:
+        if (type(key) is str) or ((key < 1) or (key > rank)):
             query = "Invalid entry "
             key = ask(query)
             continue
@@ -374,38 +330,32 @@ if flag_choose:
         break
 
     key = key - 1
-    if current_key == key:
-        current_mirror(require=False)
-
-    mirror = which_key(flag_ping, info, key)
-else:
-    mirror = which_key(flag_ping, info, 0)
 
 if flag_list:
     exit()
-elif not flag_choose:
-    current_mirror()
 
-# Switch mirror from resolvable url back to full path
-for m in archives.splitlines():
-    if mirror in m:
-        mirror = m
-        break
+# Writing a new file using the currently used mirror would be needless work
+if current_key == key:
+    exit((
+        "%s is the currently used mirror.\n%s" %
+        (archives.urls[repo_name]["Host"], skip_gen_msg)
+    ))
 
+mirror = final[key]
 lines = ''.join(lines)
 for r in repo:
     lines = lines.replace(r, mirror)
 
 
 def yes_or_no(query):
-    """Act on yes or no confirmation"""
+    """Get definitive answer"""
     opts = ('yes', 'no')
     answer = ask(query)
     while answer != opts[0]:
         if answer == opts[1]:
             exit(0)
-        else:
-            answer = ask("Please enter '%s' or '%s': " % opts)
+        answer = ask("Please enter '%s' or '%s': " % opts)
+
 
 wd = getcwd()
 if wd == directory[0:-1]:
@@ -429,12 +379,11 @@ except IOError as err:
     if err.strerror == 'Permission denied':
         exit((
             "%s\nYou do not own %s\n"
-            "Please run the script from a directory you own." %
-            (err, wd)
+            "Please run the script from a directory you own." % (err, wd)
         ))
     else:
         exit(err)
 else:
     print("New config file saved to %s" % write_file)
 
-exit(0)
+exit()

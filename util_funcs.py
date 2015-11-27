@@ -2,23 +2,20 @@
 """Collection of module netural utility functions"""
 
 from sys import exit, stderr
+from ssl import SSLError
 try:
     from urllib.request import urlopen, HTTPError, URLError
 except ImportError:
     from urllib2 import urlopen, HTTPError, URLError
 
+class HTMLGetError(Exception):
+    pass
 
 def get_html(url):
     try:
         html = urlopen(url)
-    except HTTPError as err:
-        stderr.write("\n%s\n" % err)
-        return None
-    except URLError as err:
-        exit((
-            "Unable to connect to %s\n"
-            "%s\n" % (url, err)
-        ))
+    except (HTTPError, URLError, SSLError) as err:
+        raise(HTMLGetError(err))
 
     return html.read().decode('utf-8')
 

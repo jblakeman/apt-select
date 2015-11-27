@@ -3,35 +3,124 @@
 
    Provides latency testing and mirror attribute getting from Launchpad."""
 
+import re
 from sys import stderr
 from socket import (socket, AF_INET, SOCK_STREAM,
-                    gethostbyname, setdefaulttimeout)
+                    gethostbyname, setdefaulttimeout,
+                    error, timeout, gaierror)
 from time import time
-from re import search
-from util_funcs import get_html
+from util_funcs import get_html, HTMLGetError, progress_msg
 try:
     from bs4 import BeautifulSoup
 except ImportError as err:
     exit((
         "%s\n"
         "Try 'sudo apt-get install python-bs4' "
-        "or 'sudo apt-get install python3-bs4'" % err
+        "or 'pip install beautifulsoup4'" % err
     ))
 
+try:
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import urlparse
 
-class RoundTrip(object):
+
+class ConnectError(Exception):
+    """Socket connection errors"""
+    pass
+
+
+class DataError(Exception):
+    """Errors retrieving Launchpad data"""
+    pass
+
+
+class Mirrors(object):
+    """Base for collection of archive mirrors"""
+
+    def __init__(self, url_list):
+        self.ranked = []
+        self.status_opts = (
+            "unknown",
+            "One week behind",
+            "Two days behind",
+            "One day behind",
+            "Up to date"
+        )
+        self.num = len(url_list)
+        self.urls = {}
+        for url in url_list:
+            self.urls[url] = {"Host": urlparse(url).netloc}
+
+        self.got = {"ping": 0, "data": 0}
+
+    def get_rtts(self):
+        """Test latency to all mirrors"""
+        processed = 0
+        stderr.write("Testing %d mirror(s)\n" % self.num)
+        progress_msg(processed, self.num)
+        for url, struct in self.urls.items():
+            try:
+                trip = _RoundTrip(struct["Host"])
+            except gaierror as err:
+                stderr.write("%s: %s ignored\n" % (err, url))
+            else:
+                try:
+                    rtt = trip.min_rtt()
+                except ConnectError as err:
+                    stderr.write("\nconnection to %s: %s\n" % (url, err))
+                else:
+                    self.urls[url].update({"Latency": rtt})
+                    self.got["ping"] += 1
+
+            processed += 1
+            progress_msg(processed, self.num)
+
+        stderr.write('\n')
+        # Mirrors without latency info are removed
+        self.urls = {
+            key: val for key, val in self.urls.items() if "Latency" in val
+        }
+
+        self.ranked = sorted(self.urls, key=lambda x: self.urls[x]["Latency"])
+
+    def lookup_statuses(self, num, min_status, codename, hardware):
+        """Scrape requested number of statuses/info from Launchpad"""
+        if min_status == "unknown":
+            min_index = self.status_opts.index(min_status)
+            self.status_opts = self.status_opts[min_index:]
+
+        progress_msg(self.got["data"], num)
+        for url in (x for x in self.ranked
+                    if "Status" not in self.urls[x]):
+            try:
+                info = _LaunchData(
+                    url, self.urls[url]["Launchpad"],
+                    codename, hardware
+                ).get_info()
+            except DataError as err:
+                stderr.write("\n%s\n" % err)
+            else:
+                if info and info[1] and info[1]["Status"] in self.status_opts:
+                    self.urls[url].update(info[1])
+                    self.got["data"] += 1
+                else:
+                    self.ranked.remove(info[0])
+
+            progress_msg(self.got["data"], num)
+            if self.got["data"] == num:
+                break
+
+
+class _RoundTrip(object):
     """Socket connections for latency reporting"""
 
     def __init__(self, url):
         self.url = url
         try:
             self.addr = gethostbyname(self.url)
-        except IOError as err:
-            stderr.write((
-                "\nCould not resolve hostname %s\n%s\n" %
-                (self.url, err)
-            ))
-            self.addr = None
+        except gaierror as err:
+            raise gaierror(err)
 
     def __tcp_ping(self):
         """Return socket latency to host's resolved IP address"""
@@ -41,8 +130,8 @@ class RoundTrip(object):
         send_tstamp = time()*1000
         try:
             sock.connect((self.addr, port))
-        except IOError:
-            return None
+        except (timeout, error) as err:
+            raise ConnectError(err)
 
         recv_tstamp = time()*1000
         rtt = recv_tstamp - send_tstamp
@@ -51,87 +140,55 @@ class RoundTrip(object):
 
     def min_rtt(self):
         """Return lowest rtt"""
-        if not self.addr:
-            return None
-
         rtts = []
         for _ in range(3):
-            rtt = self.__tcp_ping()
-            if rtt:
-                rtts.append(rtt)
+            try:
+                rtt = self.__tcp_ping()
+            except ConnectError as err:
+                raise ConnectError(err)
             else:
-                rtts = None
-                break
+                rtts.append(rtt)
 
-        if rtts:
-            return round(min(rtts))
-
-        return None
-
-# Possible statuses from mirror launchpad sites
-statuses = (
-    "unknown",
-    "One week behind",
-    "Two days behind",
-    "One day behind",
-    "Up to date"
-)
+        return round(min(rtts))
 
 
-class Data(object):
+class _LaunchData(object):
     """Launchpad mirror data"""
 
-    def __init__(self, url, launch_url, codename, hardware, min_status=None):
+    def __init__(self, url, launch_url, codename, hardware):
         self.url = url
         self.launch_url = launch_url
         self.codename = codename
         self.hardware = hardware
-        global statuses
-
-        if min_status:
-            min_index = statuses.index(min_status)
-            statuses = statuses[min_index:]
-
-        self.regex = (
-            (
-                r'Version\nArchitecture\nStatus\n[\w\s]+'
-                r'The\s%s\s\w+\n%s\n(.*)\n' % (self.codename, self.hardware)
-            ),
-            r'Speed:\n([0-9]{1,3}\s\w+)'
-        )
-
-    def __re_find(self, regex, string):
-        """Find and return regex match"""
-        match = search(regex, string)
-        try:
-            match = match.group(1)
-        except AttributeError:
-            pass
-
-        return match
 
     def get_info(self):
-        """Return mirror status and bandwidth"""
-        launch_html = get_html(self.launch_url)
-        if not launch_html:
+        """Parse launchpad page HTML and place info in queue"""
+        try:
+            launch_html = get_html(self.launch_url)
+        except HTMLGetError as err:
+            stderr.write("\nconnection to %s: %s\n" % (self.launch_url, err))
             return None
 
-        text = BeautifulSoup(launch_html).get_text()
-        status = self.__re_find(self.regex[0], text)
-        if not status:
-            stderr.write(
-                "Unable to parse status info from %s" % self.launch_url
-            )
+        info = {}
+        soup = BeautifulSoup(launch_html)
+        for line in soup.find('table', class_='listing sortable',
+                              id='arches').find('tbody').find_all('tr'):
+            arches = [x.get_text() for x in line.find_all('td')]
+            if self.codename in arches[0] and arches[1] == self.hardware:
+                info.update({"Status": arches[2]})
+
+        for line in soup.find_all(id=re.compile('speed|organisation')):
+            info.update({line.dt.get_text().strip(':'): line.dd.get_text()})
+
+        if "Status" not in info:
+            stderr.write((
+                "Unable to parse status info from %s\n" % self.launch_url
+            ))
             return None
 
-        if "unknown" in status:
-            status = "unknown"
+        # Launchpad has more descriptive "unknown" status.
+        # It's trimmed here to match statuses list
+        if "unknown" in info["Status"]:
+            info["Status"] = "unknown"
 
-        if status not in statuses:
-            return None
-
-        speed = self.__re_find(self.regex[1], text)
-        if not speed:
-            return None
-
-        return (self.url, (status, speed))
+        return [self.url, info]
