@@ -225,9 +225,9 @@ def apt_select():
     repo_name = ""
     found = False
     skip_gen_msg = "Skipping file generation."
-    with open(sources_path, 'r') as f:
-        lines = f.readlines()
-        repo = []
+    with open(sources_path, 'r') as sources_file:
+        lines = sources_file.readlines()
+        repos = []
         required_repo = "main"
         for line in lines:
             fields = line.split()
@@ -235,20 +235,20 @@ def apt_select():
                 if (not found and
                         (release[1] in fields[2]) and
                         (fields[3] == required_repo)):
-                    repo += [fields[1]]
+                    repos += [fields[1]]
                     found = True
                     continue
                 elif fields[2] == '%s-security' % (release[1]):
-                    repo += [fields[1]]
+                    repos += [fields[1]]
                     break
 
-        if not repo:
+        if not repos:
             stderr.write((
                 "Error finding current %s repository in %s\n%s\n" %
                 (required_repo, sources_path, skip_gen_msg)
             ))
         else:
-            repo_name = repo[0]
+            repo_name = repos[0]
 
     rank = 0
     final = []
@@ -319,11 +319,11 @@ def apt_select():
 
     mirror = final[key]
     lines = ''.join(lines)
-    for r in repo:
-        lines = lines.replace(r, mirror)
+    for repo in repos:
+        lines = lines.replace(repo, mirror)
 
-    wd = getcwd()
-    if wd == directory[0:-1]:
+    work_dir = getcwd()
+    if work_dir == directory[0:-1]:
         query = (
             "'%(dir)s' is the current directory.\n"
             "Generating a new '%(apt)s' file will "
@@ -336,15 +336,16 @@ def apt_select():
         )
         yes_or_no(query)
 
-    write_file = wd + "/" + apt_file
+    write_file = work_dir + "/" + apt_file
     try:
-        with open(write_file, 'w') as f:
-            f.write(lines)
+        with open(write_file, 'w') as sources_file:
+            sources_file.write(lines)
     except IOError as err:
         if err.strerror == 'Permission denied':
             exit((
                 "%s\nYou do not own %s\n"
-                "Please run the script from a directory you own." % (err, wd)
+                "Please run the script from a directory you own." %
+                (err, work_dir)
             ))
         else:
             exit(err)
