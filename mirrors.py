@@ -53,6 +53,41 @@ class Mirrors(object):
             self.urls[url] = {"Host": urlparse(url).netloc}
 
         self.got = {"ping": 0, "data": 0}
+        self.abort_launch = False
+
+    def get_launchpad_urls(self):
+        """Obtain mirrors' corresponding launchpad URLs"""
+        launchpad_base = "https://launchpad.net"
+        launchpad_url = launchpad_base + "/ubuntu/+archivemirrors"
+        stderr.write("Getting list of launchpad URLs...")
+        try:
+            launchpad_html = get_html(launchpad_url)
+        except HTMLGetError as err:
+            stderr.write((
+                "Unable to retrieve list of launchpad sites\n"
+                "Reverting to latency only"
+            ))
+            self.abort_launch = True
+        else:
+            stderr.write("done.\n")
+            prev = ""
+            for element in BeautifulSoup(launchpad_html).table.descendants:
+                try:
+                    url = element.a
+                except AttributeError:
+                    pass
+                else:
+                    try:
+                        url = url["href"]
+                    except TypeError:
+                        pass
+                    else:
+
+                        if url in self.urls:
+                            self.urls[url]["Launchpad"] = launchpad_base + prev
+
+                        if url.startswith("/ubuntu/+mirror/"):
+                            prev = url
 
     def get_rtts(self):
         """Test latency to all mirrors"""

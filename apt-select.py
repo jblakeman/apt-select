@@ -6,7 +6,6 @@ from subprocess import check_output
 from argparse import ArgumentParser, RawTextHelpFormatter
 from util_funcs import get_html, HTMLGetError
 from mirrors import Mirrors
-from bs4 import BeautifulSoup
 
 # argparse returns list type for only choice arguments, not default
 def index_zero(flag):
@@ -206,40 +205,9 @@ def apt_select():
             "TCP connectivity issues.\n" % mirror_list
         ))
 
-    abort_launch = False
     if not flag_ping:
-        launchpad_base = "https://launchpad.net"
-        launchpad_url = launchpad_base + "/ubuntu/+archivemirrors"
-        stderr.write("Getting list of launchpad URLs...")
-        try:
-            launchpad_html = get_html(launchpad_url)
-        except HTMLGetError as err:
-            stderr.write((
-                "Unable to retrieve list of launchpad sites\n"
-                "Reverting to latency only"
-            ))
-            abort_launch = True
-        else:
-            stderr.write("done.\n")
-            prev = ""
-            for element in BeautifulSoup(launchpad_html).table.descendants:
-                try:
-                    url = element.a
-                except AttributeError:
-                    pass
-                else:
-                    try:
-                        url = url["href"]
-                    except TypeError:
-                        pass
-                    else:
-
-                        if url in archives.urls:
-                            archives.urls[url]["Launchpad"] = launchpad_base + prev
-
-                        if url.startswith("/ubuntu/+mirror/"):
-                            prev = url
-
+        archives.get_launchpad_urls()
+        if not archives.abort_launch:
             hardware = check_output(["uname", "-m"]).strip().decode('utf-8')
             if hardware == 'x86_64':
                 hardware = 'amd64'
@@ -293,7 +261,7 @@ def apt_select():
             host += " (current)"
             current_key = rank
 
-        if not flag_ping and not abort_launch:
+        if not flag_ping and not archives.abort_launch:
             if "Status" in info:
                 assign_defaults(info, ("Org", "Speed"), "N/A")
                 print((
