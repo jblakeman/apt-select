@@ -94,16 +94,17 @@ class Mirrors(object):
         processed = 0
         stderr.write("Testing %d mirror(s)\n" % self.num)
         progress_msg(processed, self.num)
-        for url, struct in self.urls.items():
+        for url, info in self.urls.items():
+            host = info["Host"]
             try:
-                trip = _RoundTrip(struct["Host"])
+                trip = _RoundTrip(host)
             except gaierror as err:
                 stderr.write("%s: %s ignored\n" % (err, url))
             else:
                 try:
                     rtt = trip.min_rtt()
                 except ConnectError as err:
-                    stderr.write("\nconnection to %s: %s\n" % (url, err))
+                    stderr.write("\nconnection to %s: %s\n" % (host, err))
                 else:
                     self.urls[url].update({"Latency": rtt})
                     self.got["ping"] += 1
