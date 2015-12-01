@@ -336,19 +336,12 @@ def apt_select():
         )
         yes_or_no(query)
 
-    write_file = work_dir + "/" + apt_file
+    write_file = work_dir.rstrip('/') + '/' + apt_file
     try:
         with open(write_file, 'w') as sources_file:
             sources_file.write(lines)
     except IOError as err:
-        if err.strerror == 'Permission denied':
-            exit((
-                "%s\nYou do not own %s\n"
-                "Please run the script from a directory you own." %
-                (err, work_dir)
-            ))
-        else:
-            exit(err)
+        exit("Unable to generate sources.list:\n\t%s\n" % err)
     else:
         print("New config file saved to %s" % write_file)
 
