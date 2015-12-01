@@ -79,7 +79,7 @@ def apt_select():
         metavar='NUMBER'
     )
 
-    STATUS_ARGS = (
+    status_args = (
         "up-to-date",
         "one-day-behind",
         "two-days-behind",
@@ -92,7 +92,7 @@ def apt_select():
         '-m',
         '--min-status',
         nargs=1,
-        choices=STATUS_ARGS,
+        choices=status_args,
         help=(
             "return mirrors with minimum status\n"
             "choices:\n"
@@ -102,14 +102,14 @@ def apt_select():
             "   %(week)s\n"
             "   %(unknown)s\n"
             "default: %(up)s\n" % {
-                'up': STATUS_ARGS[0],
-                'day': STATUS_ARGS[1],
-                'two_day': STATUS_ARGS[2],
-                'week': STATUS_ARGS[3],
-                'unknown': STATUS_ARGS[4]
+                'up': status_args[0],
+                'day': status_args[1],
+                'two_day': status_args[2],
+                'week': status_args[3],
+                'unknown': status_args[4]
             }
         ),
-        default=STATUS_ARGS[0],
+        default=status_args[0],
         metavar='STATUS'
     )
     test_group.add_argument(
