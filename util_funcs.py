@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Collection of module netural utility functions"""
 
-from sys import exit, stderr
+from sys import stderr
 from ssl import SSLError
 try:
     from urllib.request import urlopen, HTTPError, URLError
