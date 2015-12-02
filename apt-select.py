@@ -185,14 +185,14 @@ def apt_select():
     codename = release[1][0].upper() + release[1][1:]
     ubuntu_url = "mirrors.ubuntu.com"
     mirror_list = "http://%s/mirrors.txt" % ubuntu_url
-
     stderr.write("Getting list of mirrors...")
     try:
-        archives = Mirrors(get_html(mirror_list).splitlines())
+        mirror_list = get_html(mirror_list)
     except HTMLGetError as err:
         exit("Error getting list from %s:\n\t%s" % (mirror_list, err))
 
     stderr.write("done.\n")
+    archives = Mirrors(mirror_list.splitlines(), flag_ping)
     archives.get_rtts()
     if archives.got["ping"] < flag_number:
         flag_number = archives.got["ping"]

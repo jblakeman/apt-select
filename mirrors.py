@@ -11,7 +11,7 @@ from socket import (socket, AF_INET, SOCK_STREAM,
 from time import time
 from util_funcs import get_html, HTMLGetError, progress_msg
 try:
-    from bs4 import BeautifulSoup
+    from bs4 import BeautifulSoup, FeatureNotFound
 except ImportError as err:
     exit((
         "%s\n"
@@ -38,22 +38,29 @@ class DataError(Exception):
 class Mirrors(object):
     """Base for collection of archive mirrors"""
 
-    def __init__(self, url_list):
+    def __init__(self, url_list, flag_ping):
         self.ranked = []
-        self.status_opts = (
-            "unknown",
-            "One week behind",
-            "Two days behind",
-            "One day behind",
-            "Up to date"
-        )
         self.num = len(url_list)
         self.urls = {}
+        self.got = {"ping": 0}
         for url in url_list:
             self.urls[url] = {"Host": urlparse(url).netloc}
 
-        self.got = {"ping": 0, "data": 0}
-        self.abort_launch = False
+        if not flag_ping:
+            self.got["data"] = 0
+            self.status_opts = (
+                "unknown",
+                "One week behind",
+                "Two days behind",
+                "One day behind",
+                "Up to date"
+            )
+            self.abort_launch = False
+            self.parse_lib = "lxml"
+            try:
+                BeautifulSoup("", self.parse_lib)
+            except FeatureNotFound:
+                self.parse_lib = "html.parser"
 
     def get_launchpad_urls(self):
         """Obtain mirrors' corresponding launchpad URLs"""
@@ -70,8 +77,9 @@ class Mirrors(object):
             self.abort_launch = True
         else:
             stderr.write("done.\n")
+            soup = BeautifulSoup(launchpad_html, self.parse_lib)
             prev = ""
-            for element in BeautifulSoup(launchpad_html).table.descendants:
+            for element in soup.table.descendants:
                 try:
                     url = element.a
                 except AttributeError:
@@ -132,7 +140,7 @@ class Mirrors(object):
             try:
                 info = _LaunchData(
                     url, self.urls[url]["Launchpad"],
-                    codename, hardware
+                    codename, hardware, self.parse_lib
                 ).get_info()
             except DataError as err:
                 stderr.write("\n%s\n" % err)
@@ -191,11 +199,12 @@ class _RoundTrip(object):
 class _LaunchData(object):
     """Launchpad mirror data"""
 
-    def __init__(self, url, launch_url, codename, hardware):
+    def __init__(self, url, launch_url, codename, hardware, parse_lib):
         self.url = url
         self.launch_url = launch_url
         self.codename = codename
         self.hardware = hardware
+        self.parse_lib = parse_lib
 
     def get_info(self):
         """Parse launchpad page HTML and place info in queue"""
@@ -206,7 +215,7 @@ class _LaunchData(object):
             return None
 
         info = {}
-        soup = BeautifulSoup(launch_html)
+        soup = BeautifulSoup(launch_html, self.parse_lib)
         for line in soup.find('table', class_='listing sortable',
                               id='arches').find('tbody').find_all('tr'):
             arches = [x.get_text() for x in line.find_all('td')]
