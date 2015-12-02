@@ -198,12 +198,7 @@ def apt_select():
         flag_number = archives.got["ping"]
 
     if flag_number == 0:
-        exit((
-            "Cannot connect to any mirrors in %s\n."
-            "Minimum latency of this machine may exceed"
-            "2.5 seconds or\nthere may be other unknown"
-            "TCP connectivity issues.\n" % mirror_list
-        ))
+        exit("Cannot connect to any mirrors in %s\n." % mirror_list)
 
     if not flag_ping:
         archives.get_launchpad_urls()
