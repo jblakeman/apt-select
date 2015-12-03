@@ -10,9 +10,11 @@ except ImportError:
     from urllib2 import urlopen, HTTPError, URLError
 
 class HTMLGetError(Exception):
+    """Error class for HTML Gets"""
     pass
 
 def get_html(url):
+    """Retrieve and read HTML from URL"""
     try:
         html = urlopen(url)
     except (HTTPError, URLError, SSLError, timeout) as err:
