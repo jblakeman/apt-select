@@ -3,6 +3,7 @@
 
 from sys import stderr
 from ssl import SSLError
+from socket import timeout
 try:
     from urllib.request import urlopen, HTTPError, URLError
 except ImportError:
@@ -14,8 +15,8 @@ class HTMLGetError(Exception):
 def get_html(url):
     try:
         html = urlopen(url)
-    except (HTTPError, URLError, SSLError) as err:
-        raise(HTMLGetError(err))
+    except (HTTPError, URLError, SSLError, timeout) as err:
+        raise HTMLGetError(err)
 
     return html.read().decode('utf-8')
 
