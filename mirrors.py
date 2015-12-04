@@ -130,7 +130,7 @@ class Mirrors(object):
 
     def lookup_statuses(self, num, min_status, codename, hardware):
         """Scrape requested number of statuses/info from Launchpad"""
-        if min_status == "unknown":
+        if min_status != "unknown":
             min_index = self.status_opts.index(min_status)
             self.status_opts = self.status_opts[min_index:]
 

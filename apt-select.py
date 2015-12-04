@@ -210,9 +210,10 @@ def apt_select():
                 hardware = 'i386'
 
             stderr.write("Looking up %d status(es)\n" % flag_number)
-            archives.lookup_statuses(
-                flag_number, flag_status, codename, hardware
-            )
+            while archives.got["data"] < flag_number:
+                archives.lookup_statuses(
+                    flag_number, flag_status, codename, hardware
+                )
 
     if (flag_number > 1) and not flag_ping:
         stderr.write('\n')
