@@ -249,8 +249,10 @@ def apt_select():
     rank = 0
     final = []
     current_key = -1
-    for i in range(flag_number):
-        url = archives.ranked[i]
+    if flag_ping:
+        archives.top_list = archives.ranked[:flag_number+1]
+
+    for url in archives.top_list:
         info = archives.urls[url]
         host = info["Host"]
         if url == repo_name:

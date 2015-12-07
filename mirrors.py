@@ -43,6 +43,7 @@ class Mirrors(object):
         self.num = len(url_list)
         self.urls = {}
         self.got = {"ping": 0}
+        self.top_list = []
         for url in url_list:
             self.urls[url] = {"Host": urlparse(url).netloc}
 
@@ -148,6 +149,7 @@ class Mirrors(object):
                 if info and info[1] and info[1]["Status"] in self.status_opts:
                     self.urls[url].update(info[1])
                     self.got["data"] += 1
+                    self.top_list.append(info[0])
                 else:
                     self.ranked.remove(info[0])
 
