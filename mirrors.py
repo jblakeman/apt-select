@@ -38,7 +38,7 @@ class DataError(Exception):
 class Mirrors(object):
     """Base for collection of archive mirrors"""
 
-    def __init__(self, url_list, flag_ping):
+    def __init__(self, url_list, flag_ping, flag_status):
         self.ranked = []
         self.num = len(url_list)
         self.urls = {}
@@ -56,6 +56,8 @@ class Mirrors(object):
                 "One day behind",
                 "Up to date"
             )
+            index = self.status_opts.index(flag_status)
+            self.status_opts = self.status_opts[index:]
             self.abort_launch = False
             self.parse_lib = "lxml"
             try:
@@ -129,12 +131,8 @@ class Mirrors(object):
 
         self.ranked = sorted(self.urls, key=lambda x: self.urls[x]["Latency"])
 
-    def lookup_statuses(self, num, min_status, codename, hardware):
+    def lookup_statuses(self, num, codename, hardware):
         """Scrape requested number of statuses/info from Launchpad"""
-        if min_status != "unknown":
-            min_index = self.status_opts.index(min_status)
-            self.status_opts = self.status_opts[min_index:]
-
         progress_msg(self.got["data"], num)
         for url in (x for x in self.ranked
                     if "Status" not in self.urls[x]):

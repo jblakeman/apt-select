@@ -192,7 +192,7 @@ def apt_select():
         exit("Error getting list from %s:\n\t%s" % (mirror_list, err))
 
     stderr.write("done.\n")
-    archives = Mirrors(mirror_list.splitlines(), flag_ping)
+    archives = Mirrors(mirror_list.splitlines(), flag_ping, flag_status)
     archives.get_rtts()
     if archives.got["ping"] < flag_number:
         flag_number = archives.got["ping"]
@@ -211,9 +211,7 @@ def apt_select():
 
             stderr.write("Looking up %d status(es)\n" % flag_number)
             while archives.got["data"] < flag_number:
-                archives.lookup_statuses(
-                    flag_number, flag_status, codename, hardware
-                )
+                archives.lookup_statuses(flag_number, codename, hardware)
 
     if (flag_number > 1) and not flag_ping:
         stderr.write('\n')
