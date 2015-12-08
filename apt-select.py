@@ -245,7 +245,6 @@ def apt_select():
             repo_name = repos[0]
 
     rank = 0
-    final = []
     current_key = -1
     if flag_ping:
         archives.top_list = archives.ranked[:flag_number+1]
@@ -273,20 +272,19 @@ def apt_select():
                         'speed': info["Speed"]
                     }
                 ))
-            else:
-                continue
         else:
             print("%d. %s: %d ms" % (rank+1, info["Host"], info["Latency"]))
 
         rank += 1
-        final.append(url)
         if rank == flag_number:
             break
 
     key = 0
     if flag_choose:
-        query = "Choose a mirror (1 - %d)\n'q' to quit " % len(final)
-        key = ask(query)
+        key = ask((
+            "Choose a mirror (1 - %d)\n'q' to quit " %
+            len(archives.top_list)
+        ))
         while True:
             try:
                 key = int(key)
@@ -295,8 +293,7 @@ def apt_select():
                     exit()
 
             if (type(key) is str) or ((key < 1) or (key > rank)):
-                query = "Invalid entry "
-                key = ask(query)
+                key = ask("Invalid entry")
                 continue
 
             break
@@ -313,7 +310,7 @@ def apt_select():
             (archives.urls[repo_name]["Host"], skip_gen_msg)
         ))
 
-    mirror = final[key]
+    mirror = archives.top_list[key]
     lines = ''.join(lines)
     for repo in repos:
         lines = lines.replace(repo, mirror)
