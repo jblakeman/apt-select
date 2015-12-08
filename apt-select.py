@@ -181,7 +181,6 @@ def apt_select():
     if not path.isfile(sources_path):
         exit("%s must exist as file" % sources_path)
 
-    codename = release[1][0].upper() + release[1][1:]
     ubuntu_url = "mirrors.ubuntu.com"
     mirror_list = "http://%s/mirrors.txt" % ubuntu_url
     stderr.write("Getting list of mirrors...")
@@ -202,6 +201,7 @@ def apt_select():
     if not flag_ping:
         archives.get_launchpad_urls()
         if not archives.abort_launch:
+            codename = release[1][0].upper() + release[1][1:]
             hardware = check_output(["uname", "-m"]).strip().decode('utf-8')
             if hardware == 'x86_64':
                 hardware = 'amd64'
