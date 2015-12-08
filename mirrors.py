@@ -93,7 +93,6 @@ class Mirrors(object):
                     except TypeError:
                         pass
                     else:
-
                         if url in self.urls:
                             self.urls[url]["Launchpad"] = launchpad_base + prev
 

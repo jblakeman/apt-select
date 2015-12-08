@@ -7,6 +7,7 @@ from argparse import ArgumentParser, RawTextHelpFormatter
 from util_funcs import get_html, HTMLGetError
 from mirrors import Mirrors
 
+
 def index_zero(flag):
     """Get first element of list or return unchanged
 
@@ -60,7 +61,6 @@ def yes_or_no(query):
 
 def apt_select():
     """Run apt-select: Ubuntu archive mirror reporting tool"""
-
     parser = ArgumentParser(
         description=(
             "Find the fastest Ubuntu apt mirrors.\n"
@@ -80,7 +80,6 @@ def apt_select():
         default=1,
         metavar='NUMBER'
     )
-
     status_args = (
         "up-to-date",
         "one-day-behind",
@@ -88,7 +87,6 @@ def apt_select():
         "one-week-behind",
         "unknown"
     )
-
     test_group = parser.add_mutually_exclusive_group(required=False)
     test_group.add_argument(
         '-m',
@@ -149,7 +147,6 @@ def apt_select():
     )
 
     args = parser.parse_args()
-
     flag_number = index_zero(args.top_number)
     flag_status = index_zero(args.min_status).replace('-', ' ')
     if flag_status != 'unknown':
@@ -192,8 +189,8 @@ def apt_select():
         mirror_list = get_html(mirror_list)
     except HTMLGetError as err:
         exit("Error getting list from %s:\n\t%s" % (mirror_list, err))
-
     stderr.write("done.\n")
+
     archives = Mirrors(mirror_list.splitlines(), flag_ping, flag_status)
     archives.get_rtts()
     if archives.got["ping"] < flag_number:
@@ -355,4 +352,3 @@ if __name__ == '__main__':
         apt_select()
     except KeyboardInterrupt:
         stderr.write("Aborting...\n")
-
