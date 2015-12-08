@@ -7,9 +7,11 @@ from argparse import ArgumentParser, RawTextHelpFormatter
 from util_funcs import get_html, HTMLGetError
 from mirrors import Mirrors
 
-# argparse returns list type for only choice arguments, not default
 def index_zero(flag):
-    """Get first element of list or return unchanged"""
+    """Get first element of list or return unchanged
+
+    argparse returns a list for choice args, but not default.
+    Both types are handled here."""
     if type(flag) is list:
         return flag[0]
 
@@ -57,7 +59,7 @@ def yes_or_no(query):
 
 
 def apt_select():
-    """Run apt-select: Ubuntu alternative archive mirror reporting tool"""
+    """Run apt-select: Ubuntu archive mirror reporting tool"""
 
     parser = ArgumentParser(
         description=(
