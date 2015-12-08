@@ -181,22 +181,23 @@ def apt_select():
     if not path.isfile(sources_path):
         exit("%s must exist as file" % sources_path)
 
-    ubuntu_url = "mirrors.ubuntu.com"
-    mirror_list = "http://%s/mirrors.txt" % ubuntu_url
+    mirrors_loc = "mirrors.ubuntu.com"
+    mirrors_url = "http://%s/mirrors.txt" % mirrors_loc
     stderr.write("Getting list of mirrors...")
     try:
-        mirror_list = get_html(mirror_list)
+        mirrors_list = get_html(mirrors_url)
     except HTMLGetError as err:
-        exit("Error getting list from %s:\n\t%s" % (mirror_list, err))
+        exit("Error getting list from %s:\n\t%s" % (mirrors_list, err))
     stderr.write("done.\n")
+    mirrors_list = mirrors_list.splitlines()
 
-    archives = Mirrors(mirror_list.splitlines(), flag_ping, flag_status)
+    archives = Mirrors(mirrors_list, flag_ping, flag_status)
     archives.get_rtts()
     if archives.got["ping"] < flag_number:
         flag_number = archives.got["ping"]
 
     if flag_number == 0:
-        exit("Cannot connect to any mirrors in %s\n." % mirror_list)
+        exit("Cannot connect to any mirrors in %s\n." % mirrors_list)
 
     if not flag_ping:
         archives.get_launchpad_urls()
