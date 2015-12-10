@@ -147,7 +147,9 @@ def apt_select():
     )
 
     args = parser.parse_args()
+
     flag_number = index_zero(args.top_number)
+    # Convert status argument to format used by Launchpad
     flag_status = index_zero(args.min_status).replace('-', ' ')
     if flag_status != 'unknown':
         flag_status = flag_status[0].upper() + flag_status[1:]
