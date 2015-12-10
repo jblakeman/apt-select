@@ -8,17 +8,6 @@ from util_funcs import get_html, HTMLGetError
 from mirrors import Mirrors
 
 
-def index_zero(flag):
-    """Get first element of list or return unchanged
-
-    argparse returns a list for choice args, but not default.
-    Both types are handled here."""
-    if type(flag) is list:
-        return flag[0]
-
-    return flag
-
-
 def not_ubuntu():
     """Notify of incompatibility"""
     exit("Not an Ubuntu OS")
@@ -77,7 +66,7 @@ def apt_select():
             "specify number of mirrors to return\n"
             "default: 1\n"
         ),
-        default=1,
+        default=[1],
         metavar='NUMBER'
     )
     status_args = (
@@ -93,6 +82,7 @@ def apt_select():
         '--min-status',
         nargs=1,
         choices=status_args,
+        type=str,
         help=(
             "return mirrors with minimum status\n"
             "choices:\n"
@@ -109,7 +99,7 @@ def apt_select():
                 'unknown': status_args[4]
             }
         ),
-        default=status_args[0],
+        default=[status_args[0]],
         metavar='STATUS'
     )
     test_group.add_argument(
@@ -147,10 +137,9 @@ def apt_select():
     )
 
     args = parser.parse_args()
-
-    flag_number = index_zero(args.top_number)
+    flag_number = args.top_number[0]
     # Convert status argument to format used by Launchpad
-    flag_status = index_zero(args.min_status).replace('-', ' ')
+    flag_status = args.min_status[0].replace('-', ' ')
     if flag_status != 'unknown':
         flag_status = flag_status[0].upper() + flag_status[1:]
 
