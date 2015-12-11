@@ -11,6 +11,11 @@ from socket import (socket, AF_INET, SOCK_STREAM,
 from time import time
 from util_funcs import get_html, HTMLGetError, progress_msg
 try:
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import urlparse
+
+try:
     from bs4 import BeautifulSoup, FeatureNotFound
 except ImportError as err:
     exit((
@@ -18,11 +23,12 @@ except ImportError as err:
         "Try 'sudo apt-get install python-bs4' "
         "or 'pip install beautifulsoup4'" % err
     ))
-
-try:
-    from urlparse import urlparse
-except ImportError:
-    from urllib.parse import urlparse
+else:
+    PARSER = "lxml"
+    try:
+        BeautifulSoup("", PARSER)
+    except FeatureNotFound:
+        PARSER = "html.PARSER"
 
 
 class ConnectError(Exception):
@@ -49,12 +55,6 @@ class Mirrors(object):
             self.urls[url] = {"Host": urlparse(url).netloc}
 
         self.abort_launch = False
-        self.parse_lib = "lxml"
-        try:
-            BeautifulSoup("", self.parse_lib)
-        except FeatureNotFound:
-            self.parse_lib = "html.parser"
-
         self.codename = codename
         self.hardware = hardware
         self.status_opts = (
@@ -83,7 +83,7 @@ class Mirrors(object):
             self.abort_launch = True
         else:
             stderr.write("done.\n")
-            soup = BeautifulSoup(launchpad_html, self.parse_lib)
+            soup = BeautifulSoup(launchpad_html, PARSER)
             prev = ""
             for element in soup.table.descendants:
                 try:
@@ -145,7 +145,7 @@ class Mirrors(object):
             ))
 
         info = {}
-        soup = BeautifulSoup(launch_html, self.parse_lib)
+        soup = BeautifulSoup(launch_html, PARSER)
         for line in soup.find('table', class_='listing sortable',
                               id='arches').find('tbody').find_all('tr'):
             arches = [x.get_text() for x in line.find_all('td')]
