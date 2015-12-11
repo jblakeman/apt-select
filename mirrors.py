@@ -38,32 +38,36 @@ class DataError(Exception):
 class Mirrors(object):
     """Base for collection of archive mirrors"""
 
-    def __init__(self, url_list, flag_ping, flag_status):
+    def __init__(self, url_list, flag_number,
+                 flag_status, codename, hardware):
         self.ranked = []
-        self.num = len(url_list)
+        self.test_num = len(url_list)
         self.urls = {}
         self.got = {"ping": 0}
         self.top_list = []
         for url in url_list:
             self.urls[url] = {"Host": urlparse(url).netloc}
 
-        if not flag_ping:
-            self.got["data"] = 0
-            self.status_opts = (
-                "unknown",
-                "One week behind",
-                "Two days behind",
-                "One day behind",
-                "Up to date"
-            )
-            index = self.status_opts.index(flag_status)
-            self.status_opts = self.status_opts[index:]
-            self.abort_launch = False
-            self.parse_lib = "lxml"
-            try:
-                BeautifulSoup("", self.parse_lib)
-            except FeatureNotFound:
-                self.parse_lib = "html.parser"
+        self.abort_launch = False
+        self.parse_lib = "lxml"
+        try:
+            BeautifulSoup("", self.parse_lib)
+        except FeatureNotFound:
+            self.parse_lib = "html.parser"
+
+        self.codename = codename
+        self.hardware = hardware
+        self.got["data"] = 0
+        self.status_opts = (
+            "unknown",
+            "One week behind",
+            "Two days behind",
+            "One day behind",
+            "Up to date"
+        )
+        index = self.status_opts.index(flag_status)
+        self.status_opts = self.status_opts[index:]
+        self.status_num = flag_number
 
     def get_launchpad_urls(self):
         """Obtain mirrors' corresponding launchpad URLs"""
@@ -102,8 +106,8 @@ class Mirrors(object):
     def get_rtts(self):
         """Test latency to all mirrors"""
         processed = 0
-        stderr.write("Testing %d mirror(s)\n" % self.num)
-        progress_msg(processed, self.num)
+        stderr.write("Testing %d mirror(s)\n" % self.test_num)
+        progress_msg(processed, self.test_num)
         for url, info in self.urls.items():
             host = info["Host"]
             try:
@@ -120,7 +124,7 @@ class Mirrors(object):
                     self.got["ping"] += 1
 
             processed += 1
-            progress_msg(processed, self.num)
+            progress_msg(processed, self.test_num)
 
         stderr.write('\n')
         # Mirrors without latency info are removed
@@ -130,16 +134,50 @@ class Mirrors(object):
 
         self.ranked = sorted(self.urls, key=lambda x: self.urls[x]["Latency"])
 
-    def lookup_statuses(self, num, codename, hardware):
+
+    def __get_info(self, url):
+        """Parse launchpad page HTML and place info in queue"""
+        try:
+            launch_html = get_html(self.urls[url]["Launchpad"])
+        except HTMLGetError as err:
+            stderr.write((
+                "\nconnection to %s: %s\n" %
+                (self.urls[url]["Launchpad"], err)
+            ))
+            return None
+
+        info = {}
+        soup = BeautifulSoup(launch_html, self.parse_lib)
+        for line in soup.find('table', class_='listing sortable',
+                              id='arches').find('tbody').find_all('tr'):
+            arches = [x.get_text() for x in line.find_all('td')]
+            if self.codename in arches[0] and arches[1] == self.hardware:
+                info.update({"Status": arches[2]})
+
+        for line in soup.find_all(id=re.compile('speed|organisation')):
+            info.update({line.dt.get_text().strip(':'): line.dd.get_text()})
+
+        if "Status" not in info:
+            stderr.write((
+                "Unable to parse status info from %s\n" %
+                self.urls[url]["Launchpad"]
+            ))
+            return None
+
+        # Launchpad has more descriptive "unknown" status.
+        # It's trimmed here to match statuses list
+        if "unknown" in info["Status"]:
+            info["Status"] = "unknown"
+
+        return [url, info]
+
+    def lookup_statuses(self):
         """Scrape requested number of statuses/info from Launchpad"""
-        progress_msg(self.got["data"], num)
+        progress_msg(self.got["data"], self.status_num)
         for url in (x for x in self.ranked
                     if "Status" not in self.urls[x]):
             try:
-                info = _LaunchData(
-                    url, self.urls[url]["Launchpad"],
-                    codename, hardware, self.parse_lib
-                ).get_info()
+                info = self.__get_info(url)
             except DataError as err:
                 stderr.write("\n%s\n" % err)
             else:
@@ -150,8 +188,8 @@ class Mirrors(object):
                 else:
                     self.ranked.remove(info[0])
 
-            progress_msg(self.got["data"], num)
-            if self.got["data"] == num:
+            progress_msg(self.got["data"], self.status_num)
+            if self.got["data"] == self.status_num:
                 break
 
 
@@ -193,46 +231,3 @@ class _RoundTrip(object):
                 rtts.append(rtt)
 
         return round(min(rtts))
-
-
-class _LaunchData(object):
-    """Launchpad mirror data"""
-
-    def __init__(self, url, launch_url, codename, hardware, parse_lib):
-        self.url = url
-        self.launch_url = launch_url
-        self.codename = codename
-        self.hardware = hardware
-        self.parse_lib = parse_lib
-
-    def get_info(self):
-        """Parse launchpad page HTML and place info in queue"""
-        try:
-            launch_html = get_html(self.launch_url)
-        except HTMLGetError as err:
-            stderr.write("\nconnection to %s: %s\n" % (self.launch_url, err))
-            return None
-
-        info = {}
-        soup = BeautifulSoup(launch_html, self.parse_lib)
-        for line in soup.find('table', class_='listing sortable',
-                              id='arches').find('tbody').find_all('tr'):
-            arches = [x.get_text() for x in line.find_all('td')]
-            if self.codename in arches[0] and arches[1] == self.hardware:
-                info.update({"Status": arches[2]})
-
-        for line in soup.find_all(id=re.compile('speed|organisation')):
-            info.update({line.dt.get_text().strip(':'): line.dd.get_text()})
-
-        if "Status" not in info:
-            stderr.write((
-                "Unable to parse status info from %s\n" % self.launch_url
-            ))
-            return None
-
-        # Launchpad has more descriptive "unknown" status.
-        # It's trimmed here to match statuses list
-        if "unknown" in info["Status"]:
-            info["Status"] = "unknown"
-
-        return [self.url, info]

@@ -182,7 +182,15 @@ def apt_select():
     stderr.write("done.\n")
     mirrors_list = mirrors_list.splitlines()
 
-    archives = Mirrors(mirrors_list, flag_ping, flag_status)
+    codename = release[1][0].upper() + release[1][1:]
+    hardware = check_output(["uname", "-m"]).strip().decode('utf-8')
+    if hardware == 'x86_64':
+        hardware = 'amd64'
+    else:
+        hardware = 'i386'
+
+    archives = Mirrors(mirrors_list, flag_number, flag_status,
+                       codename, hardware)
     archives.get_rtts()
     if archives.got["ping"] < flag_number:
         flag_number = archives.got["ping"]
@@ -193,16 +201,10 @@ def apt_select():
     if not flag_ping:
         archives.get_launchpad_urls()
         if not archives.abort_launch:
-            codename = release[1][0].upper() + release[1][1:]
-            hardware = check_output(["uname", "-m"]).strip().decode('utf-8')
-            if hardware == 'x86_64':
-                hardware = 'amd64'
-            else:
-                hardware = 'i386'
-
+            archives.status_number = flag_number
             stderr.write("Looking up %d status(es)\n" % flag_number)
             while archives.got["data"] < flag_number:
-                archives.lookup_statuses(flag_number, codename, hardware)
+                archives.lookup_statuses()
 
     if (flag_number > 1) and not flag_ping:
         stderr.write('\n')
