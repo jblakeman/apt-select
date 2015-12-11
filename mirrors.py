@@ -44,8 +44,7 @@ class DataError(Exception):
 class Mirrors(object):
     """Base for collection of archive mirrors"""
 
-    def __init__(self, url_list, flag_number,
-                 flag_status, codename, hardware):
+    def __init__(self, url_list, flag_status, codename, hardware):
         self.ranked = []
         self.test_num = len(url_list)
         self.urls = {}

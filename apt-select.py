@@ -189,8 +189,7 @@ def apt_select():
     else:
         hardware = 'i386'
 
-    archives = Mirrors(mirrors_list, flag_number, flag_status,
-                       codename, hardware)
+    archives = Mirrors(mirrors_list, flag_status, codename, hardware)
     archives.get_rtts()
     if archives.got["ping"] < flag_number:
         flag_number = archives.got["ping"]
