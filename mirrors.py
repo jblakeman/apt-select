@@ -43,7 +43,7 @@ class Mirrors(object):
         self.ranked = []
         self.test_num = len(url_list)
         self.urls = {}
-        self.got = {"ping": 0}
+        self.got = {"ping": 0, "data": 0}
         self.top_list = []
         for url in url_list:
             self.urls[url] = {"Host": urlparse(url).netloc}
@@ -57,7 +57,6 @@ class Mirrors(object):
 
         self.codename = codename
         self.hardware = hardware
-        self.got["data"] = 0
         self.status_opts = (
             "unknown",
             "One week behind",
@@ -67,7 +66,7 @@ class Mirrors(object):
         )
         index = self.status_opts.index(flag_status)
         self.status_opts = self.status_opts[index:]
-        self.status_num = flag_number
+        self.status_num = 1
 
     def get_launchpad_urls(self):
         """Obtain mirrors' corresponding launchpad URLs"""
@@ -140,11 +139,10 @@ class Mirrors(object):
         try:
             launch_html = get_html(self.urls[url]["Launchpad"])
         except HTMLGetError as err:
-            stderr.write((
+            raise DataError((
                 "\nconnection to %s: %s\n" %
                 (self.urls[url]["Launchpad"], err)
             ))
-            return None
 
         info = {}
         soup = BeautifulSoup(launch_html, self.parse_lib)
@@ -158,11 +156,10 @@ class Mirrors(object):
             info.update({line.dt.get_text().strip(':'): line.dd.get_text()})
 
         if "Status" not in info:
-            stderr.write((
+            raise DataError((
                 "Unable to parse status info from %s\n" %
                 self.urls[url]["Launchpad"]
             ))
-            return None
 
         # Launchpad has more descriptive "unknown" status.
         # It's trimmed here to match statuses list
@@ -173,23 +170,25 @@ class Mirrors(object):
 
     def lookup_statuses(self):
         """Scrape requested number of statuses/info from Launchpad"""
+        total = 0
         progress_msg(self.got["data"], self.status_num)
         for url in (x for x in self.ranked
                     if "Status" not in self.urls[x]):
             try:
                 info = self.__get_info(url)
             except DataError as err:
+                self.ranked.remove(url)
                 stderr.write("\n%s\n" % err)
             else:
                 if info and info[1] and info[1]["Status"] in self.status_opts:
                     self.urls[url].update(info[1])
                     self.got["data"] += 1
                     self.top_list.append(info[0])
-                else:
-                    self.ranked.remove(info[0])
 
+            total += 1
             progress_msg(self.got["data"], self.status_num)
-            if self.got["data"] == self.status_num:
+            if ((self.got["data"] == self.status_num) or
+                    (total == self.test_num)):
                 break
 
 

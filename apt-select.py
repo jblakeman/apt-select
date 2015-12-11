@@ -201,10 +201,9 @@ def apt_select():
     if not flag_ping:
         archives.get_launchpad_urls()
         if not archives.abort_launch:
-            archives.status_number = flag_number
+            archives.status_num = flag_number
             stderr.write("Looking up %d status(es)\n" % flag_number)
-            while archives.got["data"] < flag_number:
-                archives.lookup_statuses()
+            archives.lookup_statuses()
 
     if (flag_number > 1) and not flag_ping:
         stderr.write('\n')
