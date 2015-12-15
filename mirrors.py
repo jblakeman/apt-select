@@ -134,7 +134,7 @@ class Mirrors(object):
 
 
     def __get_info(self, url):
-        """Parse launchpad page HTML and place info in queue"""
+        """Parse launchpad page HTML for mirror information"""
         try:
             launch_html = get_html(self.urls[url]["Launchpad"])
         except HTMLGetError as err:
