@@ -187,7 +187,7 @@ class Mirrors(object):
             total += 1
             progress_msg(self.got["data"], self.status_num)
             if ((self.got["data"] == self.status_num) or
-                    (total == self.test_num)):
+                    (total == self.got["ping"])):
                 break
 
 
