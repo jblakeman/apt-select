@@ -139,7 +139,7 @@ class Mirrors(object):
             launch_html = get_html(self.urls[url]["Launchpad"])
         except HTMLGetError as err:
             raise DataError((
-                "\nconnection to %s: %s\n" %
+                "connection to %s: %s" %
                 (self.urls[url]["Launchpad"], err)
             ))
 
@@ -156,7 +156,7 @@ class Mirrors(object):
 
         if "Status" not in info:
             raise DataError((
-                "Unable to parse status info from %s\n" %
+                "Unable to parse status info from %s" %
                 self.urls[url]["Launchpad"]
             ))
 
