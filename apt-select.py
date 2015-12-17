@@ -208,7 +208,7 @@ def apt_select():
     if flag_list:
         exit()
 
-    # Writing a new file using the currently used mirror would be needless work
+    # Avoid generating duplicate sources.list
     if current_key == key:
         exit((
             "%s is the currently used mirror.\n%s" %
