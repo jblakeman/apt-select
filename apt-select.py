@@ -119,8 +119,8 @@ def apt_select():
             stderr.write("Looking up %d status(es)\n" % flag_number)
             archives.lookup_statuses()
 
-    if (flag_number > 1) and not flag_ping:
-        stderr.write('\n')
+        if flag_number > 1:
+            stderr.write('\n')
 
     repo_name = ""
     found = False
