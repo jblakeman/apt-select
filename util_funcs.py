@@ -20,7 +20,12 @@ def get_html(url):
     except (HTTPError, URLError, SSLError, timeout) as err:
         raise HTMLGetError(err)
 
-    return html.read().decode('utf-8')
+    try:
+        html = html.read()
+    except (SSLError, IOError, OSError) as err:
+        raise HTMLGetError(err)
+
+    return html.decode('utf-8')
 
 
 def progress_msg(processed, total):
