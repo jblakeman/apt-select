@@ -198,13 +198,12 @@ def apt_select():
                 if key == 'q':
                     exit()
 
-            if (type(key) is str) or ((key < 1) or (key > rank)):
-                key = ask("Invalid entry")
-                continue
+            if (type(key) is not str) and (key >= 1) and (key <= rank):
+                break
 
-            break
+            key = ask("Invalid entry ")
 
-        key = key - 1
+        key -= 1
 
     if flag_list:
         exit()
