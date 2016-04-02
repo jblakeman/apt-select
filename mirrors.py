@@ -57,8 +57,16 @@ class Mirrors(object):
         self.urls = {}
         self.got = {"ping": 0, "data": 0}
         self.top_list = []
+        self.trip_queue = Queue()
+        self.trips = []
         for url in url_list:
-            self.urls[url] = {"Host": urlparse(url).netloc}
+            host = urlparse(url).netloc
+            try:
+                self.trips.append(_RoundTrip(url, host, self.trip_queue))
+            except gaierror as err:
+                stderr.write("%s: %s ignored\n" % (err, url))
+            else:
+                self.urls[url] = {"Host": host}
 
         self.abort_launch = False
         self.codename = codename
@@ -201,10 +209,12 @@ class Mirrors(object):
 class _RoundTrip(object):
     """Socket connections for latency reporting"""
 
-    def __init__(self, url):
+    def __init__(self, url, host, trip_queue):
         self.url = url
+        self.host = host
+        self.trip_queue = trip_queue
         try:
-            self.addr = gethostbyname(self.url)
+            self.addr = gethostbyname(host)
         except gaierror as err:
             raise gaierror(err)
 
@@ -231,8 +241,10 @@ class _RoundTrip(object):
             try:
                 rtt = self.__tcp_ping()
             except ConnectError as err:
-                raise ConnectError(err)
+                stderr.write("\n\tconnection to %s: %s\n" % (self.host, err))
+                self.trip_queue.put_nowait(None)
+                return
             else:
                 rtts.append(rtt)
 
-        return round(min(rtts))
+        self.trip_queue.put((self.url, round(min(rtts))))
