@@ -15,6 +15,13 @@ try:
 except ImportError:
     from urllib.parse import urlparse
 
+from threading import Thread
+
+try:
+    from queue import Queue
+except ImportError:
+    from queue import queue
+
 try:
     from bs4 import BeautifulSoup, FeatureNotFound
 except ImportError as err:
