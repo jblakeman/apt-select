@@ -20,7 +20,7 @@ from threading import Thread
 try:
     from queue import Queue, Empty
 except ImportError:
-    from queue import queue, Empty
+    from Queue import Queue, Empty
 
 try:
     from bs4 import BeautifulSoup, FeatureNotFound
