@@ -64,7 +64,7 @@ def get_args():
         action='store_true',
         help=(
             "rank mirror(s) by latency only, disregard status(es)\n"
-            "cannot be used in conjunction with -m/--min-status\n"
+            "cannot be used with -m/--min-status\n"
         ),
         default=False
     )
@@ -87,7 +87,7 @@ def get_args():
         action='store_true',
         help=(
             "print list of mirrors only, don't generate file\n"
-            "cannot be used in conjunction with -c/--choose\n"
+            "cannot be used with -c/--choose\n"
         ),
         default=False
     )
