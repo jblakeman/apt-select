@@ -18,9 +18,9 @@ except ImportError:
 from threading import Thread
 
 try:
-    from queue import Queue
+    from queue import Queue, Empty
 except ImportError:
-    from queue import queue
+    from queue import queue, Empty
 
 try:
     from bs4 import BeautifulSoup, FeatureNotFound
@@ -118,22 +118,26 @@ class Mirrors(object):
 
     def get_rtts(self):
         """Test latency to all mirrors"""
+
+        for trip in self.trips:
+            thread = Thread(target=trip.min_rtt)
+            thread.daemon = True
+            thread.start()
+
+        trip_num = len(self.trips)
         processed = 0
         stderr.write("Testing %d mirror(s)\n" % self.test_num)
-        progress_msg(processed, self.test_num)
-        for url, info in self.urls.items():
-            host = info["Host"]
+        progress_msg(processed, trip_num)
+        for _ in range(trip_num):
             try:
-                trip = _RoundTrip(host)
-            except gaierror as err:
-                stderr.write("%s: %s ignored\n" % (err, url))
+                min_rtt = self.trip_queue.get(block=True)
+            except Empty:
+                pass
             else:
-                try:
-                    rtt = trip.min_rtt()
-                except ConnectError as err:
-                    stderr.write("\nconnection to %s: %s\n" % (host, err))
-                else:
-                    self.urls[url].update({"Latency": rtt})
+                # ConnectError was handled if a queue result is None
+                if min_rtt:
+                    self.trip_queue.task_done()
+                    self.urls[min_rtt[0]].update({"Latency": min_rtt[1]})
                     self.got["ping"] += 1
 
             processed += 1
@@ -145,7 +149,9 @@ class Mirrors(object):
             key: val for key, val in self.urls.items() if "Latency" in val
         }
 
-        self.ranked = sorted(self.urls, key=lambda x: self.urls[x]["Latency"])
+        self.ranked = sorted(
+            self.urls, key=lambda x: self.urls[x]["Latency"]
+        )
 
 
     def __get_info(self, url):
