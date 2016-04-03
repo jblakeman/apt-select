@@ -7,29 +7,64 @@ Features
 -----------
 
 - Tests latency to mirrors in [mirrors.txt](http://mirrors.ubuntu.com/mirrors.txt).
-    - Each mirror is sent 3 TCP connection requests (on port 80) to gauge round trip time.
+    - Latency is measured by the establishment time of a TCP socket connection on port 80.
+    - 3 requests are sent to each mirror, minumum time being used for rank.
 
 - Prints latency, status, and bandwidth capacity of the fastest mirrors in a ranked list.
     - Minimum round trip times determine rank.
     - Status and bandwidth are scraped from [launchpad](https://launchpad.net/ubuntu/+archivemirrors).
 
 - Generates `sources.list` file using new mirror.
-    - New mirror can either be chosen from a list or generated automatically (default).
-    - Selected mirror is used to search `/etc/apt/sources.list` and replace all instances of the first urls labeled as the `main`/`security` repositories.
+    - New mirror to be used can either be chosen from a list or selected automatically using the top ranked mirror (default).
+    - `/etc/apt/sources.list` is searched, and selected mirror replaces all instances of the first urls labeled as the `main`/`security` repositories.
 
 Dependencies
 ------------
 
 Python HTML parser, BeautifulSoup
 
-    sudo apt-get install 'python(3?)-bs4$'
+Python2
+
+    sudo apt-get install python-bs4
+
+Python3
+
+    sudo apt-get install python3-bs4
 
 Usage
 -----
 
-List arguments and options:
+```
+$ ./apt-select.py --help
+usage: apt-select.py [-h] [-t NUMBER] [-m STATUS | -p] [-c | -l]
 
-    ./apt-select.py -h
+Find the fastest Ubuntu apt mirrors.
+Generate new sources.list file.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -t NUMBER, --top-number NUMBER
+                        specify number of mirrors to return
+                        default: 1
+  -m STATUS, --min-status STATUS
+                        return mirrors with minimum status
+                        choices:
+                           up-to-date
+                           one-day-behind
+                           two-days-behind
+                           one-week-behind
+                           unknown
+                        default: up-to-date
+  -p, --ping-only       rank mirror(s) by latency only, disregard status(es)
+                        cannot be used with -m/--min-status
+  -c, --choose          choose mirror from a list
+                        requires -t/--top-num NUMBER where NUMBER > 1
+  -l, --list            print list of mirrors only, don't generate file
+                        cannot be used with -c/--choose
+```
+
+Examples
+--------
 
 Choose from the top 3 mirrors, including those last updated a week ago:
 
