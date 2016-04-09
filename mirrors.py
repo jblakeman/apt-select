@@ -3,7 +3,6 @@
 
    Provides latency testing and mirror attribute getting from Launchpad."""
 
-import re
 from sys import stderr
 from socket import (socket, AF_INET, SOCK_STREAM,
                     gethostbyname, setdefaulttimeout,
@@ -173,7 +172,7 @@ class Mirrors(object):
             if self.codename in arches[0] and arches[1] == self.hardware:
                 info.update({"Status": arches[2]})
 
-        for line in soup.find_all(id=re.compile('speed|organisation')):
+        for line in soup.find_all(id=['speed', 'organisation']):
             info.update({line.dt.get_text().strip(':'): line.dd.get_text()})
 
         if "Status" not in info:
