@@ -166,14 +166,18 @@ class Mirrors(object):
 
         info = {}
         soup = BeautifulSoup(launch_html, PARSER)
-        for line in soup.find('table', class_='listing sortable',
-                              id='arches').find('tbody').find_all('tr'):
-            arches = [x.get_text() for x in line.find_all('td')]
-            if self.codename in arches[0] and arches[1] == self.hardware:
-                info.update({"Status": arches[2]})
-
-        for line in soup.find_all(id=['speed', 'organisation']):
-            info.update({line.dt.get_text().strip(':'): line.dd.get_text()})
+        # Start with elements of ids we need to match
+        for line in soup.find_all(id=['arches', 'speed', 'organisation']):
+            if line.name == 'table':
+                # Status information resides in a table column alongside
+                # series name and machine architecture, so we match them.
+                for tr in line.find('tbody').find_all('tr'):
+                    arches = [x.get_text() for x in tr.find_all('td')]
+                    if self.codename in arches[0] and arches[1] == self.hardware:
+                        info.update({"Status": arches[2]})
+            else:
+                # "Speed" resides in a dl, and we the key -> value as such
+                info.update({line.dt.get_text().strip(':'): line.dd.get_text()})
 
         if "Status" not in info:
             raise DataError((
