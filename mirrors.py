@@ -176,7 +176,7 @@ class Mirrors(object):
                     if self.codename in arches[0] and arches[1] == self.hardware:
                         info.update({"Status": arches[2]})
             else:
-                # "Speed" resides in a dl, and we the key -> value as such
+                # "Speed" resides in a dl, and we use the key -> value as such
                 info.update({line.dt.get_text().strip(':'): line.dd.get_text()})
 
         if "Status" not in info:
