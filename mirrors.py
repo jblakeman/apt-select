@@ -155,7 +155,11 @@ class Mirrors(object):
 
 
     def __get_info(self, url):
-        """Parse launchpad page HTML for mirror information"""
+        """Parse launchpad page HTML for mirror information
+
+        Ideally, launchpadlib would be used to get mirror information, but the
+        Launchpad API doesn't support access to archivemirror statuses."""
+
         try:
             launch_html = get_html(self.urls[url]["Launchpad"])
         except HTMLGetError as err:
