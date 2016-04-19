@@ -104,7 +104,7 @@ def apt_select():
     else:
         hardware = 'i386'
 
-    archives = Mirrors(mirrors_list, flag_status, codename, hardware)
+    archives = Mirrors(mirrors_list, flag_status)
     archives.get_rtts()
     if archives.got["ping"] < flag_number:
         flag_number = archives.got["ping"]
@@ -115,9 +115,10 @@ def apt_select():
     if not flag_ping:
         archives.get_launchpad_urls()
         if not archives.abort_launch:
+            # Mirrors needs a limit to stop launching threads
             archives.status_num = flag_number
             stderr.write("Looking up %d status(es)\n" % flag_number)
-            archives.lookup_statuses()
+            archives.lookup_statuses(flag_status, codename, hardware)
 
         if flag_number > 1:
             stderr.write('\n')

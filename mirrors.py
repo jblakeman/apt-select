@@ -50,7 +50,7 @@ class DataError(Exception):
 class Mirrors(object):
     """Base for collection of archive mirrors"""
 
-    def __init__(self, url_list, flag_status, codename, hardware):
+    def __init__(self, url_list, flag_status):
         self.ranked = []
         self.test_num = len(url_list)
         self.urls = {}
@@ -68,8 +68,6 @@ class Mirrors(object):
                 self.urls[url] = {"Host": host}
 
         self.abort_launch = False
-        self.codename = codename
-        self.hardware = hardware
         self.status_opts = (
             "unknown",
             "One week behind",
@@ -79,6 +77,7 @@ class Mirrors(object):
         )
         index = self.status_opts.index(flag_status)
         self.status_opts = self.status_opts[index:]
+        # Default to top
         self.status_num = 1
 
     def get_launchpad_urls(self):
@@ -154,70 +153,62 @@ class Mirrors(object):
         )
 
 
-    def __get_info(self, url):
-        """Parse launchpad page HTML for mirror information
+    def __queue_lookups(self, codename, hardware, data_queue):
+        """Queue threads for data retrieval from launchpad.net
 
-        Ideally, launchpadlib would be used to get mirror information, but the
-        Launchpad API doesn't support access to archivemirror statuses."""
-
-        try:
-            launch_html = get_html(self.urls[url]["Launchpad"])
-        except HTMLGetError as err:
-            raise DataError((
-                "connection to %s: %s" %
-                (self.urls[url]["Launchpad"], err)
-            ))
-
-        info = {}
-        soup = BeautifulSoup(launch_html, PARSER)
-        # Find elements of the ids we need
-        for line in soup.find_all(id=['arches', 'speed', 'organisation']):
-            if line.name == 'table':
-                # Status information lives in a table column alongside
-                # series name and machine architecture
-                for tr in line.find('tbody').find_all('tr'):
-                    arches = [x.get_text() for x in tr.find_all('td')]
-                    if self.codename in arches[0] and arches[1] == self.hardware:
-                        info.update({"Status": arches[2]})
-            else:
-                # "Speed" lives in a dl, and we use the key -> value as such
-                info.update({line.dt.get_text().strip(':'): line.dd.get_text()})
-
-        if "Status" not in info:
-            raise DataError((
-                "Unable to parse status info from %s" %
-                self.urls[url]["Launchpad"]
-            ))
-
-        # Launchpad has more descriptive "unknown" status.
-        # It's trimmed here to match statuses list
-        if "unknown" in info["Status"]:
-            info["Status"] = "unknown"
-
-        return [url, info]
-
-    def lookup_statuses(self):
-        """Scrape requested number of statuses/info from Launchpad"""
-        total = 0
-        progress_msg(self.got["data"], self.status_num)
+           Returns number of threads started to fulfill number of
+           requested statuses"""
+        num_threads = 0
         for url in (x for x in self.ranked
                     if "Status" not in self.urls[x]):
-            try:
-                info = self.__get_info(url)
-            except DataError as err:
-                self.ranked.remove(url)
-                stderr.write("\n%s\n" % err)
-            else:
-                if info and info[1] and info[1]["Status"] in self.status_opts:
-                    self.urls[url].update(info[1])
-                    self.got["data"] += 1
-                    self.top_list.append(info[0])
+            thread = Thread(
+                target=_LaunchData(
+                    url, self.urls[url]["Launchpad"],
+                    codename, hardware, data_queue
+                ).get_info
+            )
+            thread.daemon = True
+            thread.start()
 
-            total += 1
-            progress_msg(self.got["data"], self.status_num)
-            if ((self.got["data"] == self.status_num) or
-                    (total == self.got["ping"])):
+            num_threads += 1
+            # We expect number of retrieved status requests may already
+            # be greater than 0.  This would be the case anytime an initial
+            # pass ran into errors.
+            if num_threads == (self.status_num - self.got["data"]):
                 break
+
+        return num_threads
+
+    def lookup_statuses(self, min_status, codename, hardware):
+        """Scrape statuses/info in from launchpad.net mirror pages"""
+        while (self.got["data"] < self.status_num) and self.ranked:
+            data_queue = Queue()
+            num_threads = self.__queue_lookups(codename, hardware, data_queue)
+            # Get output of all started thread methods from queue
+            progress_msg(self.got["data"], self.status_num)
+            for _ in range(num_threads):
+                try:
+                    # We don't care about timeouts longer than 7 seconds as
+                    # we're only getting 16 KB
+                    info = data_queue.get(block=True, timeout=7)
+                except Empty:
+                    pass
+                else:
+                    data_queue.task_done()
+                    if info[0] and info[1] and info[1]["Status"] in self.status_opts:
+                        self.urls[info[0]].update(info[1])
+                        self.got["data"] += 1
+                        self.top_list.append(info[0])
+                    else:
+                        # Remove unqualified results from ranked list so
+                        # queueing can use it to populate the right threads
+                        self.ranked.remove(info[0])
+
+                progress_msg(self.got["data"], self.status_num)
+                if (self.got["data"] == self.status_num):
+                    break
+
+            data_queue.join()
 
 
 class _RoundTrip(object):
@@ -262,3 +253,56 @@ class _RoundTrip(object):
                 rtts.append(rtt)
 
         self.trip_queue.put((self.url, round(min(rtts))))
+
+class _LaunchData(object):
+    def __init__(self, url, launch_url, codename, hardware, data_queue):
+        self.url = url
+        self.launch_url = launch_url
+        self.codename = codename
+        self.hardware = hardware
+        self.data_queue = data_queue
+
+    def __parse_mirror_html(self, launch_html):
+        info = {}
+        soup = BeautifulSoup(launch_html, PARSER)
+        # Find elements of the ids we need
+        for line in soup.find_all(id=['arches', 'speed', 'organisation']):
+            if line.name == 'table':
+                # Status information lives in a table column alongside
+                # series name and machine architecture
+                for tr in line.find('tbody').find_all('tr'):
+                    arches = [x.get_text() for x in tr.find_all('td')]
+                    if self.codename in arches[0] and arches[1] == self.hardware:
+                        info.update({"Status": arches[2]})
+            else:
+                # "Speed" lives in a dl, and we use the key -> value as such
+                info.update({line.dt.get_text().strip(':'): line.dd.get_text()})
+
+        return info
+
+    def get_info(self):
+        """Parse launchpad page HTML for mirror information
+
+        Ideally, launchpadlib would be used to get mirror information, but the
+        Launchpad API doesn't support access to archivemirror statuses."""
+
+        try:
+            launch_html = get_html(self.launch_url)
+        except HTMLGetError as err:
+            stderr.write("connection to %s: %s" % (self.launch_url, err))
+            self.data_queue.put_nowait(None)
+        else:
+            info = self.__parse_mirror_html(launch_html)
+            if "Status" not in info:
+                stderr.write((
+                    "Unable to parse status info from %s" % self.launch_url
+                ))
+                self.data_queue.put_nowait(None)
+                return
+
+            # Launchpad has more descriptive "unknown" status.
+            # It's trimmed here to match statuses list
+            if "unknown" in info["Status"]:
+                info["Status"] = "unknown"
+
+            self.data_queue.put((self.url, info))
