@@ -14,8 +14,8 @@ Features
     - Status and bandwidth are scraped from [launchpad](https://launchpad.net/ubuntu/+archivemirrors).
 
 - Generates `sources.list` file using new mirror.
-    - New mirror to be used can either be chosen from a list or selected automatically using the top ranked mirror (default).
-    - `/etc/apt/sources.list` is searched, and selected mirror replaces all instances of the first urls labeled as the `main`/`security` repositories.
+    - Mirror can be chosen from a list or selected automatically using the top ranked mirror (default).
+    - `/etc/apt/sources.list` is searched to generate `sources.list` file using new mirror.
 
 Dependencies
 ------------
