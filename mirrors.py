@@ -50,35 +50,28 @@ class DataError(Exception):
 class Mirrors(object):
     """Base for collection of archive mirrors"""
 
-    def __init__(self, url_list, flag_status):
+    def __init__(self, url_list, flag_ping, flag_status):
         self.ranked = []
-        self.test_num = len(url_list)
         self.urls = {}
+        self.url_list = url_list
+        self.num_trips = 0
         self.got = {"ping": 0, "data": 0}
+        self.ranked = []
         self.top_list = []
         self.trip_queue = Queue()
-        self.trips = []
-        for url in url_list:
-            host = urlparse(url).netloc
-            try:
-                self.trips.append(_RoundTrip(url, host, self.trip_queue))
-            except gaierror as err:
-                stderr.write("%s: %s ignored\n" % (err, url))
-            else:
-                self.urls[url] = {"Host": host}
-
-        self.abort_launch = False
-        self.status_opts = (
-            "unknown",
-            "One week behind",
-            "Two days behind",
-            "One day behind",
-            "Up to date"
-        )
-        index = self.status_opts.index(flag_status)
-        self.status_opts = self.status_opts[index:]
-        # Default to top
-        self.status_num = 1
+        if not flag_ping:
+            self.abort_launch = False
+            self.status_opts = (
+                "unknown",
+                "One week behind",
+                "Two days behind",
+                "One day behind",
+                "Up to date"
+            )
+            index = self.status_opts.index(flag_status)
+            self.status_opts = self.status_opts[index:]
+            # Default to top
+            self.status_num = 1
 
     def get_launchpad_urls(self):
         """Obtain mirrors' corresponding launchpad URLs"""
@@ -114,19 +107,33 @@ class Mirrors(object):
                         if url.startswith("/ubuntu/+mirror/"):
                             prev = url
 
+    def __kickoff_trips(self):
+        """Instantiate round trips class for all, initiating queued threads"""
+
+        for url in self.url_list:
+            host = urlparse(url).netloc
+            try:
+                thread = Thread(
+                    target=_RoundTrip(url, host, self.trip_queue).min_rtt
+                )
+            except gaierror as err:
+                stderr.write("%s: %s ignored\n" % (err, url))
+            else:
+                self.urls[url] = {"Host": host}
+                thread.daemon = True
+                thread.start()
+                self.num_trips += 1
+
+
     def get_rtts(self):
         """Test latency to all mirrors"""
 
-        for trip in self.trips:
-            thread = Thread(target=trip.min_rtt)
-            thread.daemon = True
-            thread.start()
+        self.__kickoff_trips()
 
-        trip_num = len(self.trips)
         processed = 0
-        stderr.write("Testing %d mirror(s)\n" % self.test_num)
-        progress_msg(processed, trip_num)
-        for _ in range(trip_num):
+        stderr.write("Testing %d mirror(s)\n" % self.num_trips)
+        progress_msg(processed, self.num_trips)
+        for _ in range(self.num_trips):
             try:
                 min_rtt = self.trip_queue.get(block=True)
             except Empty:
@@ -140,7 +147,7 @@ class Mirrors(object):
                     self.got["ping"] += 1
 
             processed += 1
-            progress_msg(processed, self.test_num)
+            progress_msg(processed, self.num_trips)
 
         stderr.write('\n')
         # Mirrors without latency info are removed
