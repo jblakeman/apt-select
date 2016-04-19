@@ -1,7 +1,7 @@
 apt-select
 ========
 
-Select a fast, up to date Ubuntu apt mirror using flexible filters.
+Ubuntu Archive Mirror reporting tool for selection of fast apt mirrors.
 
 Features
 -----------
