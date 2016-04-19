@@ -52,17 +52,17 @@ def apt_select():
     """Run apt-select: Ubuntu archive mirror reporting tool"""
     parser = get_args()
     args = parser.parse_args()
-    flag_number = args.top_number[0]
-    flag_ping = args.ping_only
-    flag_list = args.list_only
-    flag_choose = args.choose
-    flag_status = args.min_status[0].replace('-', ' ')
+    top_number = args.top_number[0]
+    ping_only = args.ping_only
+    list_only = args.list_only
+    choose = args.choose
+    min_status = args.min_status[0].replace('-', ' ')
 
-    if not flag_ping and (flag_status != 'unknown'):
+    if not ping_only and (min_status != 'unknown'):
         # Convert status argument to format used by Launchpad
-        flag_status = flag_status[0].upper() + flag_status[1:]
+        min_status = min_status[0].upper() + min_status[1:]
 
-    if flag_choose and (not flag_number or flag_number < 2):
+    if choose and (not top_number or top_number < 2):
         parser.print_usage()
         exit((
             "error: -c/--choose option requires -t/--top-number NUMBER "
@@ -104,23 +104,23 @@ def apt_select():
     else:
         hardware = 'i386'
 
-    archives = Mirrors(mirrors_list, flag_ping, flag_status)
+    archives = Mirrors(mirrors_list, ping_only, min_status)
     archives.get_rtts()
-    if archives.got["ping"] < flag_number:
-        flag_number = archives.got["ping"]
+    if archives.got["ping"] < top_number:
+        top_number = archives.got["ping"]
 
-    if flag_number == 0:
+    if top_number == 0:
         exit("Cannot connect to any mirrors in %s\n." % mirrors_list)
 
-    if not flag_ping:
+    if not ping_only:
         archives.get_launchpad_urls()
         if not archives.abort_launch:
             # Mirrors needs a limit to stop launching threads
-            archives.status_num = flag_number
-            stderr.write("Looking up %d status(es)\n" % flag_number)
-            archives.lookup_statuses(flag_status, codename, hardware)
+            archives.status_num = top_number
+            stderr.write("Looking up %d status(es)\n" % top_number)
+            archives.lookup_statuses(min_status, codename, hardware)
 
-        if flag_number > 1:
+        if top_number > 1:
             stderr.write('\n')
 
     repo_name = ""
@@ -153,8 +153,8 @@ def apt_select():
 
     rank = 0
     current_key = -1
-    if flag_ping:
-        archives.top_list = archives.ranked[:flag_number+1]
+    if ping_only:
+        archives.top_list = archives.ranked[:top_number+1]
 
     for url in archives.top_list:
         info = archives.urls[url]
@@ -163,7 +163,7 @@ def apt_select():
             host += " (current)"
             current_key = rank
 
-        if not flag_ping and not archives.abort_launch:
+        if not ping_only and not archives.abort_launch:
             if "Status" in info:
                 assign_defaults(info, ("Org", "Speed"), "N/A")
                 print((
@@ -183,11 +183,11 @@ def apt_select():
             print("%d. %s: %d ms" % (rank+1, info["Host"], info["Latency"]))
 
         rank += 1
-        if rank == flag_number:
+        if rank == top_number:
             break
 
     key = 0
-    if flag_choose:
+    if choose:
         key = ask((
             "Choose a mirror (1 - %d)\n'q' to quit " %
             len(archives.top_list)
@@ -206,7 +206,7 @@ def apt_select():
 
         key -= 1
 
-    if flag_list:
+    if list_only:
         exit()
 
     # Avoid generating duplicate sources.list
