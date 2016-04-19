@@ -50,7 +50,7 @@ class DataError(Exception):
 class Mirrors(object):
     """Base for collection of archive mirrors"""
 
-    def __init__(self, url_list, flag_status):
+    def __init__(self, url_list, flag_ping, flag_status):
         self.ranked = []
         self.test_num = len(url_list)
         self.urls = {}
@@ -67,18 +67,19 @@ class Mirrors(object):
             else:
                 self.urls[url] = {"Host": host}
 
-        self.abort_launch = False
-        self.status_opts = (
-            "unknown",
-            "One week behind",
-            "Two days behind",
-            "One day behind",
-            "Up to date"
-        )
-        index = self.status_opts.index(flag_status)
-        self.status_opts = self.status_opts[index:]
-        # Default to top
-        self.status_num = 1
+        if not flag_ping:
+            self.abort_launch = False
+            self.status_opts = (
+                "unknown",
+                "One week behind",
+                "Two days behind",
+                "One day behind",
+                "Up to date"
+            )
+            index = self.status_opts.index(flag_status)
+            self.status_opts = self.status_opts[index:]
+            # Default to top
+            self.status_num = 1
 
     def get_launchpad_urls(self):
         """Obtain mirrors' corresponding launchpad URLs"""

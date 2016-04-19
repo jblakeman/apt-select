@@ -53,14 +53,14 @@ def apt_select():
     parser = get_args()
     args = parser.parse_args()
     flag_number = args.top_number[0]
-    # Convert status argument to format used by Launchpad
-    flag_status = args.min_status[0].replace('-', ' ')
-    if flag_status != 'unknown':
-        flag_status = flag_status[0].upper() + flag_status[1:]
-
+    flag_ping = args.ping_only
     flag_list = args.list_only
     flag_choose = args.choose
-    flag_ping = args.ping_only
+    flag_status = args.min_status[0].replace('-', ' ')
+
+    if not flag_ping and (flag_status != 'unknown'):
+        # Convert status argument to format used by Launchpad
+        flag_status = flag_status[0].upper() + flag_status[1:]
 
     if flag_choose and (not flag_number or flag_number < 2):
         parser.print_usage()
@@ -104,7 +104,7 @@ def apt_select():
     else:
         hardware = 'i386'
 
-    archives = Mirrors(mirrors_list, flag_status)
+    archives = Mirrors(mirrors_list, flag_ping, flag_status)
     archives.get_rtts()
     if archives.got["ping"] < flag_number:
         flag_number = archives.got["ping"]
