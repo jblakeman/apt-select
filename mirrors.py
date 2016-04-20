@@ -201,8 +201,7 @@ class Mirrors(object):
                     pass
                 else:
                     data_queue.task_done()
-                    if (info[0] and info[1] and
-                            info[1]["Status"] in self.status_opts):
+                    if info[1] and info[1]["Status"] in self.status_opts:
                         self.urls[info[0]].update(info[1])
                         self.got["data"] += 1
                         self.top_list.append(info[0])
@@ -301,14 +300,14 @@ class _LaunchData(object):
             launch_html = get_html(self.launch_url)
         except HTMLGetError as err:
             stderr.write("connection to %s: %s" % (self.launch_url, err))
-            self.data_queue.put_nowait(None)
+            self.data_queue.put_nowait(self.url, None)
         else:
             info = self.__parse_mirror_html(launch_html)
             if "Status" not in info:
                 stderr.write((
                     "Unable to parse status info from %s" % self.launch_url
                 ))
-                self.data_queue.put_nowait(None)
+                self.data_queue.put_nowait(self.url, None)
                 return
 
             # Launchpad has more descriptive "unknown" status.
