@@ -161,16 +161,20 @@ class Mirrors(object):
         num_threads = 0
         for url in (x for x in self.ranked
                     if "Status" not in self.urls[x]):
-            thread = Thread(
-                target=_LaunchData(
-                    url, self.urls[url]["Launchpad"],
-                    codename, hardware, data_queue
-                ).get_info
-            )
-            thread.daemon = True
-            thread.start()
+            try:
+                launch_url = self.urls[url]["Launchpad"]
+            except KeyError:
+                pass
+            else:
+                thread = Thread(
+                    target=_LaunchData(
+                        url, launch_url, codename, hardware, data_queue
+                    ).get_info
+                )
+                thread.daemon = True
+                thread.start()
 
-            num_threads += 1
+                num_threads += 1
             # We expect number of retrieved status requests may already
             # be greater than 0.  This would be the case anytime an initial
             # pass ran into errors.
