@@ -27,7 +27,6 @@ def get_html(url):
 
     return html.decode('utf-8')
 
-
 def progress_msg(processed, total):
     """Update user on percent done"""
     if total > 1:
@@ -36,4 +35,3 @@ def progress_msg(processed, total):
             "\r[%d/%d] %d%%" % (processed, total, percent)
         )
         stderr.flush()
-
