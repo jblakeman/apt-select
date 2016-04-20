@@ -42,11 +42,6 @@ class ConnectError(Exception):
     pass
 
 
-class DataError(Exception):
-    """Errors retrieving Launchpad data"""
-    pass
-
-
 class Mirrors(object):
     """Base for collection of archive mirrors"""
 
