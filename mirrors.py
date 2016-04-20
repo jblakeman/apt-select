@@ -42,11 +42,6 @@ class ConnectError(Exception):
     pass
 
 
-class DataError(Exception):
-    """Errors retrieving Launchpad data"""
-    pass
-
-
 class Mirrors(object):
     """Base for collection of archive mirrors"""
 
@@ -124,7 +119,6 @@ class Mirrors(object):
                 thread.start()
                 self.num_trips += 1
 
-
     def get_rtts(self):
         """Test latency to all mirrors"""
 
@@ -158,7 +152,6 @@ class Mirrors(object):
         self.ranked = sorted(
             self.urls, key=lambda x: self.urls[x]["Latency"]
         )
-
 
     def __queue_lookups(self, codename, hardware, data_queue):
         """Queue threads for data retrieval from launchpad.net
@@ -202,7 +195,8 @@ class Mirrors(object):
                     pass
                 else:
                     data_queue.task_done()
-                    if info[0] and info[1] and info[1]["Status"] in self.status_opts:
+                    if (info[0] and info[1] and
+                            info[1]["Status"] in self.status_opts):
                         self.urls[info[0]].update(info[1])
                         self.got["data"] += 1
                         self.top_list.append(info[0])
@@ -261,6 +255,7 @@ class _RoundTrip(object):
 
         self.trip_queue.put((self.url, round(min(rtts))))
 
+
 class _LaunchData(object):
     def __init__(self, url, launch_url, codename, hardware, data_queue):
         self.url = url
@@ -279,11 +274,14 @@ class _LaunchData(object):
                 # series name and machine architecture
                 for tr in line.find('tbody').find_all('tr'):
                     arches = [x.get_text() for x in tr.find_all('td')]
-                    if self.codename in arches[0] and arches[1] == self.hardware:
+                    if (self.codename in arches[0] and
+                            arches[1] == self.hardware):
                         info.update({"Status": arches[2]})
             else:
                 # "Speed" lives in a dl, and we use the key -> value as such
-                info.update({line.dt.get_text().strip(':'): line.dd.get_text()})
+                info.update({
+                    line.dt.get_text().strip(':'): line.dd.get_text()
+                })
 
         return info
 

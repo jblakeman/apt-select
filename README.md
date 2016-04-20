@@ -1,22 +1,21 @@
 apt-select
 ========
 
-Select a fast, up to date Ubuntu apt mirror using flexible filters.
+Ubuntu Archive Mirror reporting tool for selection of fast apt mirrors.
 
 Features
 -----------
 
-- Concurrently tests latency to mirrors in [mirrors.txt](http://mirrors.ubuntu.com/mirrors.txt).
-    - Latency is measured by the establishment time of a TCP socket connection on port 80.
-    - 3 requests are sent to each mirror, minumum time being used for rank.
+- Tests latency to mirrors in [mirrors.txt](http://mirrors.ubuntu.com/mirrors.txt).
+    - 3 requests are sent to each mirror, minumum round trip time being used for rank.
 
-- Prints latency, status, and bandwidth capacity of the fastest mirrors in a ranked list.
+- Reports latency, status, and bandwidth capacity of the fastest mirrors in a ranked list.
     - Minimum round trip times determine rank.
     - Status and bandwidth are scraped from [launchpad](https://launchpad.net/ubuntu/+archivemirrors).
 
 - Generates `sources.list` file using new mirror.
-    - New mirror to be used can either be chosen from a list or selected automatically using the top ranked mirror (default).
-    - `/etc/apt/sources.list` is searched, and selected mirror replaces all instances of the first urls labeled as the `main`/`security` repositories.
+    - Mirror can be chosen from a list or selected automatically using the top ranked mirror (default).
+    - `/etc/apt/sources.list` is searched to generate `sources.list` file using new mirror.
 
 Dependencies
 ------------
