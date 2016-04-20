@@ -188,6 +188,8 @@ class Mirrors(object):
         while (self.got["data"] < self.status_num) and self.ranked:
             data_queue = Queue()
             num_threads = self.__queue_lookups(codename, hardware, data_queue)
+            if num_threads == 0:
+                break
             # Get output of all started thread methods from queue
             progress_msg(self.got["data"], self.status_num)
             for _ in range(num_threads):
