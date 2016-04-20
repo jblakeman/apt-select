@@ -161,16 +161,21 @@ class Mirrors(object):
         num_threads = 0
         for url in (x for x in self.ranked
                     if "Status" not in self.urls[x]):
-            thread = Thread(
-                target=_LaunchData(
-                    url, self.urls[url]["Launchpad"],
-                    codename, hardware, data_queue
-                ).get_info
-            )
-            thread.daemon = True
-            thread.start()
+            try:
+                launch_url = self.urls[url]["Launchpad"]
+            except KeyError:
+                pass
+            else:
+                thread = Thread(
+                    target=_LaunchData(
+                        url, launch_url, codename, hardware, data_queue
+                    ).get_info
+                )
+                thread.daemon = True
+                thread.start()
 
-            num_threads += 1
+                num_threads += 1
+
             # We expect number of retrieved status requests may already
             # be greater than 0.  This would be the case anytime an initial
             # pass ran into errors.
@@ -184,6 +189,8 @@ class Mirrors(object):
         while (self.got["data"] < self.status_num) and self.ranked:
             data_queue = Queue()
             num_threads = self.__queue_lookups(codename, hardware, data_queue)
+            if num_threads == 0:
+                break
             # Get output of all started thread methods from queue
             progress_msg(self.got["data"], self.status_num)
             for _ in range(num_threads):
@@ -195,17 +202,16 @@ class Mirrors(object):
                     pass
                 else:
                     data_queue.task_done()
-                    if (info[0] and info[1] and
-                            info[1]["Status"] in self.status_opts):
+                    if info[1] and info[1]["Status"] in self.status_opts:
                         self.urls[info[0]].update(info[1])
                         self.got["data"] += 1
                         self.top_list.append(info[0])
+                        progress_msg(self.got["data"], self.status_num)
                     else:
                         # Remove unqualified results from ranked list so
                         # queueing can use it to populate the right threads
                         self.ranked.remove(info[0])
 
-                progress_msg(self.got["data"], self.status_num)
                 if (self.got["data"] == self.status_num):
                     break
 
@@ -295,14 +301,14 @@ class _LaunchData(object):
             launch_html = get_html(self.launch_url)
         except HTMLGetError as err:
             stderr.write("connection to %s: %s" % (self.launch_url, err))
-            self.data_queue.put_nowait(None)
+            self.data_queue.put_nowait(self.url, None)
         else:
             info = self.__parse_mirror_html(launch_html)
             if "Status" not in info:
                 stderr.write((
                     "Unable to parse status info from %s" % self.launch_url
                 ))
-                self.data_queue.put_nowait(None)
+                self.data_queue.put_nowait(self.url, None)
                 return
 
             # Launchpad has more descriptive "unknown" status.
