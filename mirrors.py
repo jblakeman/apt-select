@@ -175,6 +175,7 @@ class Mirrors(object):
                 thread.start()
 
                 num_threads += 1
+
             # We expect number of retrieved status requests may already
             # be greater than 0.  This would be the case anytime an initial
             # pass ran into errors.
@@ -205,12 +206,12 @@ class Mirrors(object):
                         self.urls[info[0]].update(info[1])
                         self.got["data"] += 1
                         self.top_list.append(info[0])
+                        progress_msg(self.got["data"], self.status_num)
                     else:
                         # Remove unqualified results from ranked list so
                         # queueing can use it to populate the right threads
                         self.ranked.remove(info[0])
 
-                progress_msg(self.got["data"], self.status_num)
                 if (self.got["data"] == self.status_num):
                     break
 
