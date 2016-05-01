@@ -301,14 +301,14 @@ class _LaunchData(object):
             launch_html = get_html(self.launch_url)
         except HTMLGetError as err:
             stderr.write("connection to %s: %s" % (self.launch_url, err))
-            self.data_queue.put_nowait(self.url, None)
+            self.data_queue.put_nowait((self.url, None))
         else:
             info = self.__parse_mirror_html(launch_html)
             if "Status" not in info:
                 stderr.write((
                     "Unable to parse status info from %s" % self.launch_url
                 ))
-                self.data_queue.put_nowait(self.url, None)
+                self.data_queue.put_nowait((self.url, None))
                 return
 
             # Launchpad has more descriptive "unknown" status.
