@@ -159,8 +159,7 @@ class Mirrors(object):
            Returns number of threads started to fulfill number of
            requested statuses"""
         num_threads = 0
-        for url in (x for x in self.ranked
-                    if "Status" not in self.urls[x]):
+        for url in self.ranked:
             try:
                 launch_url = self.urls[url]["Launchpad"]
             except KeyError:
@@ -207,13 +206,19 @@ class Mirrors(object):
                         self.got["data"] += 1
                         self.top_list.append(info[0])
                         progress_msg(self.got["data"], self.status_num)
-                    else:
-                        # Remove unqualified results from ranked list so
-                        # queueing can use it to populate the right threads
-                        self.ranked.remove(info[0])
+
+                    # Eliminate the url from the ranked list as long as
+                    # something is received from the queue (for selective
+                    # iteration if another queue needs to be built)
+                    self.ranked.remove(info[0])
 
                 if (self.got["data"] == self.status_num):
                     break
+
+            # Reorder by latency as queue returns vary building final list
+            self.top_list = sorted(
+                self.top_list, key=lambda x: self.urls[x]["Latency"]
+            )
 
             data_queue.join()
 
