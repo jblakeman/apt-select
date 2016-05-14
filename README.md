@@ -10,7 +10,6 @@ Features
     - 3 requests are sent to each mirror, minumum round trip time being used for rank.
 
 - Reports latency, status, and bandwidth capacity of the fastest mirrors in a ranked list.
-    - Minimum round trip times determine rank.
     - Status and bandwidth are scraped from [launchpad](https://launchpad.net/ubuntu/+archivemirrors).
 
 - Generates `sources.list` file using new mirror.
