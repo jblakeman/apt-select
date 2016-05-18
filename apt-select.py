@@ -61,9 +61,7 @@ def validate_args():
     return args
 
 
-def apt_select():
-    """Run apt-select: Ubuntu archive mirror reporting tool"""
-    args = validate_args()
+def get_release():
     try:
         release = check_output(["lsb_release", "-ics"])
     except OSError:
@@ -75,6 +73,14 @@ def apt_select():
         exit("Debian is not currently supported")
     elif release[0] != 'Ubuntu':
         not_ubuntu()
+
+    return release
+
+
+def apt_select():
+    """Run apt-select: Ubuntu archive mirror reporting tool"""
+    args = validate_args()
+    release = get_release()
 
     directory = '/etc/apt/'
     apt_file = 'sources.list'
