@@ -25,13 +25,6 @@ def confirm_mirror(uri):
     return False
 
 
-def assign_defaults(info, keys, default):
-    """Assign a default dict value to key if key is not present"""
-    for key in keys:
-        if key not in info:
-            info[key] = default
-
-
 def ask(query):
     """Ask for unput from user"""
     answer = get_input(query)
@@ -48,27 +41,27 @@ def yes_or_no(query):
         answer = ask("Please enter '%s' or '%s': " % opts)
 
 
-def apt_select():
-    """Run apt-select: Ubuntu archive mirror reporting tool"""
+def validate_args():
     parser = get_args()
     args = parser.parse_args()
-    top_number = args.top_number[0]
-    ping_only = args.ping_only
-    list_only = args.list_only
-    choose = args.choose
-    min_status = args.min_status[0].replace('-', ' ')
+    args.top_number = args.top_number[0]
+    args.min_status = args.min_status[0].replace('-', ' ')
 
-    if not ping_only and (min_status != 'unknown'):
+    if not args.ping_only and (args.min_status != 'unknown'):
         # Convert status argument to format used by Launchpad
-        min_status = min_status[0].upper() + min_status[1:]
+        args.min_status = args.min_status[0].upper() + args.min_status[1:]
 
-    if choose and (not top_number or top_number < 2):
+    if args.choose and (not args.top_number or args.top_number < 2):
         parser.print_usage()
         exit((
             "error: -c/--choose option requires -t/--top-number NUMBER "
             "where NUMBER is greater than 1."
         ))
 
+    return args
+
+
+def get_release():
     try:
         release = check_output(["lsb_release", "-ics"])
     except OSError:
@@ -80,6 +73,14 @@ def apt_select():
         exit("Debian is not currently supported")
     elif release[0] != 'Ubuntu':
         not_ubuntu()
+
+    return release
+
+
+def apt_select():
+    """Run apt-select: Ubuntu archive mirror reporting tool"""
+    args = validate_args()
+    release = get_release()
 
     directory = '/etc/apt/'
     apt_file = 'sources.list'
@@ -104,23 +105,23 @@ def apt_select():
     else:
         hardware = 'i386'
 
-    archives = Mirrors(mirrors_list, ping_only, min_status)
+    archives = Mirrors(mirrors_list, args.ping_only, args.min_status)
     archives.get_rtts()
-    if archives.got["ping"] < top_number:
-        top_number = archives.got["ping"]
+    if archives.got["ping"] < args.top_number:
+        args.top_number = archives.got["ping"]
 
-    if top_number == 0:
+    if args.top_number == 0:
         exit("Cannot connect to any mirrors in %s\n." % mirrors_list)
 
-    if not ping_only:
+    if not args.ping_only:
         archives.get_launchpad_urls()
         if not archives.abort_launch:
             # Mirrors needs a limit to stop launching threads
-            archives.status_num = top_number
-            stderr.write("Looking up %d status(es)\n" % top_number)
-            archives.lookup_statuses(min_status, codename, hardware)
+            archives.status_num = args.top_number
+            stderr.write("Looking up %d status(es)\n" % args.top_number)
+            archives.lookup_statuses(args.min_status, codename, hardware)
 
-        if top_number > 1:
+        if args.top_number > 1:
             stderr.write('\n')
 
     repo_name = ""
@@ -153,8 +154,8 @@ def apt_select():
 
     rank = 0
     current_key = -1
-    if ping_only:
-        archives.top_list = archives.ranked[:top_number+1]
+    if args.ping_only:
+        archives.top_list = archives.ranked[:args.top_number+1]
 
     for url in archives.top_list:
         info = archives.urls[url]
@@ -163,9 +164,10 @@ def apt_select():
             host += " (current)"
             current_key = rank
 
-        if not ping_only and not archives.abort_launch:
+        if not args.ping_only and not archives.abort_launch:
             if "Status" in info:
-                assign_defaults(info, ("Org", "Speed"), "N/A")
+                for key in ("Org", "Speed"):
+                    info.setdefault(key, "N/A")
                 print((
                     "%(rank)d. %(mirror)s\n%(tab)sLatency: %(ms)d ms\n"
                     "%(tab)sOrg:     %(org)s\n%(tab)sStatus:  %(status)s\n"
@@ -183,11 +185,11 @@ def apt_select():
             print("%d. %s: %d ms" % (rank+1, info["Host"], info["Latency"]))
 
         rank += 1
-        if rank == top_number:
+        if rank == args.top_number:
             break
 
     key = 0
-    if choose:
+    if args.choose:
         key = ask((
             "Choose a mirror (1 - %d)\n'q' to quit " %
             len(archives.top_list)
@@ -206,7 +208,7 @@ def apt_select():
 
         key -= 1
 
-    if list_only:
+    if args.list_only:
         exit()
 
     # Avoid generating duplicate sources.list

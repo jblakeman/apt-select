@@ -122,10 +122,10 @@ class Mirrors(object):
     def get_rtts(self):
         """Test latency to all mirrors"""
 
+        stderr.write("Testing latency to mirror(s)\n")
         self.__kickoff_trips()
 
         processed = 0
-        stderr.write("Testing %d mirror(s)\n" % self.num_trips)
         progress_msg(processed, self.num_trips)
         for _ in range(self.num_trips):
             try:
