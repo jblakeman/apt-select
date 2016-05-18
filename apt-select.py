@@ -82,6 +82,17 @@ def mandatory_file(file_path):
         exit("%s must exist as file" % file_path)
 
 
+def get_mirrors(mirrors_url):
+    stderr.write("Getting list of mirrors...")
+    try:
+        mirrors_list = get_html(mirrors_url)
+    except HTMLGetError as err:
+        exit("Error getting list from %s:\n\t%s" % (mirrors_list, err))
+    stderr.write("done.\n")
+
+    return mirrors_list.splitlines()
+
+
 def apt_select():
     """Run apt-select: Ubuntu archive mirror reporting tool"""
     args = validate_args()
@@ -94,13 +105,7 @@ def apt_select():
 
     mirrors_loc = "mirrors.ubuntu.com"
     mirrors_url = "http://%s/mirrors.txt" % mirrors_loc
-    stderr.write("Getting list of mirrors...")
-    try:
-        mirrors_list = get_html(mirrors_url)
-    except HTMLGetError as err:
-        exit("Error getting list from %s:\n\t%s" % (mirrors_list, err))
-    stderr.write("done.\n")
-    mirrors_list = mirrors_list.splitlines()
+    mirrors_list = get_mirrors(mirrors_url)
 
     codename = release[1][0].upper() + release[1][1:]
     hardware = check_output(["uname", "-m"]).strip().decode('utf-8')
