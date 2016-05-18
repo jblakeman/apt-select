@@ -77,6 +77,11 @@ def get_release():
     return release
 
 
+def mandatory_file(file_path):
+    if not path.isfile(file_path):
+        exit("%s must exist as file" % file_path)
+
+
 def apt_select():
     """Run apt-select: Ubuntu archive mirror reporting tool"""
     args = validate_args()
@@ -85,8 +90,7 @@ def apt_select():
     directory = '/etc/apt/'
     apt_file = 'sources.list'
     sources_path = directory + apt_file
-    if not path.isfile(sources_path):
-        exit("%s must exist as file" % sources_path)
+    mandatory_file(sources_path)
 
     mirrors_loc = "mirrors.ubuntu.com"
     mirrors_url = "http://%s/mirrors.txt" % mirrors_loc
