@@ -93,6 +93,12 @@ def get_mirrors(mirrors_url):
     return mirrors_list.splitlines()
 
 
+def get_arch():
+    hardware = check_output(["uname", "-m"]).strip().decode('utf-8')
+    if hardware == 'x86_64':
+        return 'amd64'
+    return 'i386'
+
 def apt_select():
     """Run apt-select: Ubuntu archive mirror reporting tool"""
     args = validate_args()
@@ -108,11 +114,7 @@ def apt_select():
     mirrors_list = get_mirrors(mirrors_url)
 
     codename = release[1][0].upper() + release[1][1:]
-    hardware = check_output(["uname", "-m"]).strip().decode('utf-8')
-    if hardware == 'x86_64':
-        hardware = 'amd64'
-    else:
-        hardware = 'i386'
+    hardware = get_arch()
 
     archives = Mirrors(mirrors_list, args.ping_only, args.min_status)
     archives.get_rtts()
