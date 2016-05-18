@@ -99,6 +99,27 @@ def get_arch():
         return 'amd64'
     return 'i386'
 
+
+def get_current_repos(sources_file, release, required_repo):
+    lines = sources_file.readlines()
+    repos = []
+    found = False
+    for line in lines:
+        fields = line.split()
+        if confirm_mirror(fields):
+            if (not found and
+                    (release[1] in fields[2]) and
+                    (fields[3] == required_repo)):
+                repos.append(fields[1])
+                found = True
+                continue
+            elif fields[2] == '%s-security' % (release[1]):
+                repos.append(fields[1])
+                break
+
+    return {"repos": repos, "lines": lines}
+
+
 def apt_select():
     """Run apt-select: Ubuntu archive mirror reporting tool"""
     args = validate_args()
@@ -136,32 +157,17 @@ def apt_select():
             stderr.write('\n')
 
     repo_name = ""
-    found = False
+    required_repo = "main"
     skip_gen_msg = "Skipping file generation."
     with open(sources_path, 'r') as sources_file:
-        lines = sources_file.readlines()
-        repos = []
-        required_repo = "main"
-        for line in lines:
-            fields = line.split()
-            if confirm_mirror(fields):
-                if (not found and
-                        (release[1] in fields[2]) and
-                        (fields[3] == required_repo)):
-                    repos += [fields[1]]
-                    found = True
-                    continue
-                elif fields[2] == '%s-security' % (release[1]):
-                    repos += [fields[1]]
-                    break
-
-        if not repos:
+        sources = get_current_repos(sources_file, release, required_repo)
+        if not sources.get("repos"):
             stderr.write((
                 "Error finding current %s repository in %s\n%s\n" %
                 (required_repo, sources_path, skip_gen_msg)
             ))
         else:
-            repo_name = repos[0]
+            repo_name = sources["repos"][0]
 
     rank = 0
     current_key = -1
@@ -230,9 +236,9 @@ def apt_select():
         ))
 
     mirror = archives.top_list[key]
-    lines = ''.join(lines)
-    for repo in repos:
-        lines = lines.replace(repo, mirror)
+    sources["lines"] = ''.join(sources["lines"])
+    for repo in sources["repos"]:
+        sources["lines"] = sources["lines"].replace(repo, mirror)
 
     work_dir = getcwd()
     if work_dir == directory[0:-1]:
@@ -251,7 +257,7 @@ def apt_select():
     write_file = work_dir.rstrip('/') + '/' + apt_file
     try:
         with open(write_file, 'w') as sources_file:
-            sources_file.write(lines)
+            sources_file.write(sources["lines"])
     except IOError as err:
         exit("Unable to generate sources.list:\n\t%s\n" % err)
     else:
