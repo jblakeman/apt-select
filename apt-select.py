@@ -25,13 +25,6 @@ def confirm_mirror(uri):
     return False
 
 
-def assign_defaults(info, keys, default):
-    """Assign a default dict value to key if key is not present"""
-    for key in keys:
-        if key not in info:
-            info[key] = default
-
-
 def ask(query):
     """Ask for unput from user"""
     answer = get_input(query)
@@ -165,7 +158,8 @@ def apt_select():
 
         if not ping_only and not archives.abort_launch:
             if "Status" in info:
-                assign_defaults(info, ("Org", "Speed"), "N/A")
+                for key in ("Org", "Speed"):
+                    info.setdefault(key, "N/A")
                 print((
                     "%(rank)d. %(mirror)s\n%(tab)sLatency: %(ms)d ms\n"
                     "%(tab)sOrg:     %(org)s\n%(tab)sStatus:  %(status)s\n"
