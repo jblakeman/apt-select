@@ -154,8 +154,8 @@ def apt_select():
 
     rank = 0
     current_key = -1
-    if args.ping_only:
-        archives.top_list = archives.ranked[:args.top_number+1]
+    if args.ping_only or archives.abort_launch:
+        archives.top_list = archives.ranked[:args.top_number]
 
     for url in archives.top_list:
         info = archives.urls[url]
