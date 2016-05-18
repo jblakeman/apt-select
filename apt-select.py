@@ -94,8 +94,8 @@ def get_mirrors(mirrors_url):
 
 
 def get_arch():
-    hardware = check_output(["uname", "-m"]).strip().decode('utf-8')
-    if hardware == 'x86_64':
+    arch = check_output(["uname", "-m"]).strip().decode('utf-8')
+    if arch == 'x86_64':
         return 'amd64'
     return 'i386'
 
@@ -114,7 +114,7 @@ def apt_select():
     mirrors_list = get_mirrors(mirrors_url)
 
     codename = release[1][0].upper() + release[1][1:]
-    hardware = get_arch()
+    arch = get_arch()
 
     archives = Mirrors(mirrors_list, args.ping_only, args.min_status)
     archives.get_rtts()
@@ -130,7 +130,7 @@ def apt_select():
             # Mirrors needs a limit to stop launching threads
             archives.status_num = args.top_number
             stderr.write("Looking up %d status(es)\n" % args.top_number)
-            archives.lookup_statuses(args.min_status, codename, hardware)
+            archives.lookup_statuses(args.min_status, codename, arch)
 
         if args.top_number > 1:
             stderr.write('\n')
