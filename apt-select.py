@@ -42,6 +42,7 @@ def yes_or_no(query):
 
 
 def validate_args():
+    """Set arguments, disallow bad combination"""
     parser = get_args()
     args = parser.parse_args()
     args.top_number = args.top_number[0]
@@ -62,6 +63,7 @@ def validate_args():
 
 
 def get_release():
+    """Call system for Ubuntu release information"""
     try:
         release = check_output(["lsb_release", "-ics"])
     except OSError:
@@ -78,11 +80,13 @@ def get_release():
 
 
 def mandatory_file(file_path):
+    """Panic if required file doesn't exist"""
     if not path.isfile(file_path):
         exit("%s must exist as file" % file_path)
 
 
 def get_mirrors(mirrors_url):
+    """Fetch list of Ubuntu mirrors"""
     stderr.write("Getting list of mirrors...")
     try:
         mirrors_list = get_html(mirrors_url)
@@ -94,6 +98,7 @@ def get_mirrors(mirrors_url):
 
 
 def get_arch():
+    """Return architecture information in Launchpad format"""
     arch = check_output(["uname", "-m"]).strip().decode('utf-8')
     if arch == 'x86_64':
         return 'amd64'
@@ -101,6 +106,7 @@ def get_arch():
 
 
 def get_current_repos(sources_file, release, required_repo):
+    """Parse system apt sources file for URIs to replace"""
     lines = sources_file.readlines()
     repos = []
     found = False
@@ -185,6 +191,7 @@ def apt_select():
             if "Status" in info:
                 for key in ("Org", "Speed"):
                     info.setdefault(key, "N/A")
+
                 print((
                     "%(rank)d. %(mirror)s\n%(tab)sLatency: %(ms)d ms\n"
                     "%(tab)sOrg:     %(org)s\n%(tab)sStatus:  %(status)s\n"
