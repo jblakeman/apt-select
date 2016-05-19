@@ -55,6 +55,9 @@ class Mirrors(object):
         self.top_list = []
         self.trip_queue = Queue()
         if not flag_ping:
+            self.launchpad_base = "https://launchpad.net"
+            self.launchpad_url = self.launchpad_base + "/ubuntu/+archivemirrors"
+            self.launchpad_html = ""
             self.abort_launch = False
             self.status_opts = (
                 "unknown",
@@ -70,20 +73,23 @@ class Mirrors(object):
 
     def get_launchpad_urls(self):
         """Obtain mirrors' corresponding launchpad URLs"""
-        launchpad_base = "https://launchpad.net"
-        launchpad_url = launchpad_base + "/ubuntu/+archivemirrors"
         stderr.write("Getting list of launchpad URLs...")
         try:
-            launchpad_html = get_html(launchpad_url)
+            self.launchpad_html = get_html(self.launchpad_url)
         except HTMLGetError as err:
             stderr.write((
                 "%s: %s\nUnable to retrieve list of launchpad sites\n"
-                "Reverting to latency only" % (launchpad_url, err)
+                "Reverting to latency only" % (self.launchpad_url, err)
             ))
             self.abort_launch = True
         else:
             stderr.write("done.\n")
-            soup = BeautifulSoup(launchpad_html, PARSER)
+            self.__parse_launchpad_list()
+
+
+    def __parse_launchpad_list(self):
+            """Parse Launchpad's list page to find each mirror's Official page"""
+            soup = BeautifulSoup(self.launchpad_html, PARSER)
             prev = ""
             for element in soup.table.descendants:
                 try:
@@ -97,7 +103,7 @@ class Mirrors(object):
                         pass
                     else:
                         if url in self.urls:
-                            self.urls[url]["Launchpad"] = launchpad_base + prev
+                            self.urls[url]["Launchpad"] = self.launchpad_base + prev
 
                         if url.startswith("/ubuntu/+mirror/"):
                             prev = url
