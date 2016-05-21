@@ -46,7 +46,6 @@ class Mirrors(object):
     """Base for collection of archive mirrors"""
 
     def __init__(self, url_list, ping_only, min_status):
-        self.ranked = []
         self.urls = {}
         self.url_list = url_list
         self.num_trips = 0
