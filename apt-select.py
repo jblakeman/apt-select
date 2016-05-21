@@ -8,40 +8,7 @@ from util_funcs import get_html, HTMLGetError
 from mirrors import Mirrors
 
 
-def not_ubuntu():
-    """Notify of incompatibility"""
-    exit("Not an Ubuntu OS")
-
-
-def confirm_mirror(uri):
-    """Check if line follows correct sources.list URI"""
-    deb = ('deb', 'deb-src')
-    proto = ('http://', 'ftp://')
-    if (uri and (uri[0] in deb) and
-            (proto[0] in uri[1] or
-             proto[1] in uri[1])):
-        return True
-
-    return False
-
-
-def ask(query):
-    """Ask for unput from user"""
-    answer = get_input(query)
-    return answer
-
-
-def yes_or_no(query):
-    """Get definitive answer"""
-    opts = ('yes', 'no')
-    answer = ask(query)
-    while answer != opts[0]:
-        if answer == opts[1]:
-            exit(0)
-        answer = ask("Please enter '%s' or '%s': " % opts)
-
-
-def validate_args():
+def set_args():
     """Set arguments, disallow bad combination"""
     parser = get_args()
     args = parser.parse_args()
@@ -60,6 +27,11 @@ def validate_args():
         ))
 
     return args
+
+
+def not_ubuntu():
+    """Notify of incompatibility"""
+    exit("Not an Ubuntu OS")
 
 
 def get_release():
@@ -105,6 +77,18 @@ def get_arch():
     return 'i386'
 
 
+def confirm_mirror(uri):
+    """Check if line follows correct sources.list URI"""
+    deb = ('deb', 'deb-src')
+    proto = ('http://', 'ftp://')
+    if (uri and (uri[0] in deb) and
+            (proto[0] in uri[1] or
+             proto[1] in uri[1])):
+        return True
+
+    return False
+
+
 def get_current_repos(sources_file, release, required_repo):
     """Parse system apt sources file for URIs to replace"""
     lines = sources_file.readlines()
@@ -126,9 +110,25 @@ def get_current_repos(sources_file, release, required_repo):
     return {"repos": repos, "lines": lines}
 
 
+def ask(query):
+    """Ask for unput from user"""
+    answer = get_input(query)
+    return answer
+
+
+def yes_or_no(query):
+    """Get definitive answer"""
+    opts = ('yes', 'no')
+    answer = ask(query)
+    while answer != opts[0]:
+        if answer == opts[1]:
+            exit(0)
+        answer = ask("Please enter '%s' or '%s': " % opts)
+
+
 def apt_select():
     """Run apt-select: Ubuntu archive mirror reporting tool"""
-    args = validate_args()
+    args = set_args()
     release = get_release()
 
     directory = '/etc/apt/'
