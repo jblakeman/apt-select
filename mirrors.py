@@ -8,7 +8,7 @@ from socket import (socket, AF_INET, SOCK_STREAM,
                     gethostbyname, setdefaulttimeout,
                     error, timeout, gaierror)
 from time import time
-from util_funcs import get_html, HTMLGetError, progress_msg
+from utils import get_html, URLGetError, progress_msg
 try:
     from urlparse import urlparse
 except ImportError:
@@ -76,7 +76,7 @@ class Mirrors(object):
         stderr.write("Getting list of launchpad URLs...")
         try:
             self.launchpad_html = get_html(self.launchpad_url)
-        except HTMLGetError as err:
+        except URLGetError as err:
             stderr.write((
                 "%s: %s\nUnable to retrieve list of launchpad sites\n"
                 "Reverting to latency only" % (self.launchpad_url, err)
@@ -133,7 +133,7 @@ class Mirrors(object):
 
         processed = 0
         progress_msg(processed, self.num_trips)
-        for _ in range(self.num_trips):
+        for _ in xrange(self.num_trips):
             try:
                 min_rtt = self.trip_queue.get(block=True)
             except Empty:
@@ -198,7 +198,7 @@ class Mirrors(object):
                 break
             # Get output of all started thread methods from queue
             progress_msg(self.got["data"], self.status_num)
-            for _ in range(num_threads):
+            for _ in xrange(num_threads):
                 try:
                     # We don't care about timeouts longer than 7 seconds as
                     # we're only getting 16 KB
@@ -260,7 +260,7 @@ class _RoundTrip(object):
     def min_rtt(self):
         """Return lowest rtt"""
         rtts = []
-        for _ in range(3):
+        for _ in xrange(3):
             try:
                 rtt = self.__tcp_ping()
             except ConnectError as err:
@@ -310,7 +310,7 @@ class _LaunchData(object):
 
         try:
             launch_html = get_html(self.launch_url)
-        except HTMLGetError as err:
+        except URLGetError as err:
             stderr.write("connection to %s: %s\n" % (self.launch_url, err))
             self.data_queue.put_nowait((self.url, None))
         else:
