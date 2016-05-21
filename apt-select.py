@@ -77,37 +77,37 @@ def get_arch():
     return 'i386'
 
 
-def confirm_mirror(uri):
+def confirm_mirror(uri, deb, protos):
     """Check if line follows correct sources.list URI"""
-    deb = ('deb', 'deb-src')
-    proto = ('http://', 'ftp://')
     if (uri and (uri[0] in deb) and
-            (proto[0] in uri[1] or
-             proto[1] in uri[1])):
+            (protos[0] in uri[1] or
+             protos[1] in uri[1])):
         return True
 
     return False
 
 
-def get_current_repos(sources_file, release, required_repo):
+def get_current_archives(sources_file, release, required_archive):
     """Parse system apt sources file for URIs to replace"""
     lines = sources_file.readlines()
-    repos = []
-    found = False
+    archives = []
+    deb = {k: None for k in ('deb', 'deb-src')}
+    protos = ('http://', 'ftp://')
     for line in lines:
         fields = line.split()
-        if confirm_mirror(fields):
-            if (not found and
+        if confirm_mirror(fields, deb, protos):
+            if (not archives and
                     (release[1] in fields[2]) and
-                    (fields[3] == required_repo)):
-                repos.append(fields[1])
-                found = True
+                    (fields[3] == required_archive)):
+                archives.append(fields[1])
                 continue
-            elif fields[2] == '%s-security' % (release[1]):
-                repos.append(fields[1])
+            elif (archives and
+                    (fields[2] == '%s-security' % (release[1])) and
+                    (archives[0] != fields[1])):
+                archives.append(fields[1])
                 break
 
-    return {"repos": repos, "lines": lines}
+    return {"archives": archives, "lines": lines}
 
 
 def ask(query):
@@ -127,7 +127,7 @@ def yes_or_no(query):
 
 
 def apt_select():
-    """Run apt-select: Ubuntu archive mirror reporting tool"""
+    """Run apt-select: Ubuntu archive mirror archiverting tool"""
     args = set_args()
     release = get_release()
 
@@ -162,18 +162,18 @@ def apt_select():
         if args.top_number > 1:
             stderr.write('\n')
 
-    repo_name = ""
-    required_repo = "main"
+    archive_name = ""
+    required_archive = "main"
     skip_gen_msg = "Skipping file generation."
     with open(sources_path, 'r') as sources_file:
-        sources = get_current_repos(sources_file, release, required_repo)
-        if not sources.get("repos"):
+        sources = get_current_archives(sources_file, release, required_archive)
+        if "archives" not in sources:
             stderr.write((
-                "Error finding current %s repository in %s\n%s\n" %
-                (required_repo, sources_path, skip_gen_msg)
+                "Error finding current %s archivesitory in %s\n%s\n" %
+                (required_archive, sources_path, skip_gen_msg)
             ))
         else:
-            repo_name = sources["repos"][0]
+            archive_name = sources["archives"][0]
 
     rank = 0
     current_key = -1
@@ -183,7 +183,7 @@ def apt_select():
     for url in archives.top_list:
         info = archives.urls[url]
         host = info["Host"]
-        if url == repo_name:
+        if url == archive_name:
             host += " (current)"
             current_key = rank
 
@@ -239,13 +239,13 @@ def apt_select():
     if current_key == key:
         exit((
             "%s is the currently used mirror.\n%s" %
-            (archives.urls[repo_name]["Host"], skip_gen_msg)
+            (archives.urls[archive_name]["Host"], skip_gen_msg)
         ))
 
     mirror = archives.top_list[key]
     sources["lines"] = ''.join(sources["lines"])
-    for repo in sources["repos"]:
-        sources["lines"] = sources["lines"].replace(repo, mirror)
+    for archive in sources["archives"]:
+        sources["lines"] = sources["lines"].replace(archive, mirror)
 
     work_dir = getcwd()
     if work_dir == directory[0:-1]:
