@@ -45,7 +45,7 @@ class ConnectError(Exception):
 class Mirrors(object):
     """Base for collection of archive mirrors"""
 
-    def __init__(self, url_list, flag_ping, flag_status):
+    def __init__(self, url_list, ping_only, min_status):
         self.ranked = []
         self.urls = {}
         self.url_list = url_list
@@ -54,7 +54,7 @@ class Mirrors(object):
         self.ranked = []
         self.top_list = []
         self.trip_queue = Queue()
-        if not flag_ping:
+        if not ping_only:
             self.launchpad_base = "https://launchpad.net"
             self.launchpad_url = self.launchpad_base + "/ubuntu/+archivemirrors"
             self.launchpad_html = ""
@@ -66,7 +66,7 @@ class Mirrors(object):
                 "One day behind",
                 "Up to date"
             )
-            index = self.status_opts.index(flag_status)
+            index = self.status_opts.index(min_status)
             self.status_opts = self.status_opts[index:]
             # Default to top
             self.status_num = 1
