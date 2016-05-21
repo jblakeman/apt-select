@@ -8,7 +8,7 @@ from socket import (socket, AF_INET, SOCK_STREAM,
                     gethostbyname, setdefaulttimeout,
                     error, timeout, gaierror)
 from time import time
-from util_funcs import get_html, HTMLGetError, progress_msg
+from utils import get_html, URLGetError, progress_msg
 try:
     from urlparse import urlparse
 except ImportError:
@@ -76,7 +76,7 @@ class Mirrors(object):
         stderr.write("Getting list of launchpad URLs...")
         try:
             self.launchpad_html = get_html(self.launchpad_url)
-        except HTMLGetError as err:
+        except URLGetError as err:
             stderr.write((
                 "%s: %s\nUnable to retrieve list of launchpad sites\n"
                 "Reverting to latency only" % (self.launchpad_url, err)
@@ -310,7 +310,7 @@ class _LaunchData(object):
 
         try:
             launch_html = get_html(self.launch_url)
-        except HTMLGetError as err:
+        except URLGetError as err:
             stderr.write("connection to %s: %s\n" % (self.launch_url, err))
             self.data_queue.put_nowait((self.url, None))
         else:

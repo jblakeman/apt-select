@@ -4,7 +4,7 @@ from sys import exit, stderr, version_info
 from os import getcwd, path
 from subprocess import check_output
 from arguments import get_args
-from util_funcs import get_html, HTMLGetError
+from utils import get_html, URLGetError
 from mirrors import Mirrors
 
 
@@ -62,7 +62,7 @@ def get_mirrors(mirrors_url):
     stderr.write("Getting list of mirrors...")
     try:
         mirrors_list = get_html(mirrors_url)
-    except HTMLGetError as err:
+    except URLGetError as err:
         exit("Error getting list from %s:\n\t%s" % (mirrors_list, err))
     stderr.write("done.\n")
 

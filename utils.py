@@ -9,23 +9,26 @@ try:
 except ImportError:
     from urllib2 import urlopen, HTTPError, URLError
 
-class HTMLGetError(Exception):
-    """Error class for HTML Gets"""
+
+class URLGetError(Exception):
+    """Error class for retreiving and reading content from remote URL"""
     pass
+
 
 def get_html(url):
     """Retrieve and read HTML from URL"""
     try:
         html = urlopen(url)
     except (HTTPError, URLError, SSLError, timeout) as err:
-        raise HTMLGetError(err)
+        raise URLGetError(err)
 
     try:
         html = html.read()
     except (SSLError, IOError, OSError) as err:
-        raise HTMLGetError(err)
+        raise URLGetError(err)
 
     return html.decode('utf-8')
+
 
 def progress_msg(processed, total):
     """Update user on percent done"""
