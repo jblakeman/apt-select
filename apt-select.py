@@ -127,7 +127,7 @@ def yes_or_no(query):
 
 
 def apt_select():
-    """Run apt-select: Ubuntu archive mirror archiverting tool"""
+    """Run apt-select: Ubuntu archive mirror reporting tool"""
     args = set_args()
     release = get_release()
 
