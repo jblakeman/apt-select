@@ -110,6 +110,29 @@ def get_current_archives(sources_file, release, required_archive):
     return {"archives": archives, "lines": lines}
 
 
+def print_status(info, rank):
+    for key in ("Org", "Speed"):
+            info.setdefault(key, "N/A")
+
+    print((
+        "%(rank)d. %(mirror)s\n%(tab)sLatency: %(ms)d ms\n"
+        "%(tab)sOrg:     %(org)s\n%(tab)sStatus:  %(status)s\n"
+        "%(tab)sSpeed:   %(speed)s" % {
+            'tab': '    ',
+            'rank': rank + 1,
+            'mirror': info["Host"],
+            'ms': info["Latency"],
+            'org': info["Organisation"],
+            'status': info["Status"],
+            'speed': info["Speed"]
+        }
+    ))
+
+
+def print_latency(info, rank):
+    print("%d. %s: %d ms" % (rank+1, info["Host"], info["Latency"]))
+
+
 def ask(query):
     """Ask for unput from user"""
     answer = get_input(query)
@@ -182,31 +205,14 @@ def apt_select():
 
     for url in archives.top_list:
         info = archives.urls[url]
-        host = info["Host"]
         if url == archive_name:
-            host += " (current)"
+            info["Host"] += " (current)"
             current_key = rank
 
         if not args.ping_only and not archives.abort_launch:
-            if "Status" in info:
-                for key in ("Org", "Speed"):
-                    info.setdefault(key, "N/A")
-
-                print((
-                    "%(rank)d. %(mirror)s\n%(tab)sLatency: %(ms)d ms\n"
-                    "%(tab)sOrg:     %(org)s\n%(tab)sStatus:  %(status)s\n"
-                    "%(tab)sSpeed:   %(speed)s" % {
-                        'tab': '    ',
-                        'rank': rank + 1,
-                        'mirror': host,
-                        'ms': info["Latency"],
-                        'org': info["Organisation"],
-                        'status': info["Status"],
-                        'speed': info["Speed"]
-                    }
-                ))
+            print_status(info, rank)
         else:
-            print("%d. %s: %d ms" % (rank+1, info["Host"], info["Latency"]))
+            print_latency(info, rank)
 
         rank += 1
         if rank == args.top_number:
