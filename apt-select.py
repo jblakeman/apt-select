@@ -98,8 +98,8 @@ def get_current_archives(sources_file, release, required_component):
             # Start by finding the required component (main)
             if (not archives and
                     # The release name (e.g. xenial) and component are the
-                    # third, and fourth fields (as described in the sources.list
-                    # man page examples)
+                    # third, and fourth fields (as described in the
+                    # sources.list man page examples)
                     (release[1] in fields[2]) and
                     (fields[3] == required_component)):
                 archives.append(fields[1])
@@ -228,7 +228,8 @@ def apt_select():
     required_component = "main"
     skip_gen_msg = "Skipping file generation."
     with open(sources_path, 'r') as sources_file:
-        sources = get_current_archives(sources_file, release, required_component)
+        sources = get_current_archives(sources_file, release,
+                                       required_component)
         if "archives" not in sources:
             stderr.write((
                 "Error finding current %s archivesitory in %s\n%s\n" %
