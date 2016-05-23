@@ -175,6 +175,17 @@ def yes_or_no(query):
         answer = ask("Please enter '%s' or '%s': " % opts)
 
 
+def gen_sources_file(file_name, lines):
+    """Generate new apt sources.list file"""
+    try:
+        with open(file_name, 'w') as f:
+            f.write(lines)
+    except IOError as err:
+        raise (err)
+    else:
+        print("New config file saved to %s" % file_name)
+
+
 def apt_select():
     """Run apt-select: Ubuntu archive mirror reporting tool"""
     args = set_args()
@@ -281,12 +292,9 @@ def apt_select():
 
     write_file = work_dir.rstrip('/') + '/' + apt_file
     try:
-        with open(write_file, 'w') as sources_file:
-            sources_file.write(sources["lines"])
+        gen_sources_file(write_file, sources["lines"])
     except IOError as err:
-        exit("Unable to generate sources.list:\n\t%s\n" % err)
-    else:
-        print("New config file saved to %s" % write_file)
+        exit("Unable to generate new sources.list:\n\t%s\n" % err)
 
     exit()
 
