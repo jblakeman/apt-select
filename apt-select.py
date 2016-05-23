@@ -12,11 +12,10 @@ def set_args():
     """Set arguments, disallow bad combination"""
     parser = get_args()
     args = parser.parse_args()
-    args.top_number = args.top_number[0]
-    args.min_status = args.min_status[0].replace('-', ' ')
 
+    # Convert status argument to format used by Launchpad
+    args.min_status = args.min_status.replace('-', ' ')
     if not args.ping_only and (args.min_status != 'unknown'):
-        # Convert status argument to format used by Launchpad
         args.min_status = args.min_status[0].upper() + args.min_status[1:]
 
     if args.choose and (not args.top_number or args.top_number < 2):
