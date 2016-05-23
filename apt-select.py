@@ -87,7 +87,7 @@ def confirm_mirror(uri, deb, protos):
     return False
 
 
-def get_current_archives(sources_file, release, required_archive):
+def get_current_archives(sources_file, release, required_component):
     """Parse system apt sources file for URIs to replace"""
     lines = sources_file.readlines()
     archives = []
@@ -96,13 +96,22 @@ def get_current_archives(sources_file, release, required_archive):
     for line in lines:
         fields = line.split()
         if confirm_mirror(fields, deb, protos):
+            # Start by finding the required component (main)
             if (not archives and
+                    # The release name (e.g. xenial) and component are the
+                    # third, and fourth fields (as described in the sources.list
+                    # man page examples)
                     (release[1] in fields[2]) and
-                    (fields[3] == required_archive)):
+                    (fields[3] == required_component)):
                 archives.append(fields[1])
                 continue
+            # Try to find the mirror used for security component, only if
+            # we've already found the mirror for the required repository
             elif (archives and
+                    # The release name dash-prefixes the security component
                     (fields[2] == '%s-security' % (release[1])) and
+                    # Mirror urls should be unique as they'll be used in a
+                    # global search and replace to generate a new file
                     (archives[0] != fields[1])):
                 archives.append(fields[1])
                 break
@@ -204,14 +213,14 @@ def apt_select():
             stderr.write('\n')
 
     archive_name = ""
-    required_archive = "main"
+    required_component = "main"
     skip_gen_msg = "Skipping file generation."
     with open(sources_path, 'r') as sources_file:
-        sources = get_current_archives(sources_file, release, required_archive)
+        sources = get_current_archives(sources_file, release, required_component)
         if "archives" not in sources:
             stderr.write((
                 "Error finding current %s archivesitory in %s\n%s\n" %
-                (required_archive, sources_path, skip_gen_msg)
+                (required_component, sources_path, skip_gen_msg)
             ))
         else:
             archive_name = sources["archives"][0]
@@ -250,6 +259,8 @@ def apt_select():
             (archives.urls[archive_name]["Host"], skip_gen_msg)
         ))
 
+    # Replace all relevant instances of current mirror URIs in sources.list
+    # with the new mirror URI.  We use this to write the new file.
     mirror = archives.top_list[key]
     sources["lines"] = ''.join(sources["lines"])
     for archive in sources["archives"]:
