@@ -16,13 +16,13 @@ def get_args():
     parser.add_argument(
         '-t',
         '--top-number',
-        nargs=1,
+        nargs='?',
         type=int,
         help=(
             "specify number of mirrors to return\n"
             "default: 1\n"
         ),
-        default=[1],
+        default=1,
         metavar='NUMBER'
     )
     status_args = (
@@ -36,7 +36,7 @@ def get_args():
     test_group.add_argument(
         '-m',
         '--min-status',
-        nargs=1,
+        nargs='?',
         choices=status_args,
         type=str,
         help=(
@@ -55,7 +55,7 @@ def get_args():
                 'unknown': status_args[4]
             }
         ),
-        default=[status_args[0]],
+        default=status_args[0],
         metavar='STATUS'
     )
     test_group.add_argument(
