@@ -139,6 +139,24 @@ def ask(query):
     return answer
 
 
+def get_selected_mirror(rank, list_size):
+    """Prompt for user input to select desired mirror"""
+    key = ask("Choose a mirror (1 - %d)\n'q' to quit " % list_size)
+    while True:
+        try:
+            key = int(key)
+        except ValueError:
+            if key == 'q':
+                exit()
+        else:
+            if (key >= 1) and (key <= rank):
+                break
+
+        key = ask("Invalid entry ")
+
+    return key-1
+
+
 def yes_or_no(query):
     """Get definitive answer"""
     opts = ('yes', 'no')
@@ -220,23 +238,7 @@ def apt_select():
 
     key = 0
     if args.choose:
-        key = ask((
-            "Choose a mirror (1 - %d)\n'q' to quit " %
-            len(archives.top_list)
-        ))
-        while True:
-            try:
-                key = int(key)
-            except ValueError:
-                if key == 'q':
-                    exit()
-
-            if (type(key) is not str) and (key >= 1) and (key <= rank):
-                break
-
-            key = ask("Invalid entry ")
-
-        key -= 1
+        key = get_selected_mirror(rank, len(archives.top_list))
 
     if args.list_only:
         exit()
