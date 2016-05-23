@@ -119,6 +119,7 @@ def get_current_archives(sources_file, release, required_component):
 
 
 def print_status(info, rank):
+    """Print full mirror status report for ranked item"""
     for key in ("Org", "Speed"):
             info.setdefault(key, "N/A")
 
@@ -138,6 +139,7 @@ def print_status(info, rank):
 
 
 def print_latency(info, rank):
+    """Print latency information for mirror in ranked report"""
     print("%d. %s: %d ms" % (rank+1, info["Host"], info["Latency"]))
 
 
