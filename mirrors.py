@@ -36,6 +36,10 @@ else:
     except FeatureNotFound:
         PARSER = "html.PARSER"
 
+try:
+    xrange
+except NameError:
+    xrange = range
 
 class ConnectError(Exception):
     """Socket connection errors"""
@@ -55,7 +59,9 @@ class Mirrors(object):
         self.trip_queue = Queue()
         if not ping_only:
             self.launchpad_base = "https://launchpad.net"
-            self.launchpad_url = self.launchpad_base + "/ubuntu/+archivemirrors"
+            self.launchpad_url = (
+                self.launchpad_base + "/ubuntu/+archivemirrors"
+            )
             self.launchpad_html = ""
             self.abort_launch = False
             self.status_opts = (
@@ -85,27 +91,29 @@ class Mirrors(object):
             stderr.write("done.\n")
             self.__parse_launchpad_list()
 
-
     def __parse_launchpad_list(self):
-            """Parse Launchpad's list page to find each mirror's Official page"""
-            soup = BeautifulSoup(self.launchpad_html, PARSER)
-            prev = ""
-            for element in soup.table.descendants:
+        """Parse Launchpad's list page to find each mirror's
+           Official page"""
+        soup = BeautifulSoup(self.launchpad_html, PARSER)
+        prev = ""
+        for element in soup.table.descendants:
+            try:
+                url = element.a
+            except AttributeError:
+                pass
+            else:
                 try:
-                    url = element.a
-                except AttributeError:
+                    url = url["href"]
+                except TypeError:
                     pass
                 else:
-                    try:
-                        url = url["href"]
-                    except TypeError:
-                        pass
-                    else:
-                        if url in self.urls:
-                            self.urls[url]["Launchpad"] = self.launchpad_base + prev
+                    if url in self.urls:
+                        self.urls[url]["Launchpad"] = (
+                            self.launchpad_base + prev
+                        )
 
-                        if url.startswith("/ubuntu/+mirror/"):
-                            prev = url
+                    if url.startswith("/ubuntu/+mirror/"):
+                        prev = url
 
     def __kickoff_trips(self):
         """Instantiate round trips class for all, initiating queued threads"""

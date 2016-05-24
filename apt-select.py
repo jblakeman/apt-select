@@ -90,7 +90,7 @@ def get_current_archives(sources_file, release, required_component):
     """Parse system apt sources file for URIs to replace"""
     lines = sources_file.readlines()
     archives = []
-    deb = {k: None for k in ('deb', 'deb-src')}
+    deb = set(('deb', 'deb-src'))
     protos = ('http://', 'ftp://')
     for line in lines:
         fields = line.split()
@@ -98,8 +98,8 @@ def get_current_archives(sources_file, release, required_component):
             # Start by finding the required component (main)
             if (not archives and
                     # The release name (e.g. xenial) and component are the
-                    # third, and fourth fields (as described in the sources.list
-                    # man page examples)
+                    # third, and fourth fields (as described in the
+                    # sources.list man page examples)
                     (release[1] in fields[2]) and
                     (fields[3] == required_component)):
                 archives.append(fields[1])
@@ -119,6 +119,7 @@ def get_current_archives(sources_file, release, required_component):
 
 
 def print_status(info, rank):
+    """Print full mirror status report for ranked item"""
     for key in ("Org", "Speed"):
             info.setdefault(key, "N/A")
 
@@ -138,6 +139,7 @@ def print_status(info, rank):
 
 
 def print_latency(info, rank):
+    """Print latency information for mirror in ranked report"""
     print("%d. %s: %d ms" % (rank+1, info["Host"], info["Latency"]))
 
 
@@ -173,6 +175,17 @@ def yes_or_no(query):
         if answer == opts[1]:
             exit(0)
         answer = ask("Please enter '%s' or '%s': " % opts)
+
+
+def gen_sources_file(file_name, lines):
+    """Generate new apt sources.list file"""
+    try:
+        with open(file_name, 'w') as f:
+            f.write(lines)
+    except IOError as err:
+        raise (err)
+    else:
+        print("New config file saved to %s" % file_name)
 
 
 def apt_select():
@@ -215,7 +228,8 @@ def apt_select():
     required_component = "main"
     skip_gen_msg = "Skipping file generation."
     with open(sources_path, 'r') as sources_file:
-        sources = get_current_archives(sources_file, release, required_component)
+        sources = get_current_archives(sources_file, release,
+                                       required_component)
         if "archives" not in sources:
             stderr.write((
                 "Error finding current %s archivesitory in %s\n%s\n" %
@@ -281,12 +295,9 @@ def apt_select():
 
     write_file = work_dir.rstrip('/') + '/' + apt_file
     try:
-        with open(write_file, 'w') as sources_file:
-            sources_file.write(sources["lines"])
+        gen_sources_file(write_file, sources["lines"])
     except IOError as err:
-        exit("Unable to generate sources.list:\n\t%s\n" % err)
-    else:
-        print("New config file saved to %s" % write_file)
+        exit("Unable to generate new sources.list:\n\t%s\n" % err)
 
     exit()
 
