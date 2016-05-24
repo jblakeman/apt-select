@@ -41,6 +41,7 @@ try:
 except NameError:
     xrange = range
 
+
 class ConnectError(Exception):
     """Socket connection errors"""
     pass
@@ -51,28 +52,28 @@ class Mirrors(object):
 
     def __init__(self, url_list, ping_only, min_status):
         self.urls = {}
-        self.url_list = url_list
-        self.num_trips = 0
+        self._url_list = url_list
+        self._num_trips = 0
         self.got = {"ping": 0, "data": 0}
         self.ranked = []
         self.top_list = []
-        self.trip_queue = Queue()
+        self._trip_queue = Queue()
         if not ping_only:
-            self.launchpad_base = "https://launchpad.net"
-            self.launchpad_url = (
-                self.launchpad_base + "/ubuntu/+archivemirrors"
+            self._launchpad_base = "https://launchpad.net"
+            self._launchpad_url = (
+                self._launchpad_base + "/ubuntu/+archivemirrors"
             )
-            self.launchpad_html = ""
+            self._launchpad_html = ""
             self.abort_launch = False
-            self.status_opts = (
+            self._status_opts = (
                 "unknown",
                 "One week behind",
                 "Two days behind",
                 "One day behind",
                 "Up to date"
             )
-            index = self.status_opts.index(min_status)
-            self.status_opts = self.status_opts[index:]
+            index = self._status_opts.index(min_status)
+            self._status_opts = self._status_opts[index:]
             # Default to top
             self.status_num = 1
 
@@ -80,11 +81,11 @@ class Mirrors(object):
         """Obtain mirrors' corresponding launchpad URLs"""
         stderr.write("Getting list of launchpad URLs...")
         try:
-            self.launchpad_html = get_html(self.launchpad_url)
+            self._launchpad_html = get_html(self._launchpad_url)
         except URLGetError as err:
             stderr.write((
                 "%s: %s\nUnable to retrieve list of launchpad sites\n"
-                "Reverting to latency only" % (self.launchpad_url, err)
+                "Reverting to latency only" % (self._launchpad_url, err)
             ))
             self.abort_launch = True
         else:
@@ -94,7 +95,7 @@ class Mirrors(object):
     def __parse_launchpad_list(self):
         """Parse Launchpad's list page to find each mirror's
            Official page"""
-        soup = BeautifulSoup(self.launchpad_html, PARSER)
+        soup = BeautifulSoup(self._launchpad_html, PARSER)
         prev = ""
         for element in soup.table.descendants:
             try:
@@ -109,7 +110,7 @@ class Mirrors(object):
                 else:
                     if url in self.urls:
                         self.urls[url]["Launchpad"] = (
-                            self.launchpad_base + prev
+                            self._launchpad_base + prev
                         )
 
                     if url.startswith("/ubuntu/+mirror/"):
@@ -118,11 +119,11 @@ class Mirrors(object):
     def __kickoff_trips(self):
         """Instantiate round trips class for all, initiating queued threads"""
 
-        for url in self.url_list:
+        for url in self._url_list:
             host = urlparse(url).netloc
             try:
                 thread = Thread(
-                    target=_RoundTrip(url, host, self.trip_queue).min_rtt
+                    target=_RoundTrip(url, host, self._trip_queue).min_rtt
                 )
             except gaierror as err:
                 stderr.write("%s: %s ignored\n" % (err, url))
@@ -130,7 +131,7 @@ class Mirrors(object):
                 self.urls[url] = {"Host": host}
                 thread.daemon = True
                 thread.start()
-                self.num_trips += 1
+                self._num_trips += 1
 
     def get_rtts(self):
         """Test latency to all mirrors"""
@@ -139,22 +140,22 @@ class Mirrors(object):
         self.__kickoff_trips()
 
         processed = 0
-        progress_msg(processed, self.num_trips)
-        for _ in xrange(self.num_trips):
+        progress_msg(processed, self._num_trips)
+        for _ in xrange(self._num_trips):
             try:
-                min_rtt = self.trip_queue.get(block=True)
+                min_rtt = self._trip_queue.get(block=True)
             except Empty:
                 pass
             else:
                 # we can ignore empty rtt results (None) from the queue
                 # as in this case ConnectError was already raised
                 if min_rtt:
-                    self.trip_queue.task_done()
+                    self._trip_queue.task_done()
                     self.urls[min_rtt[0]].update({"Latency": min_rtt[1]})
                     self.got["ping"] += 1
 
             processed += 1
-            progress_msg(processed, self.num_trips)
+            progress_msg(processed, self._num_trips)
 
         stderr.write('\n')
         # Mirrors without latency info are removed
@@ -214,7 +215,7 @@ class Mirrors(object):
                     pass
                 else:
                     data_queue.task_done()
-                    if info[1] and info[1]["Status"] in self.status_opts:
+                    if info[1] and info[1]["Status"] in self._status_opts:
                         self.urls[info[0]].update(info[1])
                         self.got["data"] += 1
                         self.top_list.append(info[0])
@@ -240,11 +241,11 @@ class _RoundTrip(object):
     """Socket connections for latency reporting"""
 
     def __init__(self, url, host, trip_queue):
-        self.url = url
-        self.host = host
-        self.trip_queue = trip_queue
+        self._url = url
+        self._host = host
+        self._trip_queue = trip_queue
         try:
-            self.addr = gethostbyname(host)
+            self._addr = gethostbyname(host)
         except gaierror as err:
             raise gaierror(err)
 
@@ -255,7 +256,7 @@ class _RoundTrip(object):
         sock = socket(AF_INET, SOCK_STREAM)
         send_tstamp = time()*1000
         try:
-            sock.connect((self.addr, port))
+            sock.connect((self._addr, port))
         except (timeout, error) as err:
             raise ConnectError(err)
 
@@ -271,22 +272,22 @@ class _RoundTrip(object):
             try:
                 rtt = self.__tcp_ping()
             except ConnectError as err:
-                stderr.write("\tconnection to %s: %s\n" % (self.host, err))
-                self.trip_queue.put_nowait(None)
+                stderr.write("\tconnection to %s: %s\n" % (self._host, err))
+                self._trip_queue.put_nowait(None)
                 return
             else:
                 rtts.append(rtt)
 
-        self.trip_queue.put((self.url, round(min(rtts))))
+        self._trip_queue.put((self._url, round(min(rtts))))
 
 
 class _LaunchData(object):
     def __init__(self, url, launch_url, codename, arch, data_queue):
-        self.url = url
-        self.launch_url = launch_url
-        self.codename = codename
-        self.arch = arch
-        self.data_queue = data_queue
+        self._url = url
+        self._launch_url = launch_url
+        self._codename = codename
+        self._arch = arch
+        self._data_queue = data_queue
 
     def __parse_mirror_html(self, launch_html):
         info = {}
@@ -298,8 +299,8 @@ class _LaunchData(object):
                 # series name and machine architecture
                 for tr in line.find('tbody').find_all('tr'):
                     arches = [x.get_text() for x in tr.find_all('td')]
-                    if (self.codename in arches[0] and
-                            arches[1] == self.arch):
+                    if (self._codename in arches[0] and
+                            arches[1] == self._arch):
                         info.update({"Status": arches[2]})
             else:
                 # "Speed" lives in a dl, and we use the key -> value as such
@@ -316,17 +317,17 @@ class _LaunchData(object):
         Launchpad API doesn't support access to archivemirror statuses."""
 
         try:
-            launch_html = get_html(self.launch_url)
+            launch_html = get_html(self._launch_url)
         except URLGetError as err:
-            stderr.write("connection to %s: %s\n" % (self.launch_url, err))
-            self.data_queue.put_nowait((self.url, None))
+            stderr.write("connection to %s: %s\n" % (self._launch_url, err))
+            self.data_queue.put_nowait((self._url, None))
         else:
             info = self.__parse_mirror_html(launch_html)
             if "Status" not in info:
                 stderr.write((
-                    "Unable to parse status info from %s\n" % self.launch_url
+                    "Unable to parse status info from %s\n" % self._launch_url
                 ))
-                self.data_queue.put_nowait((self.url, None))
+                self._data_queue.put_nowait((self._url, None))
                 return
 
             # Launchpad has more descriptive "unknown" status.
@@ -334,4 +335,4 @@ class _LaunchData(object):
             if "unknown" in info["Status"]:
                 info["Status"] = "unknown"
 
-            self.data_queue.put((self.url, info))
+            self._data_queue.put((self._url, info))
