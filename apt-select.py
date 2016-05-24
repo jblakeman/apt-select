@@ -90,7 +90,7 @@ def get_current_archives(sources_file, release, required_component):
     """Parse system apt sources file for URIs to replace"""
     lines = sources_file.readlines()
     archives = []
-    deb = {k: None for k in ('deb', 'deb-src')}
+    deb = set(('deb', 'deb-src'))
     protos = ('http://', 'ftp://')
     for line in lines:
         fields = line.split()
