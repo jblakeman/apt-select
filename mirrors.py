@@ -36,6 +36,10 @@ else:
     except FeatureNotFound:
         PARSER = "html.PARSER"
 
+try:
+    xrange
+except NameError:
+    xrange = range
 
 class ConnectError(Exception):
     """Socket connection errors"""
