@@ -320,7 +320,7 @@ class _LaunchData(object):
             launch_html = get_html(self._launch_url)
         except URLGetError as err:
             stderr.write("connection to %s: %s\n" % (self._launch_url, err))
-            self.data_queue.put_nowait((self._url, None))
+            self._data_queue.put_nowait((self._url, None))
         else:
             info = self.__parse_mirror_html(launch_html)
             if "Status" not in info:
