@@ -8,6 +8,164 @@ from utils import get_html, URLGetError
 from mirrors import Mirrors
 
 
+class AptSystem(object):
+    """System information for use in apt related operations"""
+
+    def __init__(self):
+        not_ubuntu = "Must be an Ubuntu OS"
+        try:
+            self._release = self.__get_release()
+        except OSError as err:
+            # We return both errors from the stack as lsb_release may
+            # not be present for some strange reason
+            raise ValueError("%s\n%s" % (not_ubuntu, err))
+
+        if self._release["dist"] == 'Debian':
+            raise ValueError("Debian is not currently supported")
+        elif self._release["dist"] != 'Ubuntu':
+            raise ValueError(not_ubuntu)
+
+        self.codename = self._release["codename"].capitalize()
+        self.arch = self.__get_arch()
+        if self.arch not in ('i386', 'amd64'):
+            raise ValueError((
+                "%s: must have system architecture in valid Launchpad"
+                "format" % self.arch.__name__
+            ))
+
+    def __get_release(self):
+        """Call system for Ubuntu release information"""
+        try:
+            release = check_output(["lsb_release", "-ics"])
+        except OSError as err:
+            raise OSError(err)
+
+        release = [s.strip() for s in release.decode('utf-8').split()]
+        return {"dist": release[0], "codename": release[1]}
+
+    def __get_arch(self):
+        """Return architecture information in Launchpad format"""
+        arch = check_output(["uname", "-m"]).strip().decode('utf-8')
+        if arch == 'x86_64':
+            return 'amd64'
+        return 'i386'
+
+
+class SourcesFileError(Exception):
+    """Error class for operations on an apt configuration file
+
+       Operations include:
+            - verifying/reading from the current system file
+            - generating a new config file"""
+    pass
+
+
+class AptSources(AptSystem):
+    """Class for apt configuration files"""
+
+    def __init__(self):
+        super(AptSources, self).__init__()
+        self.directory = '/etc/apt/'
+        self.apt_file = 'sources.list'
+        self._config_path = self.directory + self.apt_file
+        if not path.isfile(self._config_path):
+            raise SourcesFileError((
+                "%s must exist as file" % self._config_path
+            ))
+
+        self._required_component = "main"
+        self._lines = []
+        self.urls = []
+        self.skip_gen_msg = "Skipping file generation"
+        self.new_file_path = None
+
+    def __set_sources_lines(self):
+        """Read system config file and store the lines in memory for parsing
+           and generation of new config file"""
+        try:
+            with open(self._config_path, 'r') as f:
+                self._lines = f.readlines()
+        except IOError as err:
+            raise SourcesFileError((
+                "Unable to read system apt file: %s" % err
+            ))
+
+    def __confirm_mirror(self, uri, deb, protos):
+        """Check if line follows correct sources.list URI"""
+        if (uri and (uri[0] in deb) and
+                (protos[0] in uri[1] or
+                 protos[1] in uri[1])):
+            return True
+
+        return False
+
+    def __get_current_archives(self):
+        """Parse through all lines of the system apt file to find mirror urls
+           to replace"""
+        deb = set(('deb', 'deb-src'))
+        protos = ('http://', 'ftp://')
+        urls = []
+        cname = self._release["codename"]
+        for line in self._lines:
+            fields = line.split()
+            if self.__confirm_mirror(fields, deb, protos):
+                # Start by finding the required component ("main")
+                if (not urls and
+                        # The release name (e.g. xenial) and component
+                        # are the third, and fourth fields (as
+                        # described in sources.list man page examples)
+                        (cname in fields[2]) and
+                        (fields[3] == self._required_component)):
+                    urls.append(fields[1])
+                    continue
+                elif (urls and
+                        # The release prefixes the security component
+                        (fields[2] == '%s-security' % cname) and
+                        # Mirror urls must be unique as they'll be
+                        # used in a global search and replace
+                        (urls[0] != fields[1])):
+                    urls.append(fields[1])
+                    break
+
+        return urls
+
+    def set_current_archives(self):
+        """Read in the system apt config, parse to find current mirror urls
+           to set as attribute"""
+        try:
+            self.__set_sources_lines()
+        except SourcesFileError as err:
+            raise SourcesFileError(err)
+
+        urls = self.__get_current_archives()
+        if not urls:
+            raise SourcesFileError((
+                "Error finding current %s URI in %s\n%s\n" %
+                (self._required_component, self._config_path,
+                 self.skip_gen_msg)
+            ))
+
+        self.urls = urls
+
+    def __set_config_lines(self, new_mirror):
+        """Replace all instances of the current urls with the new mirror"""
+        self._lines = ''.join(self._lines)
+        for url in self.urls:
+            self._lines = self._lines.replace(url, new_mirror)
+
+    def generate_new_config(self, work_dir, new_mirror):
+        """Write new configuration file to current working directory"""
+        self.__set_config_lines(new_mirror)
+        self.new_file_path = work_dir.rstrip('/') + '/' + self.apt_file
+        try:
+            with open(self.new_file_path, 'w') as f:
+                f.write(self._lines)
+        except IOError as err:
+            raise SourcesFileError((
+                "Unable to generate new sources.list:\n\t%s\n" % err
+            ))
+
+
 def set_args():
     """Set arguments, disallow bad combination"""
     parser = get_args()
@@ -16,7 +174,7 @@ def set_args():
     # Convert status argument to format used by Launchpad
     args.min_status = args.min_status.replace('-', ' ')
     if not args.ping_only and (args.min_status != 'unknown'):
-        args.min_status = args.min_status[0].upper() + args.min_status[1:]
+        args.min_status = args.min_status.capitalize()
 
     if args.choose and (not args.top_number or args.top_number < 2):
         parser.print_usage()
@@ -26,34 +184,6 @@ def set_args():
         ))
 
     return args
-
-
-def not_ubuntu():
-    """Notify of incompatibility"""
-    exit("Not an Ubuntu OS")
-
-
-def get_release():
-    """Call system for Ubuntu release information"""
-    try:
-        release = check_output(["lsb_release", "-ics"])
-    except OSError:
-        not_ubuntu()
-    else:
-        release = [s.strip() for s in release.decode('utf-8').split()]
-
-    if release[0] == 'Debian':
-        exit("Debian is not currently supported")
-    elif release[0] != 'Ubuntu':
-        not_ubuntu()
-
-    return release
-
-
-def mandatory_file(file_path):
-    """Panic if required file doesn't exist"""
-    if not path.isfile(file_path):
-        exit("%s must exist as file" % file_path)
 
 
 def get_mirrors(mirrors_url):
@@ -66,56 +196,6 @@ def get_mirrors(mirrors_url):
     stderr.write("done.\n")
 
     return mirrors_list.splitlines()
-
-
-def get_arch():
-    """Return architecture information in Launchpad format"""
-    arch = check_output(["uname", "-m"]).strip().decode('utf-8')
-    if arch == 'x86_64':
-        return 'amd64'
-    return 'i386'
-
-
-def confirm_mirror(uri, deb, protos):
-    """Check if line follows correct sources.list URI"""
-    if (uri and (uri[0] in deb) and
-            (protos[0] in uri[1] or
-             protos[1] in uri[1])):
-        return True
-
-    return False
-
-
-def get_current_archives(sources_file, release, required_component):
-    """Parse system apt sources file for URIs to replace"""
-    lines = sources_file.readlines()
-    archives = []
-    deb = set(('deb', 'deb-src'))
-    protos = ('http://', 'ftp://')
-    for line in lines:
-        fields = line.split()
-        if confirm_mirror(fields, deb, protos):
-            # Start by finding the required component (main)
-            if (not archives and
-                    # The release name (e.g. xenial) and component are the
-                    # third, and fourth fields (as described in the
-                    # sources.list man page examples)
-                    (release[1] in fields[2]) and
-                    (fields[3] == required_component)):
-                archives.append(fields[1])
-                continue
-            # Try to find the mirror used for security component, only if
-            # we've already found the mirror for the required repository
-            elif (archives and
-                    # The release name dash-prefixes the security component
-                    (fields[2] == '%s-security' % (release[1])) and
-                    # Mirror urls should be unique as they'll be used in a
-                    # global search and replace to generate a new file
-                    (archives[0] != fields[1])):
-                archives.append(fields[1])
-                break
-
-    return {"archives": archives, "lines": lines}
 
 
 def print_status(info, rank):
@@ -177,33 +257,19 @@ def yes_or_no(query):
         answer = ask("Please enter '%s' or '%s': " % opts)
 
 
-def gen_sources_file(file_name, lines):
-    """Generate new apt sources.list file"""
-    try:
-        with open(file_name, 'w') as f:
-            f.write(lines)
-    except IOError as err:
-        raise (err)
-    else:
-        print("New config file saved to %s" % file_name)
-
-
 def apt_select():
     """Run apt-select: Ubuntu archive mirror reporting tool"""
     args = set_args()
-    release = get_release()
-
-    directory = '/etc/apt/'
-    apt_file = 'sources.list'
-    sources_path = directory + apt_file
-    mandatory_file(sources_path)
+    try:
+        sources = AptSources()
+    except ValueError as err:
+        exit("Error setting system information: %s" % err)
+    except SourcesFileError as err:
+        exit("Error with current apt sources: %s" % err)
 
     mirrors_loc = "mirrors.ubuntu.com"
     mirrors_url = "http://%s/mirrors.txt" % mirrors_loc
     mirrors_list = get_mirrors(mirrors_url)
-
-    codename = release[1][0].upper() + release[1][1:]
-    arch = get_arch()
 
     archives = Mirrors(mirrors_list, args.ping_only, args.min_status)
     archives.get_rtts()
@@ -219,33 +285,27 @@ def apt_select():
             # Mirrors needs a limit to stop launching threads
             archives.status_num = args.top_number
             stderr.write("Looking up %d status(es)\n" % args.top_number)
-            archives.lookup_statuses(args.min_status, codename, arch)
+            archives.lookup_statuses(
+                args.min_status, sources.codename, sources.arch
+            )
 
         if args.top_number > 1:
             stderr.write('\n')
-
-    archive_name = ""
-    required_component = "main"
-    skip_gen_msg = "Skipping file generation."
-    with open(sources_path, 'r') as sources_file:
-        sources = get_current_archives(sources_file, release,
-                                       required_component)
-        if "archives" not in sources:
-            stderr.write((
-                "Error finding current %s archivesitory in %s\n%s\n" %
-                (required_component, sources_path, skip_gen_msg)
-            ))
-        else:
-            archive_name = sources["archives"][0]
 
     rank = 0
     current_key = -1
     if args.ping_only or archives.abort_launch:
         archives.top_list = archives.ranked[:args.top_number]
 
+    try:
+        sources.set_current_archives()
+    except SourcesFileError as err:
+        raise SourcesFileError(err)
+
+    current_url = sources.urls[0]
     for url in archives.top_list:
         info = archives.urls[url]
-        if url == archive_name:
+        if url == current_url:
             info["Host"] += " (current)"
             current_key = rank
 
@@ -269,35 +329,30 @@ def apt_select():
     if current_key == key:
         exit((
             "%s is the currently used mirror.\n%s" %
-            (archives.urls[archive_name]["Host"], skip_gen_msg)
+            (archives.urls[current_url]["Host"], sources.skip_gen_msg)
         ))
 
-    # Replace all relevant instances of current mirror URIs in sources.list
-    # with the new mirror URI.  We use this to write the new file.
-    mirror = archives.top_list[key]
-    sources["lines"] = ''.join(sources["lines"])
-    for archive in sources["archives"]:
-        sources["lines"] = sources["lines"].replace(archive, mirror)
-
     work_dir = getcwd()
-    if work_dir == directory[0:-1]:
+    if work_dir == sources.directory[0:-1]:
         query = (
             "'%(dir)s' is the current directory.\n"
             "Generating a new '%(apt)s' file will "
             "overwrite the current file.\n"
             "You should copy or backup '%(apt)s' before replacing it.\n"
             "Continue?\n[yes|no] " % {
-                'dir': directory,
-                'apt': apt_file
+                'dir': sources.directory,
+                'apt': sources.apt_file
             }
         )
         yes_or_no(query)
 
-    write_file = work_dir.rstrip('/') + '/' + apt_file
+    new_mirror = archives.top_list[key]
     try:
-        gen_sources_file(write_file, sources["lines"])
-    except IOError as err:
-        exit("Unable to generate new sources.list:\n\t%s\n" % err)
+        sources.generate_new_config(work_dir, new_mirror)
+    except SourcesFileError as err:
+        exit("Error generating new config file" % err)
+    else:
+        print("New config file saved to %s" % sources.new_file_path)
 
     exit()
 
