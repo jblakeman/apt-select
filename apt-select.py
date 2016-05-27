@@ -204,7 +204,7 @@ def print_status(info, rank):
             info.setdefault(key, "N/A")
 
     print((
-        "%(rank)d. %(mirror)s\n%(tab)sLatency: %(ms)d ms\n"
+        "%(rank)d. %(mirror)s\n%(tab)sLatency: %(ms).2f ms\n"
         "%(tab)sOrg:     %(org)s\n%(tab)sStatus:  %(status)s\n"
         "%(tab)sSpeed:   %(speed)s" % {
             'tab': '    ',
@@ -220,7 +220,7 @@ def print_status(info, rank):
 
 def print_latency(info, rank):
     """Print latency information for mirror in ranked report"""
-    print("%d. %s: %d ms" % (rank+1, info["Host"], info["Latency"]))
+    print("%d. %s: %.2f ms" % (rank+1, info["Host"], info["Latency"]))
 
 
 def ask(query):

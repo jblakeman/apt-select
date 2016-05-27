@@ -278,7 +278,7 @@ class _RoundTrip(object):
             else:
                 rtts.append(rtt)
 
-        self._trip_queue.put((self._url, round(min(rtts))))
+        self._trip_queue.put((self._url, min(rtts)))
 
 
 class _LaunchData(object):
