@@ -16,8 +16,6 @@ class AptSystem(object):
         try:
             self._release = self.__get_release()
         except OSError as err:
-            # We return both errors from the stack as lsb_release may
-            # not be present for some strange reason
             raise ValueError("%s\n%s" % (not_ubuntu, err))
 
         if self._release["dist"] == 'Debian':
@@ -100,8 +98,8 @@ class AptSources(AptSystem):
         return False
 
     def __get_current_archives(self):
-        """Parse through all lines of the system apt file to find mirror urls
-           to replace"""
+        """Parse through all lines of the system apt file to find current
+           mirror urls"""
         deb = set(('deb', 'deb-src'))
         protos = ('http://', 'ftp://')
         urls = []
@@ -109,19 +107,14 @@ class AptSources(AptSystem):
         for line in self._lines:
             fields = line.split()
             if self.__confirm_mirror(fields, deb, protos):
-                # Start by finding the required component ("main")
                 if (not urls and
-                        # The release name (e.g. xenial) and component
-                        # are the third, and fourth fields (as
-                        # described in sources.list man page examples)
                         (cname in fields[2]) and
                         (fields[3] == self._required_component)):
                     urls.append(fields[1])
                     continue
                 elif (urls and
-                        # The release prefixes the security component
                         (fields[2] == '%s-security' % cname) and
-                        # Mirror urls must be unique as they'll be
+                        # Mirror urls should be unique as they'll be
                         # used in a global search and replace
                         (urls[0] != fields[1])):
                     urls.append(fields[1])
@@ -325,7 +318,6 @@ def apt_select():
     if args.list_only:
         exit()
 
-    # Avoid generating duplicate sources.list
     if current_key == key:
         exit((
             "%s is the currently used mirror.\n%s" %
