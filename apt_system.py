@@ -28,6 +28,8 @@ class AptSystem(object):
         dist, codename = get_release()
     except OSError as err:
         raise ValueError("%s\n%s" % (not_ubuntu, err))
+    else:
+        codename = codename.capitalize()
 
     if dist == 'Debian':
         raise ValueError("Debian is not currently supported")
@@ -40,11 +42,6 @@ class AptSystem(object):
             "%s: must have system architecture in valid Launchpad"
             "format" % arch.__name__
         ))
-
-    def __init__(self):
-        self._dist = AptSystem.dist
-        self._codename = AptSystem.codename.capitalize()
-        self._arch = AptSystem.arch
 
 
 class SourcesFileError(Exception):
@@ -60,7 +57,6 @@ class AptSources(AptSystem):
     """Class for apt configuration files"""
 
     def __init__(self):
-        super(AptSources, self).__init__()
         self.directory = '/etc/apt/'
         self.apt_file = 'sources.list'
         self._config_path = self.directory + self.apt_file

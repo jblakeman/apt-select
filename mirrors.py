@@ -282,7 +282,6 @@ class _RoundTrip(object):
 
 class _LaunchData(AptSystem):
     def __init__(self, url, launch_url, data_queue):
-        super(_LaunchData, self).__init__()
         self._url = url
         self._launch_url = launch_url
         self._data_queue = data_queue
@@ -297,8 +296,8 @@ class _LaunchData(AptSystem):
                 # series name and machine architecture
                 for tr in line.find('tbody').find_all('tr'):
                     arches = [x.get_text() for x in tr.find_all('td')]
-                    if (self._codename in arches[0] and
-                            arches[1] == self._arch):
+                    if (self.codename in arches[0] and
+                            arches[1] == self.arch):
                         info.update({"Status": arches[2]})
             else:
                 # "Speed" lives in a dl, and we use the key -> value as such
