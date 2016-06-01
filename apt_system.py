@@ -6,8 +6,8 @@ from utils import utf8_decode
 
 def get_release():
     """Call system for Ubuntu release information"""
-    return (s.strip() for s in utf8_decode(check_output(["lsb_release", "-ics"]))
-            .split())
+    return [s.strip() for s in utf8_decode(check_output(["lsb_release", "-ics"]))
+            .split()]
 
 def get_arch():
     """Return architecture information in Launchpad format"""
