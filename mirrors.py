@@ -9,6 +9,7 @@ from socket import (socket, AF_INET, SOCK_STREAM,
                     error, timeout, gaierror)
 from time import time
 from utils import get_html, URLGetError, progress_msg
+from apt_system import AptSystem
 try:
     from urlparse import urlparse
 except ImportError:
@@ -167,7 +168,7 @@ class Mirrors(object):
             self.urls, key=lambda x: self.urls[x]["Latency"]
         )
 
-    def __queue_lookups(self, codename, arch, data_queue):
+    def __queue_lookups(self, data_queue):
         """Queue threads for data retrieval from launchpad.net
 
            Returns number of threads started to fulfill number of
@@ -180,9 +181,7 @@ class Mirrors(object):
                 pass
             else:
                 thread = Thread(
-                    target=_LaunchData(
-                        url, launch_url, codename, arch, data_queue
-                    ).get_info
+                    target=_LaunchData(url, launch_url, data_queue).get_info
                 )
                 thread.daemon = True
                 thread.start()
@@ -197,11 +196,11 @@ class Mirrors(object):
 
         return num_threads
 
-    def lookup_statuses(self, min_status, codename, arch):
+    def lookup_statuses(self, min_status):
         """Scrape statuses/info in from launchpad.net mirror pages"""
         while (self.got["data"] < self.status_num) and self.ranked:
             data_queue = Queue()
-            num_threads = self.__queue_lookups(codename, arch, data_queue)
+            num_threads = self.__queue_lookups(data_queue)
             if num_threads == 0:
                 break
             # Get output of all started thread methods from queue
@@ -281,12 +280,11 @@ class _RoundTrip(object):
         self._trip_queue.put((self._url, min(rtts)))
 
 
-class _LaunchData(object):
-    def __init__(self, url, launch_url, codename, arch, data_queue):
+class _LaunchData(AptSystem):
+    def __init__(self, url, launch_url, data_queue):
+        super(_LaunchData, self).__init__()
         self._url = url
         self._launch_url = launch_url
-        self._codename = codename
-        self._arch = arch
         self._data_queue = data_queue
 
     def __parse_mirror_html(self, launch_html):
