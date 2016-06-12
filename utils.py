@@ -9,6 +9,8 @@ try:
 except ImportError:
     from urllib2 import urlopen, HTTPError, URLError
 
+def utf8_decode(encoded):
+    return encoded.decode('utf-8')
 
 class URLGetError(Exception):
     """Error class for retreiving and reading content from remote URL"""
@@ -27,7 +29,7 @@ def get_html(url):
     except (SSLError, IOError, OSError) as err:
         raise URLGetError(err)
 
-    return html.decode('utf-8')
+    return utf8_decode(html)
 
 
 def progress_msg(processed, total):

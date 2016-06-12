@@ -2,22 +2,18 @@
 
 from subprocess import check_output
 from os import path
+from utils import utf8_decode
 
 def get_release():
     """Call system for Ubuntu release information"""
-    try:
-        release = check_output(["lsb_release", "-ics"])
-    except OSError as err:
-        raise OSError(err)
-
-    return (s.strip() for s in release.decode('utf-8').split())
+    return [s.strip() for s in utf8_decode(check_output(["lsb_release", "-ics"]))
+            .split()]
 
 def get_arch():
     """Return architecture information in Launchpad format"""
-    arch = check_output(["uname", "-m"]).strip().decode('utf-8')
-    if arch == 'x86_64':
-        return 'amd64'
-    return 'i386'
+    if utf8_decode(check_output(["uname", "-m"]).strip()) == u'x86_64':
+        return u'amd64'
+    return u'i386'
 
 
 class AptSystem(object):
