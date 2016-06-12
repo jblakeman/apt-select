@@ -1,7 +1,7 @@
 apt-select
 ==========
 
-Ubuntu Archive Mirror reporting tool for selection of fast apt mirrors.
+Ubuntu Archive Mirror reporting tool for apt sources configuration.
 
 Features
 --------
