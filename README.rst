@@ -82,7 +82,7 @@ After new sources.list is generated in current working directory, backup and rep
     sudo mv sources.list /etc/apt/
 
 Supported URI Types
-----------------------------------------------------------
+-------------------
 
 Currently, `http` and `ftp` are supported.
 
