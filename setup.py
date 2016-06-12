@@ -1,7 +1,6 @@
 """A setuptools based setup module.
 See:
-https://packaging.python.org/en/latest/distributing.html
-"""
+https://packaging.python.org/en/latest/distributing.html """
 
 from setuptools import setup, find_packages
 from codecs import open
@@ -42,8 +41,9 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
-        'Topic :: Systems :: Systems Administration',
+        'Topic :: System :: Installation/Setup'
         'Topic :: Systems :: Networking',
+        'Topic :: Systems :: Systems Administration',
         'Topic :: Utilities',
     ],
 
