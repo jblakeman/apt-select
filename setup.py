@@ -43,6 +43,7 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Topic :: System :: Installation/Setup'
         'Topic :: System :: Networking',
+        'Topic :: System :: Software Distribution',
         'Topic :: System :: Systems Administration',
         'Topic :: Utilities',
     ],
