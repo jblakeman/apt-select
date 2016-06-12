@@ -35,7 +35,7 @@ else:
     try:
         BeautifulSoup("", PARSER)
     except FeatureNotFound:
-        PARSER = "html.PARSER"
+        PARSER = "html.parser"
 
 try:
     xrange
