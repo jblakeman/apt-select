@@ -42,8 +42,8 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Topic :: System :: Installation/Setup'
-        'Topic :: Systems :: Networking',
-        'Topic :: Systems :: Systems Administration',
+        'Topic :: System :: Networking',
+        'Topic :: System :: Systems Administration',
         'Topic :: Utilities',
     ],
 
