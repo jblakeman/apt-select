@@ -14,17 +14,12 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 setup(
     name='apt-select',
     version='0.3.0',
-
     description='Ubuntu Archive Mirror reporting tool for apt sources configuration',
     long_description=long_description,
-
     url='https://github.com/jblakeman/apt-select',
-
     author='John Blakeman',
     author_email='john@johnblakeman.com',
-
     license='MIT',
-
     classifiers=[
         'Development Status :: 2 - Beta',
         'Environment :: Console',
@@ -35,8 +30,6 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.0',
-        'Programming Language :: Python :: 3.1',
         'Programming Language :: Python :: 3.2',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
@@ -47,9 +40,7 @@ setup(
         'Topic :: System :: Systems Administration',
         'Topic :: Utilities',
     ],
-
     keywords='latency status rank reporting apt configuration',
     packages=find_packages(exclude=['tests']),
-
     install_requires=['beautifulsoup4'],
 )
