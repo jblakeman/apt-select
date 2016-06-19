@@ -6,37 +6,49 @@ Ubuntu Archive Mirror reporting tool for apt sources configuration.
 Features
 --------
 
-- Tests latency to mirrors in `mirrors.txt <http://mirrors.ubuntu.com/mirrors.txt/>`_.
+* Tests latency to mirrors in `mirrors.txt <http://mirrors.ubuntu.com/mirrors.txt/>`_.
     - 3 requests are sent to each mirror, minumum round trip time being used for rank.
 
-- Reports latency, status, and bandwidth capacity of the fastest mirrors in a ranked list.
+* Reports latency, status, and bandwidth capacity of the fastest mirrors in a ranked list.
     - Status and bandwidth are scraped from `launchpad <https://launchpad.net/ubuntu/+archivemirrors/>`_.
 
-- Generates `sources.list` file using new mirror.
+* Generates `sources.list` file using new mirror.
     - Mirror can be chosen from a list or selected automatically using the top ranked mirror (default).
     - `/etc/apt/sources.list` is searched to generate `sources.list` file using new mirror.
 
-Dependencies
+Installation
 ------------
 
-Python HTML parser, BeautifulSoup
-
-Python2
 ::
 
-    sudo apt-get install python-bs4
+    pip install apt-select
 
-Python3
+or
+
 ::
 
-    sudo apt-get install python3-bs4
+    pip install git+https://github.com/jblakeman/apt-select.git
 
-Usage
------
+or
+
+::
+
+    easy_install apt-select
+
+or
+
+::
+
+    git clone https://github.com/jblakeman/apt-select
+    python apt-select/setup.py install
+
+Invocation
+----------
+
 ::
 
     $ apt-select --help
-    usage: apt-select.py [-h] [-t NUMBER] [-m STATUS | -p] [-c | -l]
+    usage: apt-select [-h] [-t NUMBER] [-m STATUS | -p] [-c | -l]
 
     Find the fastest Ubuntu apt mirrors.
     Generate new sources.list file.
@@ -68,17 +80,17 @@ Examples
 Choose from the top 3 mirrors, including those last updated a week ago:
 ::
 
-    ./apt-select.py -c -t 3 -m one-week-behind
+    apt-select -c -t 3 -m one-week-behind
 
 Find the top 10 mirrors, output latency info only, and don't generate new config file:
 ::
 
-    ./apt-select.py -t 10 -p -l
+    apt-select -t 10 -p -l
 
 After new sources.list is generated in current working directory, backup and replace to update apt:
 ::
 
-    sudo mv /etc/apt/sources.list /etc/apt/sources.list.backup && \
+    sudo cp /etc/apt/sources.list /etc/apt/sources.list.backup && \
     sudo mv sources.list /etc/apt/
 
 Supported URI Types
@@ -90,3 +102,8 @@ Currently, `http` and `ftp` are supported.
 ::
 
     [deb|deb-src] [http|ftp]://mirror.example.com/path [component1] [component2] [...]
+
+Dependencies
+------------
+
+Python HTML parser, `BeautifulSoup <https://www.crummy.com/software/BeautifulSoup/>`_.
