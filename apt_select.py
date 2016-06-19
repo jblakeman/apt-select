@@ -7,6 +7,7 @@ from utils import get_html, URLGetError
 from mirrors import Mirrors
 from apt_system import AptSources, SourcesFileError
 
+
 def set_args():
     """Set arguments, disallow bad combination"""
     parser = get_args()
@@ -194,13 +195,17 @@ def apt_select():
 
     exit()
 
+
+def main():
+    try:
+        apt_select()
+    except KeyboardInterrupt:
+        stderr.write("Aborting...\n")
+
 if __name__ == '__main__':
     # Support input for both Python 2 and 3
     get_input = input
     if version_info[:2] <= (2, 7):
         get_input = raw_input
 
-    try:
-        apt_select()
-    except KeyboardInterrupt:
-        stderr.write("Aborting...\n")
+    main()
