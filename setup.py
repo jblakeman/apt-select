@@ -43,9 +43,5 @@ setup(
     keywords='latency status rank reporting apt configuration',
     packages=find_packages(exclude=['tests']),
     install_requires=['beautifulsoup4'],
-    entry_points = {
-        'console_scripts': [
-            'apt-select=apt_select.apt_select:main',
-        ],
-    }
+    scripts=['bin/apt-select']
 )

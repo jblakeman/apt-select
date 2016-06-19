@@ -2,7 +2,7 @@
 
 from subprocess import check_output
 from os import path
-from utils import utf8_decode
+from apt_select.utils import utf8_decode
 
 def get_release():
     """Call system for Ubuntu release information"""

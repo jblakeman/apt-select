@@ -2,10 +2,10 @@
 
 from sys import exit, stderr, version_info
 from os import getcwd
-from arguments import get_args
-from utils import get_html, URLGetError
-from mirrors import Mirrors
-from apt_system import AptSources, SourcesFileError
+from apt_select.arguments import get_args
+from apt_select.utils import get_html, URLGetError
+from apt_select.mirrors import Mirrors
+from apt_select.apt_system import AptSources, SourcesFileError
 
 
 def set_args():

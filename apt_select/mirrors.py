@@ -8,8 +8,8 @@ from socket import (socket, AF_INET, SOCK_STREAM,
                     gethostbyname, setdefaulttimeout,
                     error, timeout, gaierror)
 from time import time
-from utils import get_html, URLGetError, progress_msg
-from apt_system import AptSystem
+from apt_select.utils import get_html, URLGetError, progress_msg
+from apt_select.apt_system import AptSystem
 try:
     from urlparse import urlparse
 except ImportError:
