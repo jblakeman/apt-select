@@ -45,7 +45,7 @@ setup(
     install_requires=['beautifulsoup4'],
     entry_points = {
         'console_scripts': [
-            'apt-select = apt_select:main'
-        ]
+            'apt-select=apt_select.apt_select:main',
+        ],
     }
 )
