@@ -19,6 +19,8 @@ Features
 Installation
 ------------
 
+From most recent release
+
 ::
 
     pip install apt-select
@@ -27,13 +29,13 @@ or
 
 ::
 
-    pip install git+https://github.com/jblakeman/apt-select.git
+    easy_install apt-select
 
-or
+From unstable development branch
 
 ::
 
-    easy_install apt-select
+    pip install git+https://github.com/jblakeman/apt-select.git
 
 or
 
