@@ -5,6 +5,7 @@ https://packaging.python.org/en/latest/distributing.html """
 from setuptools import setup, find_packages
 from codecs import open
 from os import path
+from apt_select import __version__
 
 here = path.abspath(path.dirname(__file__))
 
@@ -13,7 +14,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='apt-select',
-    version='0.3.0',
+    version=__version__,
     description='Ubuntu Archive Mirror reporting tool for apt sources configuration',
     long_description=long_description,
     url='https://github.com/jblakeman/apt-select',
