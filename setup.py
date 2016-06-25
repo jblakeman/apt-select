@@ -22,7 +22,7 @@ setup(
     author_email='john@johnblakeman.com',
     license='MIT',
     classifiers=[
-        'Development Status :: 2 - Beta',
+        'Development Status :: 4 - Beta',
         'Environment :: Console',
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',
