@@ -197,7 +197,6 @@ def apt_select():
 
 
 def main():
-    print(version_info)
     try:
         apt_select()
     except KeyboardInterrupt:
