@@ -25,6 +25,7 @@ class AptSystem(object):
         """Return architecture information in Launchpad format"""
         if utf8_decode(check_output(["uname", "-m"]).strip()) == 'x86_64':
             return LAUNCHPAD_ARCH_64
+
         return LAUNCHPAD_ARCH_32
 
     _not_ubuntu = "Must be an Ubuntu OS"
@@ -35,17 +36,10 @@ class AptSystem(object):
     else:
         codename = codename.capitalize()
 
-    if dist == 'Debian':
-        raise ValueError("Debian is not currently supported")
-    elif dist != 'Ubuntu':
+    if dist != 'Ubuntu':
         raise ValueError(_not_ubuntu)
 
     arch = get_arch.__func__()
-    if arch not in LAUNCHPAD_ARCHES:
-        raise ValueError((
-            "%s: must have system architecture in valid Launchpad"
-            "format" % arch.__name__
-        ))
 
 
 class SourcesFileError(Exception):
