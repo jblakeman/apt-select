@@ -243,10 +243,7 @@ class _RoundTrip(object):
         self._url = url
         self._host = host
         self._trip_queue = trip_queue
-        try:
-            self._addr = gethostbyname(host)
-        except gaierror as err:
-            raise gaierror(err)
+        self._addr = gethostbyname(host)
 
     def __tcp_ping(self):
         """Return socket latency to host's resolved IP address"""

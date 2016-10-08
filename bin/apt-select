@@ -137,10 +137,7 @@ def apt_select():
     if args.ping_only or archives.abort_launch:
         archives.top_list = archives.ranked[:args.top_number]
 
-    try:
-        sources.set_current_archives()
-    except SourcesFileError as err:
-        raise SourcesFileError(err)
+    sources.set_current_archives()
 
     current_url = sources.urls[0]
     for url in archives.top_list:
