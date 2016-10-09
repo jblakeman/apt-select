@@ -6,7 +6,7 @@ from apt_select.utils import utf8_decode
 
 LAUNCHPAD_ARCH_32 = 'i386'
 LAUNCHPAD_ARCH_64 = 'amd64'
-LAUNCHPAD_ARCHES = set([
+LAUNCHPAD_ARCHES = frozenset([
     LAUNCHPAD_ARCH_32,
     LAUNCHPAD_ARCH_64
 ])
@@ -54,8 +54,8 @@ class SourcesFileError(Exception):
 class AptSources(AptSystem):
     """Class for apt configuration files"""
 
-    DEB_SCHEMES = set(['deb', 'deb-src'])
-    PROTOCOLS = set(['http', 'ftp'])
+    DEB_SCHEMES = frozenset(['deb', 'deb-src'])
+    PROTOCOLS = frozenset(['http', 'ftp'])
 
     def __init__(self):
         self.directory = '/etc/apt/'
