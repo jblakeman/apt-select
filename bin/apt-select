@@ -164,9 +164,11 @@ def apt_select():
 
     if current_key == key:
         exit((
-            "%s is the currently used mirror.\n%s" %
-            (archives.urls[current_url]["Host"], sources.skip_gen_msg)
-        ))
+            "Selected mirror %(url)s is the currently used mirror.\n"
+            "%(message)s" % {
+                'url': current_url,
+                'message': sources.skip_gen_msg
+            }))
 
     work_dir = getcwd()
     if work_dir == sources.directory[0:-1]:
