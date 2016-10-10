@@ -46,23 +46,30 @@ def print_status(info, rank):
             info.setdefault(key, "N/A")
 
     print((
-        "%(rank)d. %(mirror)s\n%(tab)sLatency: %(ms).2f ms\n"
-        "%(tab)sOrg:     %(org)s\n%(tab)sStatus:  %(status)s\n"
+        "%(rank)d. %(mirror)s\n"
+        "%(tab)sLatency: %(ms).2f ms\n"
+        "%(tab)sOrg:     %(org)s\n"
+        "%(tab)sStatus:  %(status)s\n"
         "%(tab)sSpeed:   %(speed)s" % {
             'tab': '    ',
-            'rank': rank + 1,
-            'mirror': info["Host"],
-            'ms': info["Latency"],
-            'org': info["Organisation"],
-            'status': info["Status"],
-            'speed': info["Speed"]
+            'rank': rank ,
+            'mirror': info['Host'],
+            'ms': info['Latency'],
+            'org': info['Organisation'],
+            'status': info['Status'],
+            'speed': info['Speed']
         }
     ))
 
 
-def print_latency(info, rank):
+def print_latency(info, rank, max_host_len):
     """Print latency information for mirror in ranked report"""
-    print("%d. %s: %.2f ms" % (rank+1, info["Host"], info["Latency"]))
+    print("%(rank)d. %(mirror)s: %(padding)s%(ms).2f ms" % {
+        'rank': rank,
+        'padding': (max_host_len - info.get('host_len', max_host_len)) * ' ',
+        'mirror': info['Host'],
+        'ms': info['Latency']
+    })
 
 
 def ask(query):
@@ -71,7 +78,7 @@ def ask(query):
     return answer
 
 
-def get_selected_mirror(rank, list_size):
+def get_selected_mirror(list_size):
     """Prompt for user input to select desired mirror"""
     key = ask("Choose a mirror (1 - %d)\n'q' to quit " % list_size)
     while True:
@@ -81,12 +88,12 @@ def get_selected_mirror(rank, list_size):
             if key == 'q':
                 exit()
         else:
-            if (key >= 1) and (key <= rank):
+            if (key >= 1) and (key <= list_size):
                 break
 
         key = ask("Invalid entry ")
 
-    return key-1
+    return key
 
 
 def yes_or_no(query):
@@ -132,39 +139,46 @@ def apt_select():
         if args.top_number > 1:
             stderr.write('\n')
 
-    rank = 0
-    current_key = -1
     if args.ping_only or archives.abort_launch:
         archives.top_list = archives.ranked[:args.top_number]
 
     sources.set_current_archives()
-
     current_url = sources.urls[0]
-    for url in archives.top_list:
-        info = archives.urls[url]
-        if url == current_url:
-            info["Host"] += " (current)"
-            current_key = rank
+    if archives.urls.get(current_url):
+        archives.urls[current_url]['Host'] += " (current)"
 
-        if not args.ping_only and not archives.abort_launch:
+    show_status = False
+    max_host_len = 0
+    if not args.ping_only and not archives.abort_launch:
+        show_status = True
+    else:
+        def set_hostname_len(url, archives, i):
+            hostname_len = len(str(i) + archives.urls[url]['Host'])
+            archives.urls[url]['host_len'] = hostname_len
+            return hostname_len
+
+        max_host_len = max([set_hostname_len(url, archives, i+1)
+                            for i, url in enumerate(archives.top_list)])
+    for i, url in enumerate(archives.top_list):
+        info = archives.urls[url]
+        rank = i + 1
+        if show_status:
             print_status(info, rank)
         else:
-            print_latency(info, rank)
-
-        rank += 1
-        if rank == args.top_number:
-            break
+            print_latency(info, rank, max_host_len)
 
     key = 0
     if args.choose:
-        key = get_selected_mirror(rank, len(archives.top_list))
+        key = get_selected_mirror(len(archives.top_list)) - 1
 
     if args.list_only:
         exit()
 
-    if current_key == key:
+    new_mirror = archives.top_list[key]
+    print("Selecting mirror %(mirror)s ..." % {'mirror': new_mirror})
+    if current_url == new_mirror:
         exit((
-            "Selected mirror %(url)s is the currently used mirror.\n"
+            "%(url)s is the currently used mirror.\n"
             "%(message)s" % {
                 'url': current_url,
                 'message': sources.skip_gen_msg
