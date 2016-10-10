@@ -5,8 +5,7 @@
 
 from sys import stderr
 from socket import (socket, AF_INET, SOCK_STREAM,
-                    gethostbyname, setdefaulttimeout,
-                    error, timeout, gaierror)
+                    gethostbyname, error, timeout, gaierror)
 from time import time
 from apt_select.utils import get_html, URLGetError, progress_msg
 from apt_select.apt_system import AptSystem
@@ -243,16 +242,13 @@ class _RoundTrip(object):
         self._url = url
         self._host = host
         self._trip_queue = trip_queue
-        try:
-            self._addr = gethostbyname(host)
-        except gaierror as err:
-            raise gaierror(err)
+        self._addr = gethostbyname(host)
 
     def __tcp_ping(self):
         """Return socket latency to host's resolved IP address"""
         port = 80
-        setdefaulttimeout(2.5)
         sock = socket(AF_INET, SOCK_STREAM)
+        sock.settimeout(2.5)
         send_tstamp = time()*1000
         try:
             sock.connect((self._addr, port))
