@@ -21,20 +21,12 @@ try:
 except ImportError:
     from Queue import Queue, Empty
 
+from bs4 import BeautifulSoup, FeatureNotFound
+PARSER = "lxml"
 try:
-    from bs4 import BeautifulSoup, FeatureNotFound
-except ImportError as err:
-    exit((
-        "%s\n"
-        "Try 'sudo apt-get install python-bs4' "
-        "or 'pip install beautifulsoup4'" % err
-    ))
-else:
-    PARSER = "lxml"
-    try:
-        BeautifulSoup("", PARSER)
-    except FeatureNotFound:
-        PARSER = "html.parser"
+    BeautifulSoup("", PARSER)
+except FeatureNotFound:
+    PARSER = "html.parser"
 
 try:
     xrange
