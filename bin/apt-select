@@ -152,12 +152,12 @@ def apt_select():
     if not args.ping_only and not archives.abort_launch:
         show_status = True
     else:
-        def set_hostname_len(url, archives, i):
+        def set_hostname_len(url, i):
             hostname_len = len(str(i) + archives.urls[url]['Host'])
             archives.urls[url]['host_len'] = hostname_len
             return hostname_len
 
-        max_host_len = max([set_hostname_len(url, archives, i+1)
+        max_host_len = max([set_hostname_len(url, i+1)
                             for i, url in enumerate(archives.top_list)])
     for i, url in enumerate(archives.top_list):
         info = archives.urls[url]
