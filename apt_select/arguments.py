@@ -22,6 +22,7 @@ def get_args():
             "specify number of mirrors to return\n"
             "default: 1\n"
         ),
+        const=1,
         default=1,
         metavar='NUMBER'
     )
@@ -55,6 +56,7 @@ def get_args():
                 'unknown': status_args[4]
             }
         ),
+        const=status_args[0],
         default=status_args[0],
         metavar='STATUS'
     )
