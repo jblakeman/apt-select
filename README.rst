@@ -26,10 +26,6 @@ or::
 
     pip3 install apt-select
 
-or::
-
-    easy_install apt-select
-
 Target project master branch::
 
     pip install git+https://github.com/jblakeman/apt-select.git

@@ -4,40 +4,42 @@ from subprocess import check_output
 from os import path
 from apt_select.utils import utf8_decode
 
-def get_release():
-    """Call system for Ubuntu release information"""
-    return [s.strip() for s in utf8_decode(check_output(["lsb_release", "-ics"]))
-            .split()]
-
-def get_arch():
-    """Return architecture information in Launchpad format"""
-    if utf8_decode(check_output(["uname", "-m"]).strip()) == u'x86_64':
-        return u'amd64'
-    return u'i386'
-
+LAUNCHPAD_ARCH_32 = 'i386'
+LAUNCHPAD_ARCH_64 = 'amd64'
+LAUNCHPAD_ARCHES = frozenset([
+    LAUNCHPAD_ARCH_32,
+    LAUNCHPAD_ARCH_64
+])
 
 class AptSystem(object):
     """System information for use in apt related operations"""
 
-    not_ubuntu = "Must be an Ubuntu OS"
+    @staticmethod
+    def get_release():
+        """Call system for Ubuntu release information"""
+        return [utf8_decode(s).strip()
+                for s in check_output(["lsb_release", "-ics"]).split()]
+
+    @staticmethod
+    def get_arch():
+        """Return architecture information in Launchpad format"""
+        if utf8_decode(check_output(["uname", "-m"]).strip()) == 'x86_64':
+            return LAUNCHPAD_ARCH_64
+
+        return LAUNCHPAD_ARCH_32
+
+    _not_ubuntu = "Must be an Ubuntu OS"
     try:
-        dist, codename = get_release()
-    except OSError as err:
-        raise ValueError("%s\n%s" % (not_ubuntu, err))
+        dist, codename = get_release.__func__()
+    except OSError:
+        raise ValueError("%s\n%s" % _not_ubuntu)
     else:
         codename = codename.capitalize()
 
-    if dist == 'Debian':
-        raise ValueError("Debian is not currently supported")
-    elif dist != 'Ubuntu':
-        raise ValueError(not_ubuntu)
+    if dist != 'Ubuntu':
+        raise ValueError(_not_ubuntu)
 
-    arch = get_arch()
-    if arch not in ('i386', 'amd64'):
-        raise ValueError((
-            "%s: must have system architecture in valid Launchpad"
-            "format" % arch.__name__
-        ))
+    arch = get_arch.__func__()
 
 
 class SourcesFileError(Exception):
@@ -51,6 +53,9 @@ class SourcesFileError(Exception):
 
 class AptSources(AptSystem):
     """Class for apt configuration files"""
+
+    DEB_SCHEMES = frozenset(['deb', 'deb-src'])
+    PROTOCOLS = frozenset(['http', 'ftp'])
 
     def __init__(self):
         self.directory = '/etc/apt/'
@@ -78,11 +83,10 @@ class AptSources(AptSystem):
                 "Unable to read system apt file: %s" % err
             ))
 
-    def __confirm_mirror(self, uri, deb, protos):
+    def __confirm_apt_source_uri(self, uri):
         """Check if line follows correct sources.list URI"""
-        if (uri and (uri[0] in deb) and
-                (protos[0] in uri[1] or
-                 protos[1] in uri[1])):
+        if (uri and (uri[0] in self.DEB_SCHEMES) and
+                uri[1].split('://')[0] in self.PROTOCOLS):
             return True
 
         return False
@@ -90,13 +94,11 @@ class AptSources(AptSystem):
     def __get_current_archives(self):
         """Parse through all lines of the system apt file to find current
            mirror urls"""
-        deb = set(('deb', 'deb-src'))
-        protos = ('http://', 'ftp://')
         urls = []
         cname = self.codename.lower()
         for line in self._lines:
             fields = line.split()
-            if self.__confirm_mirror(fields, deb, protos):
+            if self.__confirm_apt_source_uri(fields):
                 if (not urls and
                         (cname in fields[2]) and
                         (fields[3] == self._required_component)):
