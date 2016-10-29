@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Main apt-select script"""
 
 from sys import exit, stderr, version_info
 from os import getcwd
@@ -6,6 +7,11 @@ from apt_select.arguments import get_args
 from apt_select.utils import get_html, URLGetError
 from apt_select.mirrors import Mirrors
 from apt_select.apt_system import AptSources, SourcesFileError
+
+# Support input for Python 2 and 3
+get_input = input
+if version_info[:2] <= (2, 7):
+    get_input = raw_input
 
 
 def set_args():
@@ -216,9 +222,4 @@ def main():
         stderr.write("Aborting...\n")
 
 if __name__ == '__main__':
-    # Support input for both Python 2 and 3
-    get_input = input
-    if version_info[:2] <= (2, 7):
-        get_input = raw_input
-
     main()
