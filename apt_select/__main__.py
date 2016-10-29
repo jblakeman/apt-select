@@ -4,7 +4,7 @@
 from sys import exit, stderr, version_info
 from os import getcwd
 from apt_select.arguments import get_args
-from apt_select.utils import get_html, URLGetError
+from apt_select.utils import get_text, URLGetTextError
 from apt_select.mirrors import Mirrors
 from apt_select.apt_system import AptSources, SourcesFileError
 
@@ -38,8 +38,8 @@ def get_mirrors(mirrors_url):
     """Fetch list of Ubuntu mirrors"""
     stderr.write("Getting list of mirrors...")
     try:
-        mirrors_list = get_html(mirrors_url)
-    except URLGetError as err:
+        mirrors_list = get_text(mirrors_url)
+    except URLGetTextError as err:
         exit("Error getting list from %s:\n\t%s" % (mirrors_url, err))
     stderr.write("done.\n")
 
