@@ -40,7 +40,7 @@ def get_mirrors(mirrors_url):
     try:
         mirrors_list = get_html(mirrors_url)
     except URLGetError as err:
-        exit("Error getting list from %s:\n\t%s" % (mirrors_list, err))
+        exit("Error getting list from %s:\n\t%s" % (mirrors_url, err))
     stderr.write("done.\n")
 
     return mirrors_list.splitlines()
