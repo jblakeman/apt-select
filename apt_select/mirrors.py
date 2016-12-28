@@ -7,7 +7,7 @@ from sys import stderr
 from socket import (socket, AF_INET, SOCK_STREAM,
                     gethostbyname, error, timeout, gaierror)
 from time import time
-from apt_select.utils import get_html, URLGetError, progress_msg
+from apt_select.utils import progress_msg, get_text, URLGetTextError
 from apt_select.apt_system import AptSystem
 try:
     from urlparse import urlparse
@@ -73,8 +73,8 @@ class Mirrors(object):
         """Obtain mirrors' corresponding launchpad URLs"""
         stderr.write("Getting list of launchpad URLs...")
         try:
-            self._launchpad_html = get_html(self._launchpad_url)
-        except URLGetError as err:
+            self._launchpad_html = get_text(self._launchpad_url)
+        except URLGetTextError as err:
             stderr.write((
                 "%s: %s\nUnable to retrieve list of launchpad sites\n"
                 "Reverting to latency only" % (self._launchpad_url, err)
@@ -302,8 +302,8 @@ class _LaunchData(AptSystem):
         Launchpad API doesn't support access to archivemirror statuses."""
 
         try:
-            launch_html = get_html(self._launch_url)
-        except URLGetError as err:
+            launch_html = get_text(self._launch_url)
+        except URLGetTextError as err:
             stderr.write("connection to %s: %s\n" % (self._launch_url, err))
             self._data_queue.put_nowait((self._url, None))
         else:

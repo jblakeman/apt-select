@@ -95,3 +95,5 @@ Dependencies
 ------------
 
 Python HTML parser, `BeautifulSoup <https://www.crummy.com/software/BeautifulSoup/>`_.
+
+HTTP Requests library, `requests <http://docs.python-requests.org/en/master/>`_.
