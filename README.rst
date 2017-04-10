@@ -85,7 +85,7 @@ After new sources.list is generated in current working directory, backup and rep
 Supported URI Types
 -------------------
 
-Currently, `http`,`https` and `ftp` are supported.
+Currently, `http`, `https` and `ftp` are supported.
 
 `/etc/apt/sources.list` should contain sources in the following format:::
 
