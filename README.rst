@@ -85,11 +85,11 @@ After new sources.list is generated in current working directory, backup and rep
 Supported URI Types
 -------------------
 
-Currently, `http` and `ftp` are supported.
+Currently, `http`,`https` and `ftp` are supported.
 
 `/etc/apt/sources.list` should contain sources in the following format:::
 
-    [deb|deb-src] [http|ftp]://mirror.example.com/path [component1] [component2] [...]
+    [deb|deb-src] [http|https|ftp]://mirror.example.com/path [component1] [component2] [...]
 
 Dependencies
 ------------
