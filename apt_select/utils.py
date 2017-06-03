@@ -1,35 +1,27 @@
 #!/usr/bin/env python
-"""Collection of module netural utility functions"""
+"""Collection of module neutral utility functions"""
 
 from sys import stderr
-from ssl import SSLError
-from socket import timeout
-try:
-    from urllib.request import urlopen, HTTPError, URLError
-except ImportError:
-    from urllib2 import urlopen, HTTPError, URLError
+import requests
+
 
 def utf8_decode(encoded):
     return encoded.decode('utf-8')
 
-class URLGetError(Exception):
-    """Error class for retreiving and reading content from remote URL"""
+
+class URLGetTextError(Exception):
+    """Error class for fetching text from a URL"""
     pass
 
 
-def get_html(url):
-    """Retrieve and read HTML from URL"""
+def get_text(url):
+    """Return text from GET request response content"""
     try:
-        html = urlopen(url)
-    except (HTTPError, URLError, SSLError, timeout) as err:
-        raise URLGetError(err)
+        text = requests.get(url).text
+    except requests.HTTPError as err:
+        raise URLGetTextError(err)
 
-    try:
-        html = html.read()
-    except (SSLError, IOError, OSError) as err:
-        raise URLGetError(err)
-
-    return utf8_decode(html)
+    return text
 
 
 def progress_msg(processed, total):

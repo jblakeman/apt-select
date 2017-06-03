@@ -1,11 +1,17 @@
 #!/usr/bin/env python
+"""Main apt-select script"""
 
 from sys import exit, stderr, version_info
 from os import getcwd
 from apt_select.arguments import get_args
-from apt_select.utils import get_html, URLGetError
+from apt_select.utils import get_text, URLGetTextError
 from apt_select.mirrors import Mirrors
 from apt_select.apt_system import AptSources, SourcesFileError
+
+# Support input for Python 2 and 3
+get_input = input
+if version_info[:2] <= (2, 7):
+    get_input = raw_input
 
 
 def set_args():
@@ -32,9 +38,9 @@ def get_mirrors(mirrors_url):
     """Fetch list of Ubuntu mirrors"""
     stderr.write("Getting list of mirrors...")
     try:
-        mirrors_list = get_html(mirrors_url)
-    except URLGetError as err:
-        exit("Error getting list from %s:\n\t%s" % (mirrors_list, err))
+        mirrors_list = get_text(mirrors_url)
+    except URLGetTextError as err:
+        exit("Error getting list from %s:\n\t%s" % (mirrors_url, err))
     stderr.write("done.\n")
 
     return mirrors_list.splitlines()
@@ -216,9 +222,4 @@ def main():
         stderr.write("Aborting...\n")
 
 if __name__ == '__main__':
-    # Support input for both Python 2 and 3
-    get_input = input
-    if version_info[:2] <= (2, 7):
-        get_input = raw_input
-
     main()
