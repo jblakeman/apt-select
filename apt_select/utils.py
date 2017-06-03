@@ -17,7 +17,7 @@ class URLGetTextError(Exception):
 def get_text(url):
     """Return text from GET request response content"""
     try:
-        text = requests.get(url).text
+        text = requests.get(url, headers={'User-Agent': 'apt-select'}).text
     except requests.HTTPError as err:
         raise URLGetTextError(err)
 
