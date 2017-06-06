@@ -6,7 +6,7 @@ Find a fast, up-to-date Ubuntu Archive Mirror.
 Features
 --------
 
-* Tests latency to mirrors in `mirrors.txt <http://mirrors.ubuntu.com/mirrors.txt>`_.
+* Tests latency to mirrors in a given country's mirror list at `mirrors.ubuntu.com <http://mirrors.ubuntu.com>`_.
     - 3 requests are sent to each mirror, minumum round trip time being used for rank.
 
 * Reports latency, status, and bandwidth capacity of the fastest mirrors in a ranked list.
@@ -40,17 +40,23 @@ Invocation
 ::
 
     $ apt-select --help
-    usage: apt-select [-h] [-t NUMBER] [-m STATUS | -p] [-c | -l]
+    usage: apt-select [-h] [-C [COUNTRY]] [-t [NUMBER]] [-m [STATUS] | -p]
+                      [-c | -l]
 
     Find the fastest Ubuntu apt mirrors.
     Generate new sources.list file.
 
     optional arguments:
       -h, --help            show this help message and exit
-      -t NUMBER, --top-number NUMBER
+      -C [COUNTRY], --country [COUNTRY]
+                            specify a country to test its list of mirrors
+                            used to match country list file names found at mirrors.ubuntu.com
+                            COUNTRY should follow ISO 3166-1 alpha-2 format
+                            default: US
+      -t [NUMBER], --top-number [NUMBER]
                             specify number of mirrors to return
                             default: 1
-      -m STATUS, --min-status STATUS
+      -m [STATUS], --min-status [STATUS]
                             return mirrors with minimum status
                             choices:
                                up-to-date
@@ -64,7 +70,7 @@ Invocation
       -c, --choose          choose mirror from a list
                             requires -t/--top-num NUMBER where NUMBER > 1
       -l, --list            print list of mirrors only, don't generate file
-                        cannot be used with -c/--choose
+                            cannot be used with -c/--choose
 
 Examples
 --------
