@@ -3,6 +3,15 @@
 
 from argparse import ArgumentParser, RawTextHelpFormatter
 
+DEFAULT_COUNTRY = 'US'
+DEFAULT_NUMBER = 1
+STATUS_ARGS = (
+    "up-to-date",
+    "one-day-behind",
+    "two-days-behind",
+    "one-week-behind",
+    "unknown"
+)
 
 def get_args():
     """Get parsed command line arguments"""
@@ -14,6 +23,19 @@ def get_args():
         formatter_class=RawTextHelpFormatter
     )
     parser.add_argument(
+        '-C',
+        '--country',
+        nargs='?',
+        type=str,
+        help=(
+            "specify a country to test its list of mirrors\n"
+            "used to match country list file names found at mirrors.ubuntu.com\n"
+            "COUNTRY should follow ISO 3166-1 alpha-2 format\n"
+            "default: US"
+        ),
+        metavar='COUNTRY'
+    )
+    parser.add_argument(
         '-t',
         '--top-number',
         nargs='?',
@@ -22,23 +44,16 @@ def get_args():
             "specify number of mirrors to return\n"
             "default: 1\n"
         ),
-        const=1,
-        default=1,
+        const=DEFAULT_NUMBER,
+        default=DEFAULT_NUMBER,
         metavar='NUMBER'
-    )
-    status_args = (
-        "up-to-date",
-        "one-day-behind",
-        "two-days-behind",
-        "one-week-behind",
-        "unknown"
     )
     test_group = parser.add_mutually_exclusive_group(required=False)
     test_group.add_argument(
         '-m',
         '--min-status',
         nargs='?',
-        choices=status_args,
+        choices=STATUS_ARGS,
         type=str,
         help=(
             "return mirrors with minimum status\n"
@@ -49,15 +64,15 @@ def get_args():
             "   %(week)s\n"
             "   %(unknown)s\n"
             "default: %(up)s\n" % {
-                'up': status_args[0],
-                'day': status_args[1],
-                'two_day': status_args[2],
-                'week': status_args[3],
-                'unknown': status_args[4]
+                'up': STATUS_ARGS[0],
+                'day': STATUS_ARGS[1],
+                'two_day': STATUS_ARGS[2],
+                'week': STATUS_ARGS[3],
+                'unknown': STATUS_ARGS[4]
             }
         ),
-        const=status_args[0],
-        default=status_args[0],
+        const=STATUS_ARGS[0],
+        default=STATUS_ARGS[0],
         metavar='STATUS'
     )
     test_group.add_argument(
