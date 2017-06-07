@@ -75,11 +75,15 @@ Invocation
 Examples
 --------
 
+Get the top mirror from the United Kingdom to generate a new `sources.list`:::
+
+    apt-select --country GB
+
 Choose from the top 3 mirrors, including those last updated a week ago:::
 
     apt-select -c -t 3 -m one-week-behind
 
-Find the top 10 mirrors, output latency info only, and don't generate new config file:::
+Find the top 10 mirrors, output latency info only, and don't generate new `sources.list`:::
 
     apt-select -t 10 -p -l
 
