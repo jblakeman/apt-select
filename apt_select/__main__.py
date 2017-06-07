@@ -9,6 +9,7 @@ from os import getcwd
 from apt_select.arguments import get_args, DEFAULT_COUNTRY
 from apt_select.mirrors import Mirrors
 from apt_select.apt_system import AptSources, SourcesFileError
+from apt_select.utils import DEFAULT_REQUEST_HEADERS
 
 # Support input for Python 2 and 3
 get_input = input
@@ -48,7 +49,7 @@ def set_args():
 def get_mirrors(mirrors_url, country):
     """Fetch list of Ubuntu mirrors"""
     stderr.write("Getting list of mirrors...")
-    response = requests.get(mirrors_url)
+    response = requests.get(mirrors_url, headers=DEFAULT_REQUEST_HEADERS)
     if response.status_code == requests.codes.NOT_FOUND:
         exit(
             "The mirror list for country: %s was not found at %s" % (

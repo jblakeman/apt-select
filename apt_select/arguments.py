@@ -31,7 +31,7 @@ def get_args():
             "specify a country to test its list of mirrors\n"
             "used to match country list file names found at mirrors.ubuntu.com\n"
             "COUNTRY should follow ISO 3166-1 alpha-2 format\n"
-            "default: US"
+            "default: %s" % DEFAULT_COUNTRY
         ),
         metavar='COUNTRY'
     )
