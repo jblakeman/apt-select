@@ -55,7 +55,7 @@ class AptSources(AptSystem):
     """Class for apt configuration files"""
 
     DEB_SCHEMES = frozenset(['deb', 'deb-src'])
-    PROTOCOLS = frozenset(['http', 'ftp', 'https'])
+    PROTOCOLS = frozenset(['http', 'ftp'])
 
     def __init__(self):
         self.directory = '/etc/apt/'
