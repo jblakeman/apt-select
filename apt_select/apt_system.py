@@ -36,7 +36,8 @@ class AptSystem(object):
     else:
         codename = codename.capitalize()
 
-    if dist != 'Ubuntu':
+    # KDE neon is based on Ubuntu but does not report itself as such
+    if dist not in ['Ubuntu', 'neon']:
         raise ValueError(_not_ubuntu)
 
     arch = get_arch.__func__()
