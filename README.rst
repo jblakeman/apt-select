@@ -6,7 +6,7 @@ Find a fast, up-to-date Ubuntu Archive Mirror.
 Features
 --------
 
-* Tests latency to mirrors in `mirrors.txt <http://mirrors.ubuntu.com/mirrors.txt>`_.
+* Tests latency to mirrors in a given country's mirror list at `mirrors.ubuntu.com <http://mirrors.ubuntu.com>`_.
     - 3 requests are sent to each mirror, minumum round trip time being used for rank.
 
 * Reports latency, status, and bandwidth capacity of the fastest mirrors in a ranked list.
@@ -40,17 +40,23 @@ Invocation
 ::
 
     $ apt-select --help
-    usage: apt-select [-h] [-t NUMBER] [-m STATUS | -p] [-c | -l]
+    usage: apt-select [-h] [-C [COUNTRY]] [-t [NUMBER]] [-m [STATUS] | -p]
+                      [-c | -l]
 
     Find the fastest Ubuntu apt mirrors.
     Generate new sources.list file.
 
     optional arguments:
       -h, --help            show this help message and exit
-      -t NUMBER, --top-number NUMBER
+      -C [COUNTRY], --country [COUNTRY]
+                            specify a country to test its list of mirrors
+                            used to match country list file names found at mirrors.ubuntu.com
+                            COUNTRY should follow ISO 3166-1 alpha-2 format
+                            default: US
+      -t [NUMBER], --top-number [NUMBER]
                             specify number of mirrors to return
                             default: 1
-      -m STATUS, --min-status STATUS
+      -m [STATUS], --min-status [STATUS]
                             return mirrors with minimum status
                             choices:
                                up-to-date
@@ -64,16 +70,20 @@ Invocation
       -c, --choose          choose mirror from a list
                             requires -t/--top-num NUMBER where NUMBER > 1
       -l, --list            print list of mirrors only, don't generate file
-                        cannot be used with -c/--choose
+                            cannot be used with -c/--choose
 
 Examples
 --------
+
+Get the top mirror from the United Kingdom to generate a new `sources.list`:::
+
+    apt-select --country GB
 
 Choose from the top 3 mirrors, including those last updated a week ago:::
 
     apt-select -c -t 3 -m one-week-behind
 
-Find the top 10 mirrors, output latency info only, and don't generate new config file:::
+Find the top 10 mirrors, output latency info only, and don't generate new `sources.list`:::
 
     apt-select -t 10 -p -l
 
@@ -85,11 +95,11 @@ After new sources.list is generated in current working directory, backup and rep
 Supported URI Types
 -------------------
 
-Currently, `http` and `ftp` are supported.
+Currently, `http`, `https` and `ftp` are supported.
 
 `/etc/apt/sources.list` should contain sources in the following format:::
 
-    [deb|deb-src] [http|ftp]://mirror.example.com/path [component1] [component2] [...]
+    [deb|deb-src] [http|https|ftp]://mirror.example.com/path [component1] [component2] [...]
 
 Dependencies
 ------------

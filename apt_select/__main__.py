@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 """Main apt-select script"""
 
+import requests
+import re
+
 from sys import exit, stderr, version_info
 from os import getcwd
-from apt_select.arguments import get_args
-from apt_select.utils import get_text, URLGetTextError
+from apt_select.arguments import get_args, DEFAULT_COUNTRY
 from apt_select.mirrors import Mirrors
 from apt_select.apt_system import AptSources, SourcesFileError
+from apt_select.utils import DEFAULT_REQUEST_HEADERS
 
 # Support input for Python 2 and 3
 get_input = input
@@ -31,19 +34,32 @@ def set_args():
             "where NUMBER is greater than 1."
         ))
 
+    if not args.country:
+        stderr.write('WARNING: no country code provided. defaulting to US.\n')
+        args.country = DEFAULT_COUNTRY
+    elif not re.match(r'^[a-zA-Z]{2}$', args.country):
+        exit((
+            "Invalid country. %s is not in ISO 3166-1 alpha-2 "
+            "format" % args.country
+        ))
+
     return args
 
 
-def get_mirrors(mirrors_url):
+def get_mirrors(mirrors_url, country):
     """Fetch list of Ubuntu mirrors"""
     stderr.write("Getting list of mirrors...")
-    try:
-        mirrors_list = get_text(mirrors_url)
-    except URLGetTextError as err:
-        exit("Error getting list from %s:\n\t%s" % (mirrors_url, err))
+    response = requests.get(mirrors_url, headers=DEFAULT_REQUEST_HEADERS)
+    if response.status_code == requests.codes.NOT_FOUND:
+        exit(
+            "The mirror list for country: %s was not found at %s" % (
+                country, mirrors_url
+            )
+        )
+
     stderr.write("done.\n")
 
-    return mirrors_list.splitlines()
+    return response.text.splitlines()
 
 
 def print_status(info, rank):
@@ -123,8 +139,8 @@ def apt_select():
         exit("Error with current apt sources: %s" % err)
 
     mirrors_loc = "mirrors.ubuntu.com"
-    mirrors_url = "http://%s/mirrors.txt" % mirrors_loc
-    mirrors_list = get_mirrors(mirrors_url)
+    mirrors_url = "http://%s/%s.txt" % (mirrors_loc, args.country.upper())
+    mirrors_list = get_mirrors(mirrors_url, args.country)
 
     archives = Mirrors(mirrors_list, args.ping_only, args.min_status)
     archives.get_rtts()
