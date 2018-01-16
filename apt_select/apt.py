@@ -4,6 +4,15 @@ from subprocess import check_output
 from os import path
 from apt_select.utils import utf8_decode
 
+SUPPORTED_KERNEL = 'Linux'
+SUPPORTED_DISTRIBUTION_TYPE = 'Ubuntu'
+
+UNAME = 'uname'
+KERNEL_COMMAND = (UNAME, '-s')
+MACHINE_COMMAND = (UNAME, '-m')
+RELEASE_COMMAND = ('lsb_release', '-ics')
+RELEASE_FILE = '/etc/lsb-release'
+
 LAUNCHPAD_ARCH_32 = 'i386'
 LAUNCHPAD_ARCH_64 = 'amd64'
 LAUNCHPAD_ARCHES = frozenset([
@@ -11,35 +20,52 @@ LAUNCHPAD_ARCHES = frozenset([
     LAUNCHPAD_ARCH_64
 ])
 
-class AptSystem(object):
+
+class System(object):
     """System information for use in apt related operations"""
 
-    @staticmethod
-    def get_release():
-        """Call system for Ubuntu release information"""
-        return [utf8_decode(s).strip()
-                for s in check_output(["lsb_release", "-ics"]).split()]
+    def __init__(self):
+        _kernel = utf8_decode(check_output(KERNEL_COMMAND)).strip()
+        if _kernel != SUPPORTED_KERNEL:
+            raise OSError(
+                "Invalid kernel found: %s. Expected %s." % (
+                    _kernel,
+                    SUPPORTED_KERNEL,
+                )
+            )
 
-    @staticmethod
-    def get_arch():
-        """Return architecture information in Launchpad format"""
-        if utf8_decode(check_output(["uname", "-m"]).strip()) == 'x86_64':
-            return LAUNCHPAD_ARCH_64
+        try:
+            self.dist, self.codename = tuple(
+                utf8_decode(s).strip()
+                for s in check_output(RELEASE_COMMAND).split()
+            )
+        except OSError:
+            # Fall back to using lsb-release info file if lsb_release command
+            # is not available. e.g. Ubuntu minimal (core, docker image).
+            try:
+                with open(RELEASE_FILE, 'rU') as release_file:
+                    lsb_info = dict(
+                        line.strip().split('=')
+                        for line in release_file.readlines()
+                    )
+                    self.dist = lsb_info['DISTRIB_ID']
+                    self.codename = lsb_info['DISTRIB_CODENAME']
+            except (IOError, OSError):
+                raise OSError((
+                    "Unable to determine system distribution. "
+                    "%s is required." % SUPPORTED_DISTRIBUTION_TYPE
+                ))
 
-        return LAUNCHPAD_ARCH_32
+        if self.dist != SUPPORTED_DISTRIBUTION_TYPE:
+            raise OSError(
+                "%s distributions are not supported. %s is required." % (
+                    self.dist, SUPPORTED_DISTRIBUTION_TYPE
+                )
+            )
 
-    _not_ubuntu = "Must be an Ubuntu OS"
-    try:
-        dist, codename = get_release.__func__()
-    except OSError:
-        raise ValueError("%s\n%s" % _not_ubuntu)
-    else:
-        codename = codename.capitalize()
-
-    if dist != 'Ubuntu':
-        raise ValueError(_not_ubuntu)
-
-    arch = get_arch.__func__()
+        self.arch = LAUNCHPAD_ARCH_32
+        if utf8_decode(check_output(MACHINE_COMMAND).strip()) == 'x86_64':
+            self.arch = LAUNCHPAD_ARCH_64
 
 
 class SourcesFileError(Exception):
@@ -51,19 +77,21 @@ class SourcesFileError(Exception):
     pass
 
 
-class AptSources(AptSystem):
+class Sources(object):
     """Class for apt configuration files"""
 
     DEB_SCHEMES = frozenset(['deb', 'deb-src'])
     PROTOCOLS = frozenset(['http', 'ftp', 'https'])
 
-    def __init__(self):
-        self.directory = '/etc/apt/'
-        self.apt_file = 'sources.list'
-        self._config_path = self.directory + self.apt_file
-        if not path.isfile(self._config_path):
+    DIRECTORY = '/etc/apt/'
+    LIST_FILE = 'sources.list'
+    _CONFIG_PATH = DIRECTORY + LIST_FILE
+
+    def __init__(self, codename):
+        self._codename = codename.lower()
+        if not path.isfile(self._CONFIG_PATH):
             raise SourcesFileError((
-                "%s must exist as file" % self._config_path
+                "%s must exist as file" % self._CONFIG_PATH
             ))
 
         self._required_component = "main"
@@ -76,7 +104,7 @@ class AptSources(AptSystem):
         """Read system config file and store the lines in memory for parsing
            and generation of new config file"""
         try:
-            with open(self._config_path, 'r') as f:
+            with open(self._CONFIG_PATH, 'r') as f:
                 self._lines = f.readlines()
         except IOError as err:
             raise SourcesFileError((
@@ -94,22 +122,16 @@ class AptSources(AptSystem):
     def __get_current_archives(self):
         """Parse through all lines of the system apt file to find current
            mirror urls"""
-        urls = []
-        cname = self.codename.lower()
+        urls = {}
         for line in self._lines:
             fields = line.split()
             if self.__confirm_apt_source_uri(fields):
                 if (not urls and
-                        (cname in fields[2]) and
+                        (self._codename in fields[2]) and
                         (fields[3] == self._required_component)):
-                    urls.append(fields[1])
-                    continue
-                elif (urls and
-                        (fields[2] == '%s-security' % cname) and
-                        # Mirror urls should be unique as they'll be
-                        # used in a global search and replace
-                        (urls[0] != fields[1])):
-                    urls.append(fields[1])
+                    urls['current'] = fields[1]
+                elif urls and (fields[2] == '%s-security' % self._codename):
+                    urls['security'] = fields[1]
                     break
 
         return urls
@@ -126,7 +148,7 @@ class AptSources(AptSystem):
         if not urls:
             raise SourcesFileError((
                 "Error finding current %s URI in %s\n%s\n" %
-                (self._required_component, self._config_path,
+                (self._required_component, self._CONFIG_PATH,
                  self.skip_gen_msg)
             ))
 
@@ -135,13 +157,13 @@ class AptSources(AptSystem):
     def __set_config_lines(self, new_mirror):
         """Replace all instances of the current urls with the new mirror"""
         self._lines = ''.join(self._lines)
-        for url in self.urls:
+        for url in self.urls.values():
             self._lines = self._lines.replace(url, new_mirror)
 
     def generate_new_config(self, work_dir, new_mirror):
         """Write new configuration file to current working directory"""
         self.__set_config_lines(new_mirror)
-        self.new_file_path = work_dir.rstrip('/') + '/' + self.apt_file
+        self.new_file_path = work_dir.rstrip('/') + '/' + self.LIST_FILE
         try:
             with open(self.new_file_path, 'w') as f:
                 f.write(self._lines)
