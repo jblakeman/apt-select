@@ -8,7 +8,7 @@ from sys import exit, stderr, version_info
 from os import getcwd
 from apt_select.arguments import get_args, DEFAULT_COUNTRY
 from apt_select.mirrors import Mirrors
-from apt_select.apt_system import AptSources, SourcesFileError
+from apt_select.apt import System, Sources, SourcesFileError
 from apt_select.utils import DEFAULT_REQUEST_HEADERS
 
 # Support input for Python 2 and 3
@@ -130,14 +130,18 @@ def yes_or_no(query):
 
 def apt_select():
     """Run apt-select: Ubuntu archive mirror reporting tool"""
-    args = set_args()
-    try:
-        sources = AptSources()
-    except ValueError as err:
-        exit("Error setting system information: %s" % err)
-    except SourcesFileError as err:
-        exit("Error with current apt sources: %s" % err)
 
+    try:
+        system = System()
+    except OSError as err:
+        exit("Error setting system information:\n\t%s" % err)
+
+    try:
+        sources = Sources(system.codename)
+    except SourcesFileError as err:
+        exit("Error with current apt sources:\n\t%s" % err)
+
+    args = set_args()
     mirrors_loc = "mirrors.ubuntu.com"
     mirrors_url = "http://%s/%s.txt" % (mirrors_loc, args.country.upper())
     mirrors_list = get_mirrors(mirrors_url, args.country)
@@ -156,7 +160,11 @@ def apt_select():
             # Mirrors needs a limit to stop launching threads
             archives.status_num = args.top_number
             stderr.write("Looking up %d status(es)\n" % args.top_number)
-            archives.lookup_statuses(args.min_status)
+            archives.lookup_statuses(
+                system.codename.capitalize(),
+                system.arch,
+                args.min_status
+            )
 
         if args.top_number > 1:
             stderr.write('\n')
@@ -165,7 +173,7 @@ def apt_select():
         archives.top_list = archives.ranked[:args.top_number]
 
     sources.set_current_archives()
-    current_url = sources.urls[0]
+    current_url = sources.urls['current']
     if archives.urls.get(current_url):
         archives.urls[current_url]['Host'] += " (current)"
 
@@ -207,15 +215,15 @@ def apt_select():
             }))
 
     work_dir = getcwd()
-    if work_dir == sources.directory[0:-1]:
+    if work_dir == sources.DIRECTORY[0:-1]:
         query = (
             "'%(dir)s' is the current directory.\n"
             "Generating a new '%(apt)s' file will "
             "overwrite the current file.\n"
             "You should copy or backup '%(apt)s' before replacing it.\n"
             "Continue?\n[yes|no] " % {
-                'dir': sources.directory,
-                'apt': sources.apt_file
+                'dir': sources.DIRECTORY,
+                'apt': sources.APT_FILE
             }
         )
         yes_or_no(query)
