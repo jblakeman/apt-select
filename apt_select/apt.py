@@ -44,12 +44,24 @@ class System(object):
             # is not available. e.g. Ubuntu minimal (core, docker image).
             try:
                 with open(RELEASE_FILE, 'rU') as release_file:
-                    lsb_info = dict(
-                        line.strip().split('=')
-                        for line in release_file.readlines()
-                    )
-                    self.dist = lsb_info['DISTRIB_ID']
-                    self.codename = lsb_info['DISTRIB_CODENAME']
+                    try:
+                        lsb_info = dict(
+                            line.strip().split('=')
+                            for line in release_file.readlines()
+                        )
+                    except ValueError:
+                        raise OSError(
+                            "Unexpected release file format found in %s." % RELEASE_FILE
+                        )
+
+                    try:
+                        self.dist = lsb_info['DISTRIB_ID']
+                        self.codename = lsb_info['DISTRIB_CODENAME']
+                    except KeyError:
+                        raise OSError(
+                            "Expected distribution keys missing from %s." % RELEASE_FILE
+                        )
+
             except (IOError, OSError):
                 raise OSError((
                     "Unable to determine system distribution. "
