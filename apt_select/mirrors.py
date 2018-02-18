@@ -8,7 +8,6 @@ from socket import (socket, AF_INET, SOCK_STREAM,
                     gethostbyname, error, timeout, gaierror)
 from time import time
 from apt_select.utils import progress_msg, get_text, URLGetTextError
-from apt_select.apt_system import AptSystem
 try:
     from urlparse import urlparse
 except ImportError:
@@ -159,7 +158,7 @@ class Mirrors(object):
             self.urls, key=lambda x: self.urls[x]["Latency"]
         )
 
-    def __queue_lookups(self, data_queue):
+    def __queue_lookups(self, codename, arch, data_queue):
         """Queue threads for data retrieval from launchpad.net
 
            Returns number of threads started to fulfill number of
@@ -172,7 +171,13 @@ class Mirrors(object):
                 pass
             else:
                 thread = Thread(
-                    target=_LaunchData(url, launch_url, data_queue).get_info
+                    target=_LaunchData(
+                        url,
+                        launch_url,
+                        codename,
+                        arch,
+                        data_queue
+                    ).get_info
                 )
                 thread.daemon = True
                 thread.start()
@@ -187,11 +192,11 @@ class Mirrors(object):
 
         return num_threads
 
-    def lookup_statuses(self, min_status):
+    def lookup_statuses(self, codename, arch, min_status):
         """Scrape statuses/info in from launchpad.net mirror pages"""
         while (self.got["data"] < self.status_num) and self.ranked:
             data_queue = Queue()
-            num_threads = self.__queue_lookups(data_queue)
+            num_threads = self.__queue_lookups(codename, arch, data_queue)
             if num_threads == 0:
                 break
             # Get output of all started thread methods from queue
@@ -220,9 +225,7 @@ class Mirrors(object):
                     break
 
             # Reorder by latency as queue returns vary building final list
-            self.top_list = sorted(
-                self.top_list, key=lambda x: self.urls[x]["Latency"]
-            )
+            self.top_list.sort(key=lambda x: self.urls[x]["Latency"])
 
             data_queue.join()
 
@@ -268,10 +271,12 @@ class _RoundTrip(object):
         self._trip_queue.put((self._url, min(rtts)))
 
 
-class _LaunchData(AptSystem):
-    def __init__(self, url, launch_url, data_queue):
+class _LaunchData(object):
+    def __init__(self, url, launch_url, codename, arch, data_queue):
         self._url = url
         self._launch_url = launch_url
+        self._codename = codename
+        self._arch = arch
         self._data_queue = data_queue
 
     def __parse_mirror_html(self, launch_html):
@@ -284,8 +289,8 @@ class _LaunchData(AptSystem):
                 # series name and machine architecture
                 for tr in line.find('tbody').find_all('tr'):
                     arches = [x.get_text() for x in tr.find_all('td')]
-                    if (self.codename in arches[0] and
-                            arches[1] == self.arch):
+                    if (self._codename in arches[0] and
+                            arches[1] == self._arch):
                         info.update({"Status": arches[2]})
             else:
                 # "Speed" lives in a dl, and we use the key -> value as such
