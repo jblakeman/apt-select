@@ -72,6 +72,9 @@ Invocation
       -l, --list            print list of mirrors only, don't generate file
                             cannot be used with -c/--choose
 
+    The exit code is 0 on success, 1 on error, and 4 if sources.list already has the chosen
+    mirror and a new one was not generated.
+
 Examples
 --------
 

@@ -12,6 +12,7 @@ STATUS_ARGS = (
     "one-week-behind",
     "unknown"
 )
+SKIPPED_FILE_GENERATION = 4
 
 def get_args():
     """Get parsed command line arguments"""
@@ -20,6 +21,9 @@ def get_args():
             "Find the fastest Ubuntu apt mirrors.\n"
             "Generate new sources.list file."
         ),
+        epilog="The exit code is 0 on success, 1 on error, and %d if "\
+        "sources.list already has the chosen\n"\
+        "mirror and a new one was not generated." % SKIPPED_FILE_GENERATION,
         formatter_class=RawTextHelpFormatter
     )
     parser.add_argument(

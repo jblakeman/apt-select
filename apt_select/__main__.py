@@ -6,7 +6,7 @@ import re
 
 from sys import exit, stderr, version_info
 from os import getcwd
-from apt_select.arguments import get_args, DEFAULT_COUNTRY
+from apt_select.arguments import get_args, DEFAULT_COUNTRY, SKIPPED_FILE_GENERATION
 from apt_select.mirrors import Mirrors
 from apt_select.apt import System, Sources, SourcesFileError
 from apt_select.utils import DEFAULT_REQUEST_HEADERS
@@ -207,12 +207,13 @@ def apt_select():
     new_mirror = archives.top_list[key]
     print("Selecting mirror %(mirror)s ..." % {'mirror': new_mirror})
     if current_url == new_mirror:
-        exit((
+        stderr.write(
             "%(url)s is the currently used mirror.\n"
-            "%(message)s" % {
+            "%(message)s\n" % {
                 'url': current_url,
                 'message': sources.skip_gen_msg
-            }))
+            })
+        exit(SKIPPED_FILE_GENERATION)
 
     work_dir = getcwd()
     if work_dir == sources.DIRECTORY[0:-1]:
