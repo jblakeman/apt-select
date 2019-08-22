@@ -22,11 +22,12 @@ class URLGetTextError(Exception):
 def get_text(url):
     """Return text from GET request response content"""
     try:
-        text = requests.get(url, headers=DEFAULT_REQUEST_HEADERS).text
+        result = requests.get(url, headers=DEFAULT_REQUEST_HEADERS)
+        result.raise_for_status()
     except requests.HTTPError as err:
         raise URLGetTextError(err)
 
-    return text
+    return result.text
 
 
 def progress_msg(processed, total):
