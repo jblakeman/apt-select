@@ -76,7 +76,7 @@ class Mirrors(object):
         except URLGetTextError as err:
             stderr.write((
                 "%s: %s\nUnable to retrieve list of launchpad sites\n"
-                "Reverting to latency only" % (self._launchpad_url, err)
+                "Reverting to latency only\n" % (self._launchpad_url, err)
             ))
             self.abort_launch = True
         else:
