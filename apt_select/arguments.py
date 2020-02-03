@@ -3,6 +3,9 @@
 
 from argparse import ArgumentParser, RawTextHelpFormatter
 
+from apt_select.utils import get_distribution_info
+
+DEFAULT_DIST = get_distribution_info()[1]
 DEFAULT_COUNTRY = 'US'
 DEFAULT_NUMBER = 1
 STATUS_ARGS = (
@@ -25,6 +28,17 @@ def get_args():
         "sources.list already has the chosen\n"\
         "mirror and a new one was not generated." % SKIPPED_FILE_GENERATION,
         formatter_class=RawTextHelpFormatter
+    )
+    parser.add_argument(
+        '-R',
+        '--release',
+        nargs='?',
+        type=str,
+        help=(
+            "specify a release codename to test its list of mirrors (e.g bionic)\n"
+            "default: %s" % get_distribution_info()[1]
+        ),
+        metavar='RELEASE'
     )
     parser.add_argument(
         '-C',

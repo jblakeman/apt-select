@@ -2,29 +2,14 @@
 
 from subprocess import check_output
 from os import path
-from apt_select.utils import utf8_decode
-
-SUPPORTED_KERNEL = 'Linux'
-SUPPORTED_DISTRIBUTION_TYPE = 'Ubuntu'
-
-UNAME = 'uname'
-KERNEL_COMMAND = (UNAME, '-s')
-MACHINE_COMMAND = (UNAME, '-m')
-RELEASE_COMMAND = ('lsb_release', '-ics')
-RELEASE_FILE = '/etc/lsb-release'
-
-LAUNCHPAD_ARCH_32 = 'i386'
-LAUNCHPAD_ARCH_64 = 'amd64'
-LAUNCHPAD_ARCHES = frozenset([
-    LAUNCHPAD_ARCH_32,
-    LAUNCHPAD_ARCH_64
-])
+from apt_select.utils import utf8_decode, get_distribution_info
+from apt_select.config import *
 
 
 class System(object):
     """System information for use in apt related operations"""
 
-    def __init__(self):
+    def __init__(self, release=None):
         _kernel = utf8_decode(check_output(KERNEL_COMMAND)).strip()
         if _kernel != SUPPORTED_KERNEL:
             raise OSError(
@@ -34,40 +19,10 @@ class System(object):
                 )
             )
 
-        try:
-            self.dist, self.codename = tuple(
-                utf8_decode(s).strip()
-                for s in check_output(RELEASE_COMMAND).split()
-            )
-        except OSError:
-            # Fall back to using lsb-release info file if lsb_release command
-            # is not available. e.g. Ubuntu minimal (core, docker image).
-            try:
-                with open(RELEASE_FILE, 'rU') as release_file:
-                    try:
-                        lsb_info = dict(
-                            line.strip().split('=')
-                            for line in release_file.readlines()
-                        )
-                    except ValueError:
-                        raise OSError(
-                            "Unexpected release file format found in %s." % RELEASE_FILE
-                        )
-
-                    try:
-                        self.dist = lsb_info['DISTRIB_ID']
-                        self.codename = lsb_info['DISTRIB_CODENAME']
-                    except KeyError:
-                        raise OSError(
-                            "Expected distribution keys missing from %s." % RELEASE_FILE
-                        )
-
-            except (IOError, OSError):
-                raise OSError((
-                    "Unable to determine system distribution. "
-                    "%s is required." % SUPPORTED_DISTRIBUTION_TYPE
-                ))
-
+        if not release:
+            self.dist, self.codename = get_distribution_info()
+        else:
+            self.dist, self.codename = "Ubuntu", release
         if self.dist != SUPPORTED_DISTRIBUTION_TYPE:
             raise OSError(
                 "%s distributions are not supported. %s is required." % (

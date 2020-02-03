@@ -130,9 +130,9 @@ def yes_or_no(query):
 
 def apt_select():
     """Run apt-select: Ubuntu archive mirror reporting tool"""
-
+    args = set_args()
     try:
-        system = System()
+        system = System(release=args.release)
     except OSError as err:
         exit("Error setting system information:\n\t%s" % err)
 
@@ -141,7 +141,6 @@ def apt_select():
     except SourcesFileError as err:
         exit("Error with current apt sources:\n\t%s" % err)
 
-    args = set_args()
     mirrors_loc = "mirrors.ubuntu.com"
     mirrors_url = "http://%s/%s.txt" % (mirrors_loc, args.country.upper())
     mirrors_list = get_mirrors(mirrors_url, args.country)
