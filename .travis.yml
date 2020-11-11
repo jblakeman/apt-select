@@ -1,0 +1,19 @@
+language: ruby
+rvm:
+  - 2.1
+addons:
+  apt:
+    packages:
+      - python-bs4
+script: make
+deploy:
+  - provider: releases
+    api-key: $GITHUB_API_KEY
+    file: 'pkg/apt-select_${TRAVIS_TAG}-0_all.deb'
+    skip_cleanup: true
+    on:
+      tags: true
+  - provider: bintray
+    user: $BINTRAY_USER
+    key: $BINTRAY_KEY
+    dry-run: true
