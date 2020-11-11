@@ -1,0 +1,6 @@
+#!/bin/bash
+
+current_path=$(dirname $([ -L $0 ] && readlink -f $0 || echo $0))
+workdir=${current_path}/..
+
+exec ${workdir}/apt-select.py $@
