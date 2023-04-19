@@ -224,7 +224,7 @@ def apt_select():
             "You should copy or backup '%(apt)s' before replacing it.\n"
             "Continue?\n[yes|no] " % {
                 'dir': sources.DIRECTORY,
-                'apt': sources.APT_FILE
+                'apt': sources._CONFIG_PATH
             }
         )
         yes_or_no(query)
