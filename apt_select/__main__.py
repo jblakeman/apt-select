@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Main apt-select script"""
 
+import random
 import requests
 import re
 
@@ -200,6 +201,8 @@ def apt_select():
     key = 0
     if args.choose:
         key = get_selected_mirror(len(archives.top_list)) - 1
+    elif args.random:
+        key = random.randint(0, len(archives.top_list) - 1)
 
     if args.list_only:
         exit()

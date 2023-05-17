@@ -112,6 +112,17 @@ def get_args():
         ),
         default=False
     )
+    output_group.add_argument(
+        '-r',
+        '--random',
+        dest='random',
+        action='store_true',
+        help=(
+            "pick a random mirror from top list\n"
+            "cannot be used with -c/--choose\n"
+        ),
+        default=False
+    )
 
     return parser
 
