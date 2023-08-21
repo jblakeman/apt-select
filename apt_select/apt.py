@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from subprocess import check_output
-from os import path
+from os import path, environ
 from apt_select.utils import utf8_decode
 
 SUPPORTED_KERNEL = 'Linux'
@@ -97,7 +97,7 @@ class Sources(object):
 
     DIRECTORY = '/etc/apt/'
     LIST_FILE = 'sources.list'
-    _CONFIG_PATH = DIRECTORY + LIST_FILE
+    _CONFIG_PATH = environ.get('APT_CONFIGPATH', DIRECTORY + LIST_FILE)
 
     def __init__(self, codename):
         self._codename = codename.lower()
