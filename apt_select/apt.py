@@ -157,6 +157,9 @@ class Sources(object):
             raise SourcesFileError(err)
 
         urls = self.__get_current_archives()
+        if 'current' not in urls:
+            # hardcode a fallback to main ubuntu archive
+            urls['current'] = 'http://archive.ubuntu.com/ubuntu'
         if not urls:
             raise SourcesFileError((
                 "Error finding current %s URI in %s\n%s\n" %
