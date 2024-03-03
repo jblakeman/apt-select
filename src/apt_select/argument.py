@@ -3,6 +3,8 @@
 
 from argparse import ArgumentParser, RawTextHelpFormatter
 
+from apt_select import constant
+
 DEFAULT_COUNTRY = "US"
 DEFAULT_NUMBER = 1
 STATUS_ARGS = (
@@ -12,18 +14,19 @@ STATUS_ARGS = (
     "one-week-behind",
     "unknown",
 )
-SKIPPED_FILE_GENERATION = 4
 
 
-def get_args():
+def get_arg_parser() -> ArgumentParser:
     """Get parsed command line arguments"""
     parser = ArgumentParser(
         description=(
-            "Find the fastest Ubuntu apt mirrors.\n" "Generate new sources.list file."
+            "Find the fastest Ubuntu apt mirrors.\nGenerate new sources.list file."
         ),
-        epilog="The exit code is 0 on success, 1 on error, and %d if "
-        "sources.list already has the chosen\n"
-        "mirror and a new one was not generated." % SKIPPED_FILE_GENERATION,
+        epilog=(
+            f"The exit code is {constant.OK} on success, {constant.NOK} on error"
+            f", and {constant.SKIPPED_FILE_GENERATION} if sources.list already has the chosen\n"
+            "mirror and a new one was not generated."
+        ),
         formatter_class=RawTextHelpFormatter,
     )
     parser.add_argument(
@@ -35,7 +38,7 @@ def get_args():
             "specify a country to test its list of mirrors\n"
             "used to match country list file names found at mirrors.ubuntu.com\n"
             "COUNTRY should follow ISO 3166-1 alpha-2 format\n"
-            "default: %s" % DEFAULT_COUNTRY
+            f"default: {DEFAULT_COUNTRY}"
         ),
         metavar="COUNTRY",
     )
@@ -44,7 +47,7 @@ def get_args():
         "--top-number",
         nargs="?",
         type=int,
-        help=("specify number of mirrors to return\n" "default: 1\n"),
+        help="specify number of mirrors to return\n" "default: 1\n",
         const=DEFAULT_NUMBER,
         default=DEFAULT_NUMBER,
         metavar="NUMBER",
@@ -115,4 +118,4 @@ def get_args():
 
 
 if __name__ == "__main__":
-    get_args().parse_args()
+    get_arg_parser().parse_args()

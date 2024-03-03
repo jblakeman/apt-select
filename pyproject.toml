@@ -52,7 +52,11 @@ version-file = "src/apt_select/_version.py"
 [tool.hatch.build.targets.sdist]
 include = [
     "/src/apt_select",
+    "/typeshed/pyi",
 ]
+
+[tool.hatch.build.targets.wheel.force-include]
+"typeshed/pyi" = "typeshed/pyi"
 
 [tool.hatch.envs.default]
 python = "3.11"
@@ -60,13 +64,18 @@ dependencies = [
     "black",
     "build",
     "hatch",
+    "mypy",
     "ruff",
+    "types-beautifulsoup4",
+    "types-requests",
     "wheel",
 ]
 
 [tool.hatch.envs.default.scripts]
 dist = [
     "black src",
+    "rm -rf 'typeshed/pyi'",
+    "stubgen --output=typeshed/pyi --search-path=src src",
     "hatch build",
 ]
 format = [
@@ -75,17 +84,36 @@ format = [
 lint = [
     "black src",
     "ruff check --fix src",
+    "mypy src",
 ]
 lint-check = [
     "black --check src",
     "pylint src",
     "ruff check src",
+    "mypy src",
 ]
 test = "pytest"
 test-cov-xml = "pytest --cov-report=xml"
 
 [tool.hatch.version]
 source = "vcs"
+
+[tool.mypy]
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_incomplete_defs = true
+disallow_subclassing_any = true
+disallow_untyped_calls = true
+disallow_untyped_decorators = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+mypy_path = ["typeshed/pyi"]
+no_implicit_optional = true
+python_version = "3.11"
+warn_redundant_casts = true
+warn_return_any = true
+warn_unused_configs = true
+warn_unused_ignores = true
 
 [tool.pylint.main]
 # Analyse import fallback blocks. This can be used to support both Python 2 and 3
@@ -550,7 +578,7 @@ max-spelling-suggestions = 4
 
 # List of comma separated words that should be considered directives if they
 # appear at the beginning of a comment and should not be checked.
-spelling-ignore-comment-directives = "fmt: on,fmt: off,noqa:,noqa,nosec,isort:skip:"
+spelling-ignore-comment-directives = "fmt: on,fmt: off,noqa:,noqa,nosec,isort:skip,mypy:"
 
 # List of comma separated words that should not be checked.
 # spelling-ignore-words =

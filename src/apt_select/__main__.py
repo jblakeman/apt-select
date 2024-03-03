@@ -1,25 +1,18 @@
 #!/usr/bin/env python
 """Main apt-select script"""
 
-import requests
+import os
 import re
+import sys
+from argparse import Namespace
 
-from sys import exit, stderr, version_info
-from os import getcwd
-from apt_select.arguments import get_args, DEFAULT_COUNTRY, SKIPPED_FILE_GENERATION
-from apt_select.mirrors import Mirrors
-from apt_select.apt import System, Sources, SourcesFileError
-from apt_select.utils import DEFAULT_REQUEST_HEADERS
-
-# Support input for Python 2 and 3
-get_input = input
-if version_info[:2] <= (2, 7):
-    get_input = raw_input
+import requests
+from apt_select import apt, argument, constant, mirror
 
 
-def set_args():
+def set_args() -> tuple[str | Namespace, int]:
     """Set arguments, disallow bad combination"""
-    parser = get_args()
+    parser = argument.get_arg_parser()
     args = parser.parse_args()
 
     # Convert status argument to format used by Launchpad
@@ -29,227 +22,237 @@ def set_args():
 
     if args.choose and (not args.top_number or args.top_number < 2):
         parser.print_usage()
-        exit(
-            (
-                "error: -c/--choose option requires -t/--top-number NUMBER "
-                "where NUMBER is greater than 1."
-            )
-        )
+        return (
+            "error: -c/--choose option requires -t/--top-number NUMBER "
+            "where NUMBER is greater than 1."
+        ), constant.NOK
 
     if not args.country:
-        stderr.write("WARNING: no country code provided. defaulting to US.\n")
-        args.country = DEFAULT_COUNTRY
+        sys.stderr.write("WARNING: no country code provided. defaulting to US.\n")
+        args.country = argument.DEFAULT_COUNTRY
     elif not re.match(r"^[a-zA-Z]{2}$", args.country):
-        exit(
-            (
-                "Invalid country. %s is not in ISO 3166-1 alpha-2 "
-                "format" % args.country
-            )
+        return (
+            f"Invalid country. {args.country} is not in ISO 3166-1 alpha-2 format",
+            constant.NOK,
         )
 
-    return args
+    return args, constant.OK
 
 
-def get_mirrors(mirrors_url, country):
+def get_mirrors(
+    mirrors_url: str,
+    country: str,
+    timeout_sec: float = constant.DEFAULT_REQUEST_TIMEOUT_SEC,
+) -> tuple[list[str], int]:
     """Fetch list of Ubuntu mirrors"""
-    stderr.write("Getting list of mirrors...")
-    response = requests.get(mirrors_url, headers=DEFAULT_REQUEST_HEADERS)
-    if response.status_code == requests.codes.NOT_FOUND:
-        exit(
-            "The mirror list for country: %s was not found at %s"
-            % (country, mirrors_url)
+    sys.stderr.write("Getting list of mirrors...")
+    response = requests.get(
+        mirrors_url, headers=constant.DEFAULT_REQUEST_HEADERS, timeout=timeout_sec
+    )
+    not_found = requests.codes.get("NOT_FOUND", None)
+    if response.status_code == not_found:
+        return (
+            [f"The mirror list for country: {country} was not found at {mirrors_url}"],
+            constant.NOK,
         )
 
-    stderr.write("done.\n")
+    sys.stderr.write("done.\n")
 
-    return response.text.splitlines()
+    return response.text.splitlines(), constant.OK
 
 
-def print_status(info, rank):
+def print_status(info: dict[str, float | str], rank: int) -> None:
     """Print full mirror status report for ranked item"""
     for key in ("Org", "Speed"):
         info.setdefault(key, "N/A")
 
     print(
         (
-            "%(rank)d. %(mirror)s\n"
-            "%(tab)sLatency: %(ms).2f ms\n"
-            "%(tab)sOrg:     %(org)s\n"
-            "%(tab)sStatus:  %(status)s\n"
-            "%(tab)sSpeed:   %(speed)s"
-            % {
-                "tab": "    ",
-                "rank": rank,
-                "mirror": info["Host"],
-                "ms": info["Latency"],
-                "org": info["Organisation"],
-                "status": info["Status"],
-                "speed": info["Speed"],
-            }
+            f"{rank}. {info['Host']}\n"
+            f"{'    '}Latency: {info['Latency']:.2f} ms\n"
+            f"{'    '}Org:     {info['Organisation']}\n"
+            f"{'    '}Status:  {info['Status']}\n"
+            f"{'    '}Speed:   {info['Speed']}"
         )
     )
 
 
-def print_latency(info, rank, max_host_len):
+def print_latency(
+    info: dict[str, float | str], rank: int, max_hostname_length: int
+) -> None:
     """Print latency information for mirror in ranked report"""
-    print(
-        "%(rank)d. %(mirror)s: %(padding)s%(ms).2f ms"
-        % {
-            "rank": rank,
-            "padding": (max_host_len - info.get("host_len", max_host_len)) * " ",
-            "mirror": info["Host"],
-            "ms": info["Latency"],
-        }
-    )
+    hostname_length = info.get("host_length", max_hostname_length)
+    if isinstance(hostname_length, int):
+        print(
+            f"{rank}. {info['Host']}: "
+            f"{(max_hostname_length - hostname_length) * ' '}{info['Latency']:.2f} ms"
+        )
 
 
-def ask(query):
+def ask(query: str) -> str:
     """Ask for unput from user"""
-    answer = get_input(query)
+    answer = input(query)
     return answer
 
 
-def get_selected_mirror(list_size):
+def get_selected_mirror(list_size: int) -> tuple[int | None, int]:
     """Prompt for user input to select desired mirror"""
-    key = ask("Choose a mirror (1 - %d)\n'q' to quit " % list_size)
+    key = ask(f"Choose a mirror (1 - {list_size})\n'q' to quit ")
     while True:
+        if key == "q":
+            return None, constant.USER_INTERRUPT
         try:
-            key = int(key)
-        except ValueError:
-            if key == "q":
-                exit()
-        else:
-            if (key >= 1) and (key <= list_size):
+            if 1 <= int(key) <= list_size:
                 break
+        except ValueError:
+            key = ask("Invalid entry ")
 
-        key = ask("Invalid entry ")
-
-    return key
+    return int(key), constant.OK
 
 
-def yes_or_no(query):
+def yes_or_no(query: str) -> int:
     """Get definitive answer"""
     opts = ("yes", "no")
     answer = ask(query)
     while answer != opts[0]:
         if answer == opts[1]:
-            exit(0)
-        answer = ask("Please enter '%s' or '%s': " % opts)
+            return constant.USER_INTERRUPT
+        answer = ask(f"Please enter '{opts[0]}' or '{opts[1]}': ")
+    return constant.OK
 
 
-def apt_select():
+def apt_select() -> tuple[str | None, int]:
     """Run apt-select: Ubuntu archive mirror reporting tool"""
 
     try:
-        system = System()
+        system = apt.System()
     except OSError as err:
-        exit("Error setting system information:\n\t%s" % err)
+        return f"Error setting system information:\n\t{err}", constant.NOK
 
     try:
-        sources = Sources(system.codename)
-    except SourcesFileError as err:
-        exit("Error with current apt sources:\n\t%s" % err)
+        sources = apt.Sources(codename=system.codename)
+    except apt.SourcesFileError as err:
+        return f"Error with current apt sources:\n\t{err}", constant.NOK
 
-    args = set_args()
+    args, status = set_args()
+    if status != constant.OK or isinstance(args, str):
+        return f"{args}", status
+
     mirrors_loc = "mirrors.ubuntu.com"
-    mirrors_url = "http://%s/%s.txt" % (mirrors_loc, args.country.upper())
-    mirrors_list = get_mirrors(mirrors_url, args.country)
+    mirrors_url = f"http://{mirrors_loc}/{args.country.upper()}.txt"
+    mirrors_list, status = get_mirrors(mirrors_url=mirrors_url, country=args.country)
+    if status != constant.OK:
+        return "".join(mirrors_list), status
 
-    archives = Mirrors(mirrors_list, args.ping_only, args.min_status)
-    archives.get_rtts()
-    if archives.got["ping"] < args.top_number:
-        args.top_number = archives.got["ping"]
+    mirrors = mirror.Mirrors(
+        url_list=mirrors_list, min_status=args.min_status, ping_only=args.ping_only
+    )
+    mirrors.measure_rtts()
+    if mirrors.got["ping"] < args.top_number:
+        args.top_number = mirrors.got["ping"]
 
     if args.top_number == 0:
-        exit("Cannot connect to any mirrors in %s\n." % mirrors_list)
+        return f"Cannot connect to any mirrors in {mirrors_list}\n.", constant.NOK
 
     if not args.ping_only:
-        archives.get_launchpad_urls()
-        if not archives.abort_launch:
+        mirrors.fetch_launchpad_urls()
+        if not mirrors.abort_launch:
             # Mirrors needs a limit to stop launching threads
-            archives.status_num = args.top_number
-            stderr.write("Looking up %d status(es)\n" % args.top_number)
-            archives.lookup_statuses(
-                system.codename.capitalize(), system.arch, args.min_status
+            mirrors.status_num = args.top_number
+            sys.stderr.write(f"Looking up {args.top_number} status(es)\n")
+            mirrors.lookup_statuses(
+                codename=system.codename.capitalize(), arch=system.arch
             )
 
         if args.top_number > 1:
-            stderr.write("\n")
+            sys.stderr.write("\n")
 
-    if args.ping_only or archives.abort_launch:
-        archives.top_list = archives.ranked[: args.top_number]
+    if args.ping_only or mirrors.abort_launch:
+        mirrors.top_list = mirrors.ranked[: args.top_number]
 
     sources.set_current_archives()
     current_url = sources.urls["current"]
-    if archives.urls.get(current_url):
-        archives.urls[current_url]["Host"] += " (current)"
+    if mirrors.urls.get(current_url):
+        _v1: float | str = mirrors.urls[current_url]["Host"]
+        if isinstance(_v1, str):
+            mirrors.urls[current_url]["Host"] = f"{_v1} (current)"
 
     show_status = False
-    max_host_len = 0
-    if not args.ping_only and not archives.abort_launch:
+    max_hostname_length = 0
+    if not args.ping_only and not mirrors.abort_launch:
         show_status = True
     else:
-
-        def set_hostname_len(url, i):
-            hostname_len = len(str(i) + archives.urls[url]["Host"])
-            archives.urls[url]["host_len"] = hostname_len
-            return hostname_len
-
-        max_host_len = max(
-            [set_hostname_len(url, i + 1) for i, url in enumerate(archives.top_list)]
+        max_hostname_length = max(
+            _set_hostname_length(index=i + 1, entry=mirrors.urls[url])
+            for i, url in enumerate(mirrors.top_list)
         )
-    for i, url in enumerate(archives.top_list):
-        info = archives.urls[url]
+    for i, url in enumerate(mirrors.top_list):
+        info = mirrors.urls[url]
         rank = i + 1
         if show_status:
-            print_status(info, rank)
+            print_status(info=info, rank=rank)
         else:
-            print_latency(info, rank, max_host_len)
+            print_latency(info=info, rank=rank, max_hostname_length=max_hostname_length)
 
     key = 0
     if args.choose:
-        key = get_selected_mirror(len(archives.top_list)) - 1
+        maybe_key, status = get_selected_mirror(list_size=len(mirrors.top_list))
+        if status != constant.OK:
+            return None, constant.USER_INTERRUPT
+        if maybe_key is None:
+            return "Invalid mirror index", constant.INVALID_MIRROR_INDEX
+        key = maybe_key - 1
 
     if args.list_only:
-        exit()
+        return None, constant.OK
 
-    new_mirror = archives.top_list[key]
-    print("Selecting mirror %(mirror)s ..." % {"mirror": new_mirror})
+    new_mirror = mirrors.top_list[key]
+    print(f"Selecting mirror {new_mirror} ...")
     if current_url == new_mirror:
-        stderr.write(
-            "%(url)s is the currently used mirror.\n"
-            "%(message)s\n" % {"url": current_url, "message": sources.skip_gen_msg}
-        )
-        exit(SKIPPED_FILE_GENERATION)
+        return (
+            f"[{current_url}] is the currently used mirror.\n"
+            f"{sources.skip_gen_msg}\n"
+        ), constant.SKIPPED_FILE_GENERATION
 
-    work_dir = getcwd()
+    work_dir = os.getcwd()
     if work_dir == sources.DIRECTORY[0:-1]:
         query = (
-            "'%(dir)s' is the current directory.\n"
-            "Generating a new '%(apt)s' file will "
+            f"'{sources.DIRECTORY}' is the current directory.\n"
+            f"Generating a new '{sources.LIST_FILE}' file will "
             "overwrite the current file.\n"
             "You should copy or backup '%(apt)s' before replacing it.\n"
-            "Continue?\n[yes|no] " % {"dir": sources.DIRECTORY, "apt": sources.APT_FILE}
+            "Continue?\n[yes|no] "
         )
-        yes_or_no(query)
+        status = yes_or_no(query=query)
+        if status != constant.OK:
+            return None, status
 
-    new_mirror = archives.top_list[key]
+    new_mirror = mirrors.top_list[key]
     try:
-        sources.generate_new_config(work_dir, new_mirror)
-    except SourcesFileError as err:
-        exit("Error generating new config file" % err)
-    else:
-        print("New config file saved to %s" % sources.new_file_path)
+        sources.generate_new_config(work_dir=work_dir, new_mirror=new_mirror)
+    except apt.SourcesFileError as err:
+        return f"Error generating new config file {err}", constant.NOK
+    print(f"New config file saved to {sources.new_file_path}")
 
-    exit()
+    return None, constant.OK
 
 
-def main():
+def _set_hostname_length(index: int, entry: dict[str, float | int | str]) -> int:
+    hostname_len = len(f"{index}{entry['Host']}")
+    entry["host_length"] = hostname_len
+    return hostname_len
+
+
+def main() -> int:
     try:
-        apt_select()
+        msg, status = apt_select()
+        if msg:
+            sys.stderr.write(msg)
+        return status
     except KeyboardInterrupt:
-        stderr.write("Aborting...\n")
+        sys.stderr.write("Aborting...\n")
+        return 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
