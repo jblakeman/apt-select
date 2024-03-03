@@ -47,11 +47,11 @@ apt-select = "apt_select.__main__:main"
 Homepage = "https://github.com/jblakeman/apt-select"
 
 [tool.hatch.build.hooks.vcs]
-version-file = "apt_select/_version.py"
+version-file = "src/apt_select/_version.py"
 
 [tool.hatch.build.targets.sdist]
 include = [
-    "/apt_select",
+    "/src/apt_select",
 ]
 
 [tool.hatch.envs.default]
@@ -66,20 +66,20 @@ dependencies = [
 
 [tool.hatch.envs.default.scripts]
 dist = [
-    "black apt_select",
+    "black src",
     "hatch build",
 ]
 format = [
-    "black apt_select",
+    "black src",
 ]
 lint = [
-    "black apt_select",
-    "ruff check --fix apt_select",
+    "black src",
+    "ruff check --fix src",
 ]
 lint-check = [
-    "black --check apt_select",
-    "pylint apt_select",
-    "ruff check apt_select",
+    "black --check src",
+    "pylint src",
+    "ruff check src",
 ]
 test = "pytest"
 test-cov-xml = "pytest --cov-report=xml"

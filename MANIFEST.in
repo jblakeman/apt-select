@@ -1,4 +1,4 @@
 include *.rst *.txt *.md
 recursive-include docs *.rst *.txt *.md
-recursive-include apt_select *
+recursive-include src/apt_select *
 recursive-include *.py
