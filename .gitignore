@@ -1,3 +1,8 @@
 __pycache__
 *.pyc
 sources.list
+_version.py*
+
+/.idea/
+/.venv/
+/dist/

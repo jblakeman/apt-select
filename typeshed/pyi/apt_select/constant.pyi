@@ -1,0 +1,10 @@
+from _typeshed import Incomplete
+
+DEFAULT_REQUEST_HEADERS: Incomplete
+DEFAULT_REQUEST_TIMEOUT_SEC: float
+ENCODING_UTF_8: str
+OK: int
+NOK: int
+INVALID_MIRROR_INDEX: int
+USER_INTERRUPT: int
+SKIPPED_FILE_GENERATION: int

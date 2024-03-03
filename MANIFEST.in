@@ -1,0 +1,4 @@
+include *.rst *.txt *.md
+recursive-include docs *.rst *.txt *.md
+recursive-include src/apt_select *
+recursive-include typeshed/pyi *.py *.pyi

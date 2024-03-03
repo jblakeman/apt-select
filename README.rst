@@ -7,7 +7,7 @@ Features
 --------
 
 * Tests latency to mirrors in a given country's mirror list at `mirrors.ubuntu.com <http://mirrors.ubuntu.com>`_.
-    - 3 requests are sent to each mirror, minumum round trip time being used for rank.
+    - 3 requests are sent to each mirror, minimum round trip time being used for rank.
 
 * Reports latency, status, and bandwidth capacity of the fastest mirrors in a ranked list.
     - Status and bandwidth are scraped from `launchpad <https://launchpad.net/ubuntu/+archivemirrors/>`_.
