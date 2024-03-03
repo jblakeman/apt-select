@@ -65,6 +65,15 @@ dependencies = [
     "build",
     "hatch",
     "mypy",
+    "pylint",
+    "pytest",
+    "pytest-clarity",
+    "pytest-cov",
+    "pytest-describe",
+    "pytest-expecter",
+    "pytest-random",
+    "pytest-sugar",
+    "pytest-xdist[psutil]",
     "ruff",
     "types-beautifulsoup4",
     "types-requests",
@@ -73,24 +82,24 @@ dependencies = [
 
 [tool.hatch.envs.default.scripts]
 dist = [
-    "black src",
+    "black src test",
     "rm -rf 'typeshed/pyi'",
     "stubgen --output=typeshed/pyi --search-path=src src",
     "hatch build",
 ]
 format = [
-    "black src",
+    "black src test",
 ]
 lint = [
-    "black src",
-    "ruff check --fix src",
-    "mypy src",
+    "black src test",
+    "ruff check --fix src test",
+    "mypy src test",
 ]
 lint-check = [
-    "black --check src",
-    "pylint src",
-    "ruff check src",
-    "mypy src",
+    "black --check src test",
+    "pylint src/apt_select",
+    "ruff check src test",
+    "mypy src test",
 ]
 test = "pytest"
 test-cov-xml = "pytest --cov-report=xml"
@@ -669,3 +678,16 @@ ignored-argument-names = "_.*|^ignored_|^unused_"
 # List of qualified module names which can have objects that can redefine
 # builtins.
 redefining-builtins-modules = ["six.moves", "past.builtins", "future.builtins", "builtins", "io"]
+
+[tool.pytest.ini_options]
+addopts = "-n 4 --cov=src/apt_select/ --cov-report=term-missing"
+minversion = "7.2"
+python_files = [
+    "*Test.py",
+    "*_test.py",
+    "test_*.py",
+]
+testpaths = [
+    "src",
+    "test",
+]
