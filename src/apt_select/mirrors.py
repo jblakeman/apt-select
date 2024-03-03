@@ -4,10 +4,10 @@
    Provides latency testing and mirror attribute getting from Launchpad."""
 
 from sys import stderr
-from socket import (socket, AF_INET, SOCK_STREAM,
-                    gethostbyname, error, timeout, gaierror)
+from socket import socket, AF_INET, SOCK_STREAM, gethostbyname, error, timeout, gaierror
 from time import time
 from apt_select.utils import progress_msg, get_text, URLGetTextError
+
 try:
     from urlparse import urlparse
 except ImportError:
@@ -21,6 +21,7 @@ except ImportError:
     from Queue import Queue, Empty
 
 from bs4 import BeautifulSoup, FeatureNotFound
+
 PARSER = "lxml"
 try:
     BeautifulSoup("", PARSER)
@@ -35,6 +36,7 @@ except NameError:
 
 class ConnectError(Exception):
     """Socket connection errors"""
+
     pass
 
 
@@ -51,9 +53,7 @@ class Mirrors(object):
         self._trip_queue = Queue()
         if not ping_only:
             self._launchpad_base = "https://launchpad.net"
-            self._launchpad_url = (
-                self._launchpad_base + "/ubuntu/+archivemirrors"
-            )
+            self._launchpad_url = self._launchpad_base + "/ubuntu/+archivemirrors"
             self._launchpad_html = ""
             self.abort_launch = False
             self._status_opts = (
@@ -61,7 +61,7 @@ class Mirrors(object):
                 "One week behind",
                 "Two days behind",
                 "One day behind",
-                "Up to date"
+                "Up to date",
             )
             index = self._status_opts.index(min_status)
             self._status_opts = self._status_opts[index:]
@@ -74,10 +74,12 @@ class Mirrors(object):
         try:
             self._launchpad_html = get_text(self._launchpad_url)
         except URLGetTextError as err:
-            stderr.write((
-                "%s: %s\nUnable to retrieve list of launchpad sites\n"
-                "Reverting to latency only\n" % (self._launchpad_url, err)
-            ))
+            stderr.write(
+                (
+                    "%s: %s\nUnable to retrieve list of launchpad sites\n"
+                    "Reverting to latency only\n" % (self._launchpad_url, err)
+                )
+            )
             self.abort_launch = True
         else:
             stderr.write("done.\n")
@@ -85,7 +87,7 @@ class Mirrors(object):
 
     def __parse_launchpad_list(self):
         """Parse Launchpad's list page to find each mirror's
-           Official page"""
+        Official page"""
         soup = BeautifulSoup(self._launchpad_html, PARSER)
         prev = ""
         for element in soup.table.descendants:
@@ -100,9 +102,7 @@ class Mirrors(object):
                     pass
                 else:
                     if url in self.urls:
-                        self.urls[url]["Launchpad"] = (
-                            self._launchpad_base + prev
-                        )
+                        self.urls[url]["Launchpad"] = self._launchpad_base + prev
 
                     if url.startswith("/ubuntu/+mirror/"):
                         prev = url
@@ -113,9 +113,7 @@ class Mirrors(object):
         for url in self._url_list:
             host = urlparse(url).netloc
             try:
-                thread = Thread(
-                    target=_RoundTrip(url, host, self._trip_queue).min_rtt
-                )
+                thread = Thread(target=_RoundTrip(url, host, self._trip_queue).min_rtt)
             except gaierror as err:
                 stderr.write("%s: %s ignored\n" % (err, url))
             else:
@@ -148,21 +146,17 @@ class Mirrors(object):
             processed += 1
             progress_msg(processed, self._num_trips)
 
-        stderr.write('\n')
+        stderr.write("\n")
         # Mirrors without latency info are removed
-        self.urls = {
-            key: val for key, val in self.urls.items() if "Latency" in val
-        }
+        self.urls = {key: val for key, val in self.urls.items() if "Latency" in val}
 
-        self.ranked = sorted(
-            self.urls, key=lambda x: self.urls[x]["Latency"]
-        )
+        self.ranked = sorted(self.urls, key=lambda x: self.urls[x]["Latency"])
 
     def __queue_lookups(self, codename, arch, data_queue):
         """Queue threads for data retrieval from launchpad.net
 
-           Returns number of threads started to fulfill number of
-           requested statuses"""
+        Returns number of threads started to fulfill number of
+        requested statuses"""
         num_threads = 0
         for url in self.ranked:
             try:
@@ -172,11 +166,7 @@ class Mirrors(object):
             else:
                 thread = Thread(
                     target=_LaunchData(
-                        url,
-                        launch_url,
-                        codename,
-                        arch,
-                        data_queue
+                        url, launch_url, codename, arch, data_queue
                     ).get_info
                 )
                 thread.daemon = True
@@ -221,7 +211,7 @@ class Mirrors(object):
                     # iteration if another queue needs to be built)
                     self.ranked.remove(info[0])
 
-                if (self.got["data"] == self.status_num):
+                if self.got["data"] == self.status_num:
                     break
 
             # Reorder by latency as queue returns vary building final list
@@ -244,13 +234,13 @@ class _RoundTrip(object):
         port = 80
         sock = socket(AF_INET, SOCK_STREAM)
         sock.settimeout(2.5)
-        send_tstamp = time()*1000
+        send_tstamp = time() * 1000
         try:
             sock.connect((self._addr, port))
         except (timeout, error) as err:
             raise ConnectError(err)
 
-        recv_tstamp = time()*1000
+        recv_tstamp = time() * 1000
         rtt = recv_tstamp - send_tstamp
         sock.close()
         return rtt
@@ -283,20 +273,17 @@ class _LaunchData(object):
         info = {}
         soup = BeautifulSoup(launch_html, PARSER)
         # Find elements of the ids we need
-        for line in soup.find_all(id=['arches', 'speed', 'organisation']):
-            if line.name == 'table':
+        for line in soup.find_all(id=["arches", "speed", "organisation"]):
+            if line.name == "table":
                 # Status information lives in a table column alongside
                 # series name and machine architecture
-                for tr in line.find('tbody').find_all('tr'):
-                    arches = [x.get_text() for x in tr.find_all('td')]
-                    if (self._codename in arches[0] and
-                            arches[1] == self._arch):
+                for tr in line.find("tbody").find_all("tr"):
+                    arches = [x.get_text() for x in tr.find_all("td")]
+                    if self._codename in arches[0] and arches[1] == self._arch:
                         info.update({"Status": arches[2]})
             else:
                 # "Speed" lives in a dl, and we use the key -> value as such
-                info.update({
-                    line.dt.get_text().strip(':'): line.dd.get_text()
-                })
+                info.update({line.dt.get_text().strip(":"): line.dd.get_text()})
 
         return info
 
@@ -314,9 +301,9 @@ class _LaunchData(object):
         else:
             info = self.__parse_mirror_html(launch_html)
             if "Status" not in info:
-                stderr.write((
-                    "Unable to parse status info from %s\n" % self._launch_url
-                ))
+                stderr.write(
+                    ("Unable to parse status info from %s\n" % self._launch_url)
+                )
                 self._data_queue.put_nowait((self._url, None))
                 return
 

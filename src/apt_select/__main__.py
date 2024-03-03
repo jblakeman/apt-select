@@ -23,25 +23,29 @@ def set_args():
     args = parser.parse_args()
 
     # Convert status argument to format used by Launchpad
-    args.min_status = args.min_status.replace('-', ' ')
-    if not args.ping_only and (args.min_status != 'unknown'):
+    args.min_status = args.min_status.replace("-", " ")
+    if not args.ping_only and (args.min_status != "unknown"):
         args.min_status = args.min_status.capitalize()
 
     if args.choose and (not args.top_number or args.top_number < 2):
         parser.print_usage()
-        exit((
-            "error: -c/--choose option requires -t/--top-number NUMBER "
-            "where NUMBER is greater than 1."
-        ))
+        exit(
+            (
+                "error: -c/--choose option requires -t/--top-number NUMBER "
+                "where NUMBER is greater than 1."
+            )
+        )
 
     if not args.country:
-        stderr.write('WARNING: no country code provided. defaulting to US.\n')
+        stderr.write("WARNING: no country code provided. defaulting to US.\n")
         args.country = DEFAULT_COUNTRY
-    elif not re.match(r'^[a-zA-Z]{2}$', args.country):
-        exit((
-            "Invalid country. %s is not in ISO 3166-1 alpha-2 "
-            "format" % args.country
-        ))
+    elif not re.match(r"^[a-zA-Z]{2}$", args.country):
+        exit(
+            (
+                "Invalid country. %s is not in ISO 3166-1 alpha-2 "
+                "format" % args.country
+            )
+        )
 
     return args
 
@@ -52,9 +56,8 @@ def get_mirrors(mirrors_url, country):
     response = requests.get(mirrors_url, headers=DEFAULT_REQUEST_HEADERS)
     if response.status_code == requests.codes.NOT_FOUND:
         exit(
-            "The mirror list for country: %s was not found at %s" % (
-                country, mirrors_url
-            )
+            "The mirror list for country: %s was not found at %s"
+            % (country, mirrors_url)
         )
 
     stderr.write("done.\n")
@@ -65,33 +68,39 @@ def get_mirrors(mirrors_url, country):
 def print_status(info, rank):
     """Print full mirror status report for ranked item"""
     for key in ("Org", "Speed"):
-            info.setdefault(key, "N/A")
+        info.setdefault(key, "N/A")
 
-    print((
-        "%(rank)d. %(mirror)s\n"
-        "%(tab)sLatency: %(ms).2f ms\n"
-        "%(tab)sOrg:     %(org)s\n"
-        "%(tab)sStatus:  %(status)s\n"
-        "%(tab)sSpeed:   %(speed)s" % {
-            'tab': '    ',
-            'rank': rank ,
-            'mirror': info['Host'],
-            'ms': info['Latency'],
-            'org': info['Organisation'],
-            'status': info['Status'],
-            'speed': info['Speed']
-        }
-    ))
+    print(
+        (
+            "%(rank)d. %(mirror)s\n"
+            "%(tab)sLatency: %(ms).2f ms\n"
+            "%(tab)sOrg:     %(org)s\n"
+            "%(tab)sStatus:  %(status)s\n"
+            "%(tab)sSpeed:   %(speed)s"
+            % {
+                "tab": "    ",
+                "rank": rank,
+                "mirror": info["Host"],
+                "ms": info["Latency"],
+                "org": info["Organisation"],
+                "status": info["Status"],
+                "speed": info["Speed"],
+            }
+        )
+    )
 
 
 def print_latency(info, rank, max_host_len):
     """Print latency information for mirror in ranked report"""
-    print("%(rank)d. %(mirror)s: %(padding)s%(ms).2f ms" % {
-        'rank': rank,
-        'padding': (max_host_len - info.get('host_len', max_host_len)) * ' ',
-        'mirror': info['Host'],
-        'ms': info['Latency']
-    })
+    print(
+        "%(rank)d. %(mirror)s: %(padding)s%(ms).2f ms"
+        % {
+            "rank": rank,
+            "padding": (max_host_len - info.get("host_len", max_host_len)) * " ",
+            "mirror": info["Host"],
+            "ms": info["Latency"],
+        }
+    )
 
 
 def ask(query):
@@ -107,7 +116,7 @@ def get_selected_mirror(list_size):
         try:
             key = int(key)
         except ValueError:
-            if key == 'q':
+            if key == "q":
                 exit()
         else:
             if (key >= 1) and (key <= list_size):
@@ -120,7 +129,7 @@ def get_selected_mirror(list_size):
 
 def yes_or_no(query):
     """Get definitive answer"""
-    opts = ('yes', 'no')
+    opts = ("yes", "no")
     answer = ask(query)
     while answer != opts[0]:
         if answer == opts[1]:
@@ -161,34 +170,34 @@ def apt_select():
             archives.status_num = args.top_number
             stderr.write("Looking up %d status(es)\n" % args.top_number)
             archives.lookup_statuses(
-                system.codename.capitalize(),
-                system.arch,
-                args.min_status
+                system.codename.capitalize(), system.arch, args.min_status
             )
 
         if args.top_number > 1:
-            stderr.write('\n')
+            stderr.write("\n")
 
     if args.ping_only or archives.abort_launch:
-        archives.top_list = archives.ranked[:args.top_number]
+        archives.top_list = archives.ranked[: args.top_number]
 
     sources.set_current_archives()
-    current_url = sources.urls['current']
+    current_url = sources.urls["current"]
     if archives.urls.get(current_url):
-        archives.urls[current_url]['Host'] += " (current)"
+        archives.urls[current_url]["Host"] += " (current)"
 
     show_status = False
     max_host_len = 0
     if not args.ping_only and not archives.abort_launch:
         show_status = True
     else:
+
         def set_hostname_len(url, i):
-            hostname_len = len(str(i) + archives.urls[url]['Host'])
-            archives.urls[url]['host_len'] = hostname_len
+            hostname_len = len(str(i) + archives.urls[url]["Host"])
+            archives.urls[url]["host_len"] = hostname_len
             return hostname_len
 
-        max_host_len = max([set_hostname_len(url, i+1)
-                            for i, url in enumerate(archives.top_list)])
+        max_host_len = max(
+            [set_hostname_len(url, i + 1) for i, url in enumerate(archives.top_list)]
+        )
     for i, url in enumerate(archives.top_list):
         info = archives.urls[url]
         rank = i + 1
@@ -205,14 +214,12 @@ def apt_select():
         exit()
 
     new_mirror = archives.top_list[key]
-    print("Selecting mirror %(mirror)s ..." % {'mirror': new_mirror})
+    print("Selecting mirror %(mirror)s ..." % {"mirror": new_mirror})
     if current_url == new_mirror:
         stderr.write(
             "%(url)s is the currently used mirror.\n"
-            "%(message)s\n" % {
-                'url': current_url,
-                'message': sources.skip_gen_msg
-            })
+            "%(message)s\n" % {"url": current_url, "message": sources.skip_gen_msg}
+        )
         exit(SKIPPED_FILE_GENERATION)
 
     work_dir = getcwd()
@@ -222,10 +229,7 @@ def apt_select():
             "Generating a new '%(apt)s' file will "
             "overwrite the current file.\n"
             "You should copy or backup '%(apt)s' before replacing it.\n"
-            "Continue?\n[yes|no] " % {
-                'dir': sources.DIRECTORY,
-                'apt': sources.APT_FILE
-            }
+            "Continue?\n[yes|no] " % {"dir": sources.DIRECTORY, "apt": sources.APT_FILE}
         )
         yes_or_no(query)
 
@@ -246,5 +250,6 @@ def main():
     except KeyboardInterrupt:
         stderr.write("Aborting...\n")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

@@ -5,17 +5,16 @@ from sys import stderr
 
 import requests
 
-DEFAULT_REQUEST_HEADERS = {
-    'User-Agent': 'apt-select'
-}
+DEFAULT_REQUEST_HEADERS = {"User-Agent": "apt-select"}
 
 
 def utf8_decode(encoded):
-    return encoded.decode('utf-8')
+    return encoded.decode("utf-8")
 
 
 class URLGetTextError(Exception):
     """Error class for fetching text from a URL"""
+
     pass
 
 
